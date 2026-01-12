@@ -33,11 +33,12 @@ public class Member {
 
 
 2.2. JPA 기본 구성요소 <br>
+```java
 EntityManagerFactory emf =
         Persistence.createEntityManagerFactory("hello");
 EntityManager em = emf.createEntityManager();
 EntityTransaction tx = em.getTransaction();
-
+```
 
 EntityManagerFactory
 애플리케이션 전체에서 하나만 생성하여 공유한다.
