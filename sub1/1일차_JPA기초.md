@@ -10,7 +10,7 @@ JPA는 자바 객체와 관계형 데이터베이스 테이블을 매핑하여, 
 
 **2. 엔티티 매핑 구조와 JPA 기본 구성 요소**
 
-2.1. 엔티티(Entity) 매핑 구조
+2.1. 엔티티(Entity) 매핑 구조 <br>
 @Entity
 public class Member {
 
@@ -32,7 +32,7 @@ public class Member {
 지정하지 않을 경우 엔티티명/필드명을 기준으로 관례적으로 매핑된다.
 
 
-2.2.
+2.2. JPA 기본 구성요소 <br>
 EntityManagerFactory emf =
         Persistence.createEntityManagerFactory("hello");
 EntityManager em = emf.createEntityManager();
