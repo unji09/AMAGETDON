@@ -8,7 +8,36 @@ JPA는 자바 객체와 관계형 데이터베이스 테이블을 매핑하여, 
 <br><br>
 
 
-**2. JPA 기본 구성 요소**
+**2. 엔티티 매핑 구조와 JPA 기본 구성 요소**
+
+2.1. 엔티티(Entity) 매핑 구조
+@Entity
+public class Member {
+
+    @Id
+    private Long id;
+
+    private String name;
+}
+
+
+@Entity
+해당 클래스가 JPA가 관리하는 엔티티 객체임을 의미한다.
+
+@Id
+엔티티의 기본 키(PK)로 사용되며, 데이터베이스의 PK와 매핑된다.
+
+@Table, @Column
+테이블명과 컬럼명을 직접 지정할 수 있으나,
+지정하지 않을 경우 엔티티명/필드명을 기준으로 관례적으로 매핑된다.
+
+
+2.2.
+EntityManagerFactory emf =
+        Persistence.createEntityManagerFactory("hello");
+EntityManager em = emf.createEntityManager();
+EntityTransaction tx = em.getTransaction();
+
 
 EntityManagerFactory
 애플리케이션 전체에서 하나만 생성하여 공유한다.
@@ -62,3 +91,17 @@ SQL은 즉시 실행되지 않고 커밋 시점에 일괄 처리
 
 JPQL은 테이블이 아닌 엔티티 객체를 대상으로 조회하는 객체 지향 쿼리 언어이다.
 SQL을 추상화하여 데이터베이스에 종속되지 않는 조회를 가능하게 한다
+
+- JPQL 조회 및 페이징으로의 활용
+List<Member> result =
+    em.createQuery("select m from Member m", Member.class)
+      .setFirstResult(5)
+      .setMaxResults(8)
+      .getResultList();
+
+
+JPQL은 테이블이 아닌 엔티티 객체를 대상으로 조회한다.
+
+페이징 처리 또한 DB 방언에 맞게 자동 변환된다.
+
+이를 통해 DB 독립적인 조회 로직 작성이 가능하다.
