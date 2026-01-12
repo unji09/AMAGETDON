@@ -93,13 +93,14 @@ SQL은 즉시 실행되지 않고 커밋 시점에 일괄 처리
 JPQL은 테이블이 아닌 엔티티 객체를 대상으로 조회하는 객체 지향 쿼리 언어이다.
 SQL을 추상화하여 데이터베이스에 종속되지 않는 조회를 가능하게 한다
 
-- JPQL 조회 및 페이징으로의 활용
+- JPQL 조회 및 페이징으로의 활용<br>
+```java
 List<Member> result =
     em.createQuery("select m from Member m", Member.class)
       .setFirstResult(5)
       .setMaxResults(8)
       .getResultList();
-
+```
 
 JPQL은 테이블이 아닌 엔티티 객체를 대상으로 조회한다.
 
