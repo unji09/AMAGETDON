@@ -1,5 +1,5 @@
 **1. 엔티티 매핑(Entity Mapping)**
-
+<Br>
 엔티티 매핑은 자바 객체를 데이터베이스 테이블과 연결하는 과정으로,
 JPA에서 객체 중심 설계를 가능하게 하는 기본 단계이다.
 
@@ -21,6 +21,7 @@ public class Member {
 
 
 **2. 기본 키(PK) 매핑 핵심**
+<br>
 @Id
 @GeneratedValue
 private Long id;
@@ -34,7 +35,7 @@ private Long id;
 
 
 **3. 연관관계 매핑이 필요한 이유**
-
+<Br>
 객체는 참조(reference) 로 관계를 표현
 
 테이블은 외래 키(FK) 로 관계를 표현
@@ -42,6 +43,7 @@ private Long id;
 
 
 **4. 단방향 연관관계 (N:1)**
+<br>
 @Entity
 public class Member {
 
@@ -59,6 +61,7 @@ JPA 연관관계 매핑의 기본 형태
 
 
 **5. 양방향 연관관계와 연관관계의 주인**
+<Br>
 @Entity
 public class Team {
 
@@ -76,7 +79,7 @@ public class Team {
 👉 Member.team 이 연관관계의 주인
 
 
-**6. 양방향 매핑 시 핵심 주의사항**
+**6. 양방향 매핑 시 핵심 주의사항**<BR>
 team.getMembers().add(member);
 member.setTeam(team);
 

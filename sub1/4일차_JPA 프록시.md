@@ -1,4 +1,5 @@
-1. 프록시 사용의 목적과 기준
+**1. 프록시 사용의 목적과 기준**
+<Br>
 언제 프록시를 쓰는가
 Member member = em.getReference(Member.class, id);
 
@@ -25,7 +26,8 @@ member.getName(); // LazyInitializationException
 → 프록시는 영속성 컨텍스트 안에서만 안전
 
 
-2. 실무 로딩 전략 원칙 (가장 중요)
+**2. 실무 로딩 전략 원칙 (가장 중요)**
+<Br>
 ❌ 즉시 로딩(EAGER) 기본 사용 금지
 @ManyToOne(fetch = FetchType.EAGER) // 기본값
 
@@ -38,10 +40,12 @@ private Team team;
 
 
 
-3. 실제 조회 최적화는 fetch join으로 해결
+**3. 실제 조회 최적화는 fetch join으로 해결**
+<br>
+```java
 select m from Member m
 join fetch m.team
-
+```
 
 연관 엔티티를 한 번의 SQL로 조회
 
@@ -55,7 +59,8 @@ EAGER를 대체하는 실무 해결책
 
 
 
-4. 영속성 전이(CASCADE) 실무 사용 기준
+**4. 영속성 전이(CASCADE) 실무 사용 기준**
+<br>
 사용 가능한 경우
 @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
 private List<OrderItem> orderItems;
@@ -74,7 +79,8 @@ private List<OrderItem> orderItems;
 
 📌 CASCADE는 연관관계가 아니라 “편의 기능”
 
-5. 고아 객체 제거(orphanRemoval)
+**5. 고아 객체 제거(orphanRemoval)**
+<br>
 @OneToMany(
     mappedBy = "parent",
     orphanRemoval = true
@@ -93,7 +99,8 @@ private List<Child> children;
 parent.getChildren().remove(child);
 // 즉시 DELETE 발생
 
-6. CASCADE + orphanRemoval = 생명주기 완전 위임
+**6. CASCADE + orphanRemoval = 생명주기 완전 위임**
+<BR>
 @OneToMany(
     mappedBy = "parent",
     cascade = CascadeType.ALL,
