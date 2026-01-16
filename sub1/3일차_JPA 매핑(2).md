@@ -121,11 +121,13 @@ TABLE_PER_CLASS 전략
 
 **8. @MappedSuperclass (공통 매핑 전용)**
 <br>
+
+```java
 @MappedSuperclass
 public abstract class BaseEntity {
     private LocalDateTime createdDate;
 }
-
+```
 
 공통 속성 상속 목적
 

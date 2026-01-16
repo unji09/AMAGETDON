@@ -32,16 +32,18 @@ member.getName(); // LazyInitializationException
 @ManyToOne(fetch = FetchType.EAGER) // 기본값
 
 ✅ 실무 표준: 전부 지연 로딩(LAZY)
+```java
 @ManyToOne(fetch = FetchType.LAZY)
 @JoinColumn(name = "TEAM_ID")
 private Team team;
 
 @OneToOne(fetch = FetchType.LAZY)
-
+```
 
 
 **3. 실제 조회 최적화는 fetch join으로 해결**
 <br>
+
 ```java
 select m from Member m
 join fetch m.team
@@ -62,9 +64,11 @@ EAGER를 대체하는 실무 해결책
 **4. 영속성 전이(CASCADE) 실무 사용 기준**
 <br>
 사용 가능한 경우
+
+```java
 @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
 private List<OrderItem> orderItems;
-
+```
 
 부모가 자식의 생명주기를 전적으로 관리
 
@@ -81,12 +85,14 @@ private List<OrderItem> orderItems;
 
 **5. 고아 객체 제거(orphanRemoval)**
 <br>
+
+```java
 @OneToMany(
     mappedBy = "parent",
     orphanRemoval = true
 )
 private List<Child> children;
-
+```
 
 컬렉션에서 제거 → DB에서도 DELETE
 
@@ -101,11 +107,14 @@ parent.getChildren().remove(child);
 
 **6. CASCADE + orphanRemoval = 생명주기 완전 위임**
 <BR>
+
+```java
 @OneToMany(
     mappedBy = "parent",
     cascade = CascadeType.ALL,
     orphanRemoval = true
 )
+```
 
 
 부모만 persist / remove 하면 됨

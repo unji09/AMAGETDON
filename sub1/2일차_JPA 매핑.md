@@ -3,6 +3,7 @@
 엔티티 매핑은 자바 객체를 데이터베이스 테이블과 연결하는 과정으로,
 JPA에서 객체 중심 설계를 가능하게 하는 기본 단계이다.
 
+```java
 @Entity
 public class Member {
 
@@ -11,7 +12,7 @@ public class Member {
 
     private String name;
 }
-
+```
 
 @Entity : JPA가 관리하는 엔티티 클래스
 
@@ -22,10 +23,12 @@ public class Member {
 
 **2. 기본 키(PK) 매핑 핵심**
 <br>
+
+```java
 @Id
 @GeneratedValue
 private Long id;
-
+```
 
 대리 키(Long) 사용 권장
 
@@ -44,6 +47,8 @@ private Long id;
 
 **4. 단방향 연관관계 (N:1)**
 <br>
+
+```java
 @Entity
 public class Member {
 
@@ -51,7 +56,7 @@ public class Member {
     @JoinColumn(name = "TEAM_ID")
     private Team team;
 }
-
+```
 
 외래 키를 직접 다루지 않고 객체를 참조
 
@@ -62,13 +67,15 @@ JPA 연관관계 매핑의 기본 형태
 
 **5. 양방향 연관관계와 연관관계의 주인**
 <Br>
+
+```java
 @Entity
 public class Team {
 
     @OneToMany(mappedBy = "team")
     private List<Member> members = new ArrayList<>();
 }
-
+```
 
 양방향 관계에서는 연관관계의 주인이 필요
 
@@ -80,9 +87,11 @@ public class Team {
 
 
 **6. 양방향 매핑 시 핵심 주의사항**<BR>
+
+```java
 team.getMembers().add(member);
 member.setTeam(team);
-
+```
 
 연관관계의 주인에 값이 설정되지 않으면 DB에 반영되지 않는다
 
