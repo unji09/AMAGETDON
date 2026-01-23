@@ -1,4 +1,4 @@
-package com.amagetdon.config;
+package com.amagetdon.common.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
