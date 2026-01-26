@@ -1,6 +1,6 @@
 ## #️⃣ 연관된 이슈
-- #[Issue number]
-- close : #[Issue number]
+- S14P11A207-48(에픽 번호)
+- close : S14P11A207-0(닫을 작업 번호)
 <!-- 이슈 완료되었을 때만 close 붙여주세요 --> 
 
 ## 📝 작업 내용
