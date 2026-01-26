@@ -1,4 +1,4 @@
-package com.amagetdon.investment.entity;
+package com.amagetdon.stock.entity;
 
 public enum MarketType {
     KOSPI("코스피"),
