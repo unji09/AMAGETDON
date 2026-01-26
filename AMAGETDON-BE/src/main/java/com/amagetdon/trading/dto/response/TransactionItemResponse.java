@@ -1,6 +1,6 @@
-package com.amagetdon.transaction.dto.response;
+package com.amagetdon.trading.dto.response;
 
-import com.amagetdon.transaction.entity.Transaction;
+import com.amagetdon.trading.entity.Transaction;
 
 import java.time.LocalDateTime;
 

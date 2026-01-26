@@ -1,4 +1,4 @@
-package com.amagetdon.investment.entity;
+package com.amagetdon.stock.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

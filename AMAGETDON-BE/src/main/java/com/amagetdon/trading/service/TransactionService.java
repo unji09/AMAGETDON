@@ -1,6 +1,6 @@
-package com.amagetdon.transaction.service;
+package com.amagetdon.trading.service;
 
-import com.amagetdon.transaction.repository.TransactionRepository;
+import com.amagetdon.trading.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

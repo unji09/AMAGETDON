@@ -1,4 +1,4 @@
-package com.amagetdon.transaction.dto.response;
+package com.amagetdon.trading.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

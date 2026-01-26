@@ -1,6 +1,6 @@
-package com.amagetdon.transaction.controller;
+package com.amagetdon.trading.controller;
 
-import com.amagetdon.transaction.service.TransactionService;
+import com.amagetdon.trading.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -8,6 +8,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/accounts")
-public class TransactionController {
-    private final TransactionService transactionService;
+public class AccountController {
+    private final AccountService accountService;
 }
