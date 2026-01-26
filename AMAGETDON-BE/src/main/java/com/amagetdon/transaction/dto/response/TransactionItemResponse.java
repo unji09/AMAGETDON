@@ -1,6 +1,5 @@
 package com.amagetdon.transaction.dto.response;
 
-import com.amagetdon.transaction.entity.TransactionType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
