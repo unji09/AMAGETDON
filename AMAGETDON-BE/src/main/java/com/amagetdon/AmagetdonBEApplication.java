@@ -6,10 +6,10 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 @ConfigurationPropertiesScan
 @SpringBootApplication
-public class AmagetdonbeApplication {
+public class AmagetdonBEApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(AmagetdonbeApplication.class, args);
+		SpringApplication.run(AmagetdonBEApplication.class, args);
 	}
 
 }
