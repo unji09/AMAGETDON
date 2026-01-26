@@ -1,20 +1,31 @@
 package com.amagetdon.transaction.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import com.amagetdon.transaction.entity.Transaction;
 
 import java.time.LocalDateTime;
 
-@Getter
-@AllArgsConstructor
-public class TransactionItemResponse {
-    private Long transactionId;
-    private String stockCode;
-    private String stockName;
-    private String transactionType;
-    private Integer quantity;
-    private Integer price;
-    private Long totalAmount;
-    private LocalDateTime createdAt;
-    private Integer feeAmount;
+public record TransactionItemResponse(
+        Long transactionId,
+        String stockCode,
+        String stockName,
+        String transactionType,
+        Integer quantity,
+        Integer price,
+        Long totalAmount,
+        LocalDateTime createdAt,
+        Integer feeAmount
+) {
+    public static TransactionItemResponse from(Transaction transaction) {
+        return new TransactionItemResponse(
+                transaction.getTransactionId(),
+                transaction.getStockCode(),
+                transaction.getStockName(),
+                transaction.getTransactionType().name(),
+                transaction.getQuantity(),
+                transaction.getPrice(),
+                transaction.getTotalAmount(),
+                transaction.getCreatedAt(),
+                transaction.getFeeAmount()
+        );
+    }
 }
