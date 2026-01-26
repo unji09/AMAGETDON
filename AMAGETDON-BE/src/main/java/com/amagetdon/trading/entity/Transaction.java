@@ -1,4 +1,4 @@
-package com.amagetdon.transaction.entity;
+package com.amagetdon.trading.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

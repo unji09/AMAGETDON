@@ -1,4 +1,4 @@
-package com.amagetdon.transaction.entity;
+package com.amagetdon.trading.entity;
 
 public enum TransactionType {
     BUY("매수"),

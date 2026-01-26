@@ -1,6 +1,6 @@
-package com.amagetdon.transaction.controller;
+package com.amagetdon.trading.controller;
 
-import com.amagetdon.transaction.service.TransactionService;
+import com.amagetdon.trading.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
