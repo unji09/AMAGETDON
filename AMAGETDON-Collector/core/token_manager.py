@@ -1,7 +1,7 @@
 import redis
 import requests
 import os
-from logger import logger
+from core.logger import logger
 
 class TokenManager:
     
@@ -16,8 +16,10 @@ class TokenManager:
         )
         
         self.token_key = 'kis:access_token'
+        self.ws_approval_key = 'kis:ws_approval_key'
         
         self.auth_url = "https://openapi.koreainvestment.com:9443/oauth2/tokenP"
+        self.ws_auth_url = "https://openapi.koreainvestment.com:9443/oauth2/Approval"
     
     #rest 토큰 발급
     def get_token(self):
