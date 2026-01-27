@@ -1,13 +1,9 @@
 package com.amagetdon.learning.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
@@ -50,5 +46,20 @@ public class UserChapterProgress {
         this.isCompleted = true;
         this.completedAt = now;
         this.recentUpdatedAt = now;
+    }
+
+    @Embeddable
+    @Getter
+    @NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA용 기본 생성자
+    @AllArgsConstructor // 직접 생성 및 팩토리 메서드용 전체 생성자
+    @EqualsAndHashCode
+    public static class UserChapterProgressId implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        @Column(name = "chapter_id")
+        private Long chapterId;
+
+        @Column(name = "user_id")
+        private Long userId;
     }
 }
