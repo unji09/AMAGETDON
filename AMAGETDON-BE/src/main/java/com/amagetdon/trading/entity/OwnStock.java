@@ -33,10 +33,7 @@ public class OwnStock {
     @AllArgsConstructor
     @EqualsAndHashCode
     public static class OwnStockId implements Serializable {
-        @Column(name = "stock_code", length = 20)
         private String stockCode;
-
-        @Column(name = "user_id")
         private Long userId;
     }
 }
