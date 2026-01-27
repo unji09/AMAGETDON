@@ -5,17 +5,18 @@ import os
 from datetime import datetime
 from config.config import DB_CONFIG
 from core.token_manager import TokenManager 
-from logger import logger
+from core.logger import logger
 from models.dto import StockDTO
-from typing import Optional
+from typing import Optional, List
+from core.market_hours import is_market_open
 
 def safe_int(value: str) -> Optional[int]:
-        if not value or value.strip() == '':
-            return None
-        try:
-            return int(value)
-        except (ValueError, TypeError):
-            return None
+    if not value or value.strip() == '':
+        return None
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return None
 
 def safe_float(value: str) -> Optional[float]:
     if not value or value.strip() == '':
@@ -24,30 +25,43 @@ def safe_float(value: str) -> Optional[float]:
         return float(value)
     except (ValueError, TypeError):
         return None
-        
+
 class RealtimeCollector:
     
-    def __init__(self):
+    def __init__(self, token_manager: TokenManager):
         self.conn = None
-
-        self.token_manager = TokenManager(
-            redis_host='host.docker.internal',
-            redis_port=6379
-        )
+        self.token_manager = token_manager
+        self.redis_client = token_manager.redis_client
+        self.top_stocks_key = 'kis:top_30_stocks'
+        self.user_stocks_key = 'kis:user_stocks'
     
     def connect_db(self):
         if self.conn is None or not self.conn.open:
             self.conn = pymysql.connect(**DB_CONFIG)
     
-    def get_all_stocks(self):
-        self.connect_db()
-        cursor = self.conn.cursor()
-        
-        cursor.execute("SELECT stock_code, stock_name FROM stock")
-        
-        return cursor.fetchall()
+    def get_user_stocks_excluding_top30(self) -> List[str]:
+        try:
+            user_cached = self.redis_client.get(self.user_stocks_key)
+            if not user_cached:
+                return []
+            
+            user_stocks = set(user_cached.split(','))
+            
+            top_cached = self.redis_client.get(self.top_stocks_key)
+            if top_cached:
+                top_30 = set(top_cached.split(','))
+                return list(user_stocks - top_30)
+            
+            return list(user_stocks)
+            
+        except Exception as e:
+            logger.error(f"종목 조회 실패: {e}")
+            return []
 
     def fetch_price(self, stock_code: str) -> Optional[StockDTO]:
+        if not is_market_open():
+            return None
+
         try:
             token = self.token_manager.get_token()
             if not token:
@@ -69,11 +83,10 @@ class RealtimeCollector:
                 "FID_INPUT_ISCD": stock_code
             }
 
-            response = requests.get(url, headers=headers, params=params)
+            response = requests.get(url, headers=headers, params=params, timeout=10)
             data = response.json()
 
             if data.get("rt_cd") != "0":
-                logger.error(f"{stock_code} API 오류: {data.get('msg1')}")
                 return None
 
             output = data.get("output", {})
@@ -89,7 +102,7 @@ class RealtimeCollector:
 
             return StockDTO(
                 stock_code=stock_code,
-                stock_name=output.get("stck_shrn_iscd", ""),
+                stock_name=output.get("hts_kor_isnm", ""),
                 current_price=current_price,
                 change_amount=change_amount,
                 change_rate=change_rate,
@@ -101,48 +114,54 @@ class RealtimeCollector:
             logger.error(f"{stock_code} 호출 실패: {e}")
             return None
     
-    def save_prices_batch(self, stocks: list[StockDTO]):
-        if not stocks:
-            return
+    def save_price(self, stock: StockDTO):
+        try:
+            self.connect_db()
+            cursor = self.conn.cursor()
 
-        self.connect_db()
-        cursor = self.conn.cursor()
+            sql = """
+                INSERT INTO stock_price
+                (stock_code, current_price, volume, trading_value, change_amount, change_rate, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """
 
-        sql = """
-            INSERT INTO stock_prices
-            (stock_code, current_price, volume, trading_value, change_amount, change_rate, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """
-
-        for s in stocks:
             cursor.execute(sql, (
-                s.stock_code,
-                s.current_price,
-                s.volume,
-                s.trading_value,
-                s.change_amount,
-                s.change_rate,
+                stock.stock_code,
+                stock.current_price,
+                stock.volume,
+                stock.trading_value,
+                stock.change_amount,
+                stock.change_rate,
                 datetime.now()
             ))
 
-        self.conn.commit()
+            self.conn.commit()
+
+        except Exception as e:
+            logger.error(f"{stock.stock_code} 저장 실패: {e}")
     
     def collect(self):
-        logger.info("=== 실시간 시세 수집 시작 ===")
-        
-        try:
-            all_stocks = self.get_all_stocks()
-            stock_codes = [code for code, name in all_stocks]
+        while True:
+            start_time = time.time()
+            
+            stock_codes = self.get_user_stocks_excluding_top30()
+            
+            if not stock_codes:
+                logger.debug("수집할 사용자 종목 없음")
+                time.sleep(5)
+                continue
+            
             total = len(stock_codes)
-            logger.debug(total)
             processed = 0
+
+            logger.info(f"사용자 종목 수집 시작: {total}개")
 
             for code in stock_codes:
                 try:
                     stock = self.fetch_price(code)
 
                     if stock:
-                        self.save_prices_batch([stock])
+                        self.save_price(stock)
                         processed += 1
 
                     time.sleep(0.05)
@@ -150,13 +169,13 @@ class RealtimeCollector:
                 except Exception as e:
                     logger.error(f"{code} 처리 실패: {e}")
 
-            logger.info(f"=== 수집 완료 {processed}/{total} ===")
-
-        except Exception as e:
-            logger.error(f"수집 중 오류: {e}")
+            elapsed = time.time() - start_time
+            logger.info(f"수집 완료: {processed}/{total}개 (소요: {elapsed:.2f}초)")
+            
+            if elapsed < 5:
+                wait_time = 5 - elapsed
+                time.sleep(wait_time)
     
     def close(self):
         if self.conn:
             self.conn.close()
-        
-        self.token_manager.close()
