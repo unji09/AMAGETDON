@@ -16,7 +16,9 @@ services:
       
       TZ: Asia/Seoul
     
-    restart: unless-stopped
+    network_mode: host
+
+    restart: no
     
     extra_hosts:
       - "host.docker.internal:host-gateway"
