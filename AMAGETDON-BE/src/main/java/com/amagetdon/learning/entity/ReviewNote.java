@@ -34,8 +34,8 @@ public class ReviewNote {
         }
     }
 
-    public ReviewNote(Long userId, Long quizId) {
+    public ReviewNote(Long userId, Quiz quiz) {
         this.userId = userId;
-        this.quizId = quizId;
+        this.quiz = quiz;
     }
 }
