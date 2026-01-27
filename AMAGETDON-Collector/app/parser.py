@@ -1,12 +1,6 @@
 import pymysql
-import logging
-from datetime import datetime
-from config import DB_CONFIG
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+from core.logger import logger
+from config.config import DB_CONFIG
 
 class StockParser:
     
@@ -44,11 +38,11 @@ class StockParser:
                         'market': market_type
                     })
             
-            logging.info(f"{market_type} 파싱 완료: {len(stocks)}개 (주권만)")
+            logger.info(f"{market_type} 파싱 완료: {len(stocks)}개 (주권만)")
             return stocks
             
         except Exception as e:
-            logging.error(f"{filepath} 파싱 실패: {e}")
+            logger.error(f"{filepath} 파싱 실패: {e}")
             return []
     
     def save_to_db(self, stocks):
@@ -73,13 +67,13 @@ class StockParser:
                 ))
                 success += 1
             except Exception as e:
-                logging.error(f"저장 실패 {stock['code']}: {e}")
+                logger.error(f"저장 실패 {stock['code']}: {e}")
         
         self.conn.commit()
-        logging.info(f"DB 저장 완료: {success}개")
+        logger.info(f"DB 저장 완료: {success}개")
     
     def parse_and_save(self):
-        logging.info("=== 종목 파싱 시작 ===")
+        logger.info("=== 종목 파싱 시작 ===")
         
         kospi_stocks = self.parse_mst_file('./stock_code/kospi_code.mst', 'KOSPI')
         kosdaq_stocks = self.parse_mst_file('./stock_code/kosdaq_code.mst', 'KOSDAQ')
@@ -88,9 +82,9 @@ class StockParser:
         
         if len(all_stocks) > 0:
             self.save_to_db(all_stocks)
-            logging.info(f"=== 파싱 완료: 총 {len(all_stocks)}개 (주권만) ===")
+            logger.info(f"=== 파싱 완료: 총 {len(all_stocks)}개 (주권만) ===")
         else:
-            logging.warning("파싱된 종목이 없습니다!")
+            logger.warning("파싱된 종목이 없습니다!")
         
         if self.conn:
             self.conn.close()
