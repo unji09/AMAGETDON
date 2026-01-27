@@ -18,8 +18,8 @@ public record TransactionItemResponse(
     public static TransactionItemResponse from(Transaction transaction) {
         return new TransactionItemResponse(
                 transaction.getTransactionId(),
-                transaction.getStockCode(),
-                transaction.getStockName(),
+                transaction.getStock().getStockCode(),
+                transaction.getStock().getStockName(),
                 transaction.getTransactionType().name(),
                 transaction.getQuantity(),
                 transaction.getPrice(),

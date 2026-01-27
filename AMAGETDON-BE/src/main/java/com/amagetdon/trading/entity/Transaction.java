@@ -1,14 +1,18 @@
 package com.amagetdon.trading.entity;
 
+import com.amagetdon.stock.entity.Stock;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "transaction")
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Transaction {
@@ -16,14 +20,12 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long transactionId;
 
-    @Column(name = "stock_code", nullable = false, length = 20)
-    private String stockCode;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "stock_code")
+    private Stock stock;
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
-
-    @Column(nullable = false, length = 100)
-    private String stockName;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -41,6 +43,37 @@ public class Transaction {
     @Column(nullable = false)
     private Integer feeAmount;
 
-    @Column(nullable = false)
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    public static Transaction of(
+            Long userId,
+            Stock stock,
+            Integer quantity,
+            Integer price,
+            TransactionType transactionType
+    ) {
+        Transaction transaction = new Transaction();
+
+        transaction.userId = userId;
+        transaction.stock = stock;
+        transaction.transactionType = transactionType;
+        transaction.quantity = quantity;
+        transaction.price = price;
+        transaction.totalAmount = (long) quantity * price;
+        transaction.feeAmount = calculateFee(transaction.totalAmount);
+        return transaction;
+    }
+
+    private static Integer calculateFee(Long amount) {
+        return (int) (amount * 0.00015);
+    }
+
+    public Long getNetAmount() {
+        if (transactionType == TransactionType.SELL) {
+            return totalAmount - feeAmount;
+        }
+        return totalAmount + feeAmount;
+    }
 }
