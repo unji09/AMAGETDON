@@ -3,11 +3,11 @@ import requests
 import time
 import os
 from datetime import datetime
-from config import DB_CONFIG
-from token_manager import TokenManager 
+from config.config import DB_CONFIG
+from core.token_manager import TokenManager 
 from logger import logger
-from dto import StockDTO
-from typing import List, Optional
+from models.dto import StockDTO
+from typing import Optional
 
 def safe_int(value: str) -> Optional[int]:
         if not value or value.strip() == '':
