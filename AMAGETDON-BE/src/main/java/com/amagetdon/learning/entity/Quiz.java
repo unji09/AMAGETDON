@@ -17,9 +17,8 @@ public class Quiz {
     @Column(name = "quiz_id")
     private Long quizId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "chapter_id", nullable = false)
-    private Chapter chapter;
+    @Column(name = "chapter_id", nullable = false)
+    private Long chapterId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "quiz_type", nullable = false)
