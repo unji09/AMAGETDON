@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user_chapter_progress")
+@Table(name = "user_chapter_progresses")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserChapterProgress {
@@ -25,10 +25,10 @@ public class UserChapterProgress {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "recent_updated_at")
+    @Column(name = "recent_updated_at", nullable = false)
     private LocalDateTime recentUpdatedAt;
 
     private UserChapterProgress(UserChapterProgressId id, LocalDateTime now) {

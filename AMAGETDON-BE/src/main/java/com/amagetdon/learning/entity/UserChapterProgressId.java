@@ -15,6 +15,8 @@ import java.io.Serializable;
 @EqualsAndHashCode
 public class UserChapterProgressId implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     @Column(name = "chapter_id", nullable = false)
     private Long chapterId;
 
