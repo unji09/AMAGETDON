@@ -46,4 +46,34 @@ public class Transaction {
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    public static Transaction of(
+            Long userId,
+            Stock stock,
+            Integer quantity,
+            Integer price,
+            TransactionType transactionType
+    ) {
+        Transaction transaction = new Transaction();
+
+        transaction.userId = userId;
+        transaction.stock = stock;
+        transaction.transactionType = transactionType;
+        transaction.quantity = quantity;
+        transaction.price = price;
+        transaction.totalAmount = (long) quantity * price;
+        transaction.feeAmount = calculateFee(transaction.totalAmount);
+        return transaction;
+    }
+
+    private static Integer calculateFee(Long amount) {
+        return (int) (amount * 0.00015);
+    }
+
+    public Long getNetAmount() {
+        if (transactionType == TransactionType.SELL) {
+            return totalAmount - feeAmount;
+        }
+        return totalAmount + feeAmount;
+    }
 }
