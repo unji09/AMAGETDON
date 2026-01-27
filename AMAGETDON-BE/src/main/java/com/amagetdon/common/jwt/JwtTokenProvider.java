@@ -3,30 +3,30 @@ package com.amagetdon.common.jwt;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
+@Component
 public class JwtTokenProvider {
 
-    private final JwtProperties jwtProperites;
-    private final SecretKey secretKey;
+    private final JwtProperties jwtProperties;
 
-    public JwtTokenProvider(JwtProperties jwtProperties, SecretKey secretKey) {
-        this.jwtProperites = jwtProperties;
-        this.secretKey = Keys.hmacShaKeyFor(
-                jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8)
-        );
+    public JwtTokenProvider(JwtProperties jwtProperties) {
+        this.jwtProperties = jwtProperties;
+    }
+
+    private SecretKey getSecretKey() {
+        return jwtProperties.getSigningKey();
     }
 
     public String createAccessToken(Long userId) {
-        return createToken(userId, TokenType.ACCESS,jwtProperites.getAccessTokenExpirationMs());
+        return createToken(userId, TokenType.ACCESS,jwtProperties.getAccessTokenExpirationMs());
     }
 
     public String createRefreshToken(Long userId) {
-        return createToken(userId, TokenType.REFRESH, jwtProperites.getRefreshTokenExpirationMs());
+        return createToken(userId, TokenType.REFRESH, jwtProperties.getRefreshTokenExpirationMs());
     }
 
     public String createToken(Long userId, TokenType tokenType, long expirationMs) {
@@ -38,7 +38,7 @@ public class JwtTokenProvider {
                 .claim("tokenType", tokenType.name())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
-                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .signWith(getSecretKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -57,7 +57,7 @@ public class JwtTokenProvider {
 
     private Claims parseClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(secretKey)
+                .setSigningKey(getSecretKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
