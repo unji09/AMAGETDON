@@ -43,6 +43,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     // JSON 처리를 위한 Jackson (보통 기본 포함)
     implementation 'com.fasterxml.jackson.core:jackson-databind'
+	// Spring Security 코어 및 웹 보안
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 }
 
 tasks.named('test') {

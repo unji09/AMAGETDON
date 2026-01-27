@@ -26,6 +26,5 @@ spring:
       port: 6379
 
   jwt:
-    secret: AmagetdonSecretKeyForJWTGeneration
     access-token-expiration-ms: 1800000
     refresh-token-expiration-ms: 1209600000
