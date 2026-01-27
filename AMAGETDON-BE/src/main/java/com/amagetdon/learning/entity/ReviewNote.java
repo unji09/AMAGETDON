@@ -20,8 +20,9 @@ public class ReviewNote {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "quiz_id", nullable = false)
-    private Long quizId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "quiz_id", nullable = false)
+    private Quiz quiz;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
