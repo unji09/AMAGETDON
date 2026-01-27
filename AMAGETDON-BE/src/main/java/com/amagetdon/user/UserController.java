@@ -15,10 +15,6 @@ public class UserController {
     }
 
     //create
-    public ResponseEntity<?> createUser() {
-        userService.regist();
-        return ResponseEntity.ok().build();
-    }
 
     //login
 
