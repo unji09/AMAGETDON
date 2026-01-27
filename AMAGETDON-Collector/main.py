@@ -37,6 +37,14 @@ def check_and_initialize():
 
 def main():
     check_and_initialize()
+    
+    collector = RealtimeCollector() 
+    
+    schedule.every(5).seconds.do(collector.collect) 
+    
+    while True: 
+        schedule.run_pending()
+        time.sleep(1)
 
 if __name__ == "__main__":
     main()
