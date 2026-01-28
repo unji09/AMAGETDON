@@ -120,7 +120,7 @@ class RealtimeCollector:
             cursor = self.conn.cursor()
 
             sql = """
-                INSERT INTO stock_price
+                INSERT INTO stock_prices
                 (stock_code, current_price, volume, trading_value, change_amount, change_rate, created_at)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
             """
@@ -145,7 +145,7 @@ class RealtimeCollector:
             start_time = time.time()
             
             stock_codes = self.get_user_stocks_excluding_top30()
-            
+
             if not stock_codes:
                 logger.debug("수집할 사용자 종목 없음")
                 time.sleep(5)
