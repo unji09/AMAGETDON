@@ -1,0 +1,96 @@
+import os
+import requests
+from typing import List
+from core.logger import logger
+from core.token_manager import TokenManager
+from core.market_hours import is_market_open
+
+class VolumeTracker:
+
+    def __init__(self, token_manager: TokenManager):
+        self.token_manager = token_manager
+        self.redis_client = token_manager.redis_client
+        self.top_stocks_key = 'kis:top_30_stocks'
+    
+    def get_top_30_volume_stocks(self) -> List[str]:
+        try:
+            cached = self.redis_client.get(self.top_stocks_key)
+            if cached:
+                stock_codes = cached.split(',')
+                logger.debug(f"Redis에서 TOP 30 가져오기: {len(stock_codes)}개")
+                return stock_codes
+            
+            logger.info("거래량 TOP 30 조회 시작")
+            stock_codes = self._fetch_from_api()
+            
+            if stock_codes:
+                self.redis_client.setex(
+                    self.top_stocks_key,
+                    300,
+                    ','.join(stock_codes)
+                )
+                logger.info(f"TOP 30 조회 완료: {len(stock_codes)}개")
+                return stock_codes
+            else:
+                logger.error("거래량 TOP 30 조회 실패")
+                return []
+                
+        except Exception as e:
+            logger.error(f"TOP 30 조회 오류: {e}")
+            return []
+    
+    def _fetch_from_api(self) -> List[str]:
+        try:
+            token = self.token_manager.get_token()
+            if not token:
+                return []
+            
+            if not is_market_open():
+                return []
+
+            url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/volume-rank"
+            
+            headers = {
+                "Content-Type": "application/json; charset=utf-8",
+                "authorization": f"Bearer {token}",
+                "appkey": os.getenv("API_KEY"),
+                "appsecret": os.getenv("API_SECRET"),
+                "tr_id": "FHPST01710000",
+                "custtype": "P"
+            }
+
+            params = {
+                "FID_COND_MRKT_DIV_CODE": "J",      
+                "FID_COND_SCR_DIV_CODE": "20171",  
+                "FID_INPUT_ISCD": "0000",
+                "FID_DIV_CLS_CODE": "0",
+                "FID_BLNG_CLS_CODE": "0",
+                "FID_TRGT_CLS_CODE": "0",
+                "FID_TRGT_EXLS_CLS_CODE": "100000000",
+                "FID_INPUT_PRICE_1": "",
+                "FID_INPUT_PRICE_2": "",
+                "FID_VOL_CNT": "",
+                "FID_INPUT_DATE_1": ""
+            }
+
+            response = requests.get(url, headers=headers, params=params, timeout=10)
+            data = response.json()
+
+            logger.info(f"API 응답 코드: {data.get('rt_cd')}")
+            logger.info(f"API 응답 메시지: {data.get('msg1')}")
+            logger.info(f"API output 개수: {len(data.get('output', []))}")
+            
+            if data.get("rt_cd") == "0":
+                outputs = data.get("output", [])
+                stock_codes = [item['mksc_shrn_iscd'] for item in outputs[:30]]
+                return stock_codes
+            else:
+                logger.error(f"API 오류: {data.get('msg1')}")
+                return []
+                
+        except requests.Timeout:
+            logger.error("API 호출 타임아웃")
+            return []
+        except Exception as e:
+            logger.error(f"API 호출 실패: {e}")
+            return []

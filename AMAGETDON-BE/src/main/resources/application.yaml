@@ -1,9 +1,10 @@
 spring:
-  application:
-    name: amagetdonbe
   profiles:
     include:
+      - db
       - secret
+  application:
+    name: amagetdonbe
   datasource:
     url: jdbc:mysql://localhost:3306/amagetdon?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -25,13 +26,19 @@ spring:
       port: 6379
 
   jwt:
-    secret-key: "ArmageddonTemporarySecretKeyForTesting"
+    secret: AmagetdonSecretKeyForJWTGeneration
     access-token-expiration-ms: 1800000
     refresh-token-expiration-ms: 1209600000
 
-  openvidu:
-    url: ${OPENVIDU_URL:http://localhost:4443/}
-    secret: ${OPENVIDU_SECRET:need_to_fill_secret}
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /api-docs
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
 
 server:
   servlet:
