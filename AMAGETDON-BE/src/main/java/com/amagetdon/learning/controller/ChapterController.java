@@ -25,7 +25,13 @@ public class ChapterController {
 
     @Operation(
             summary = "전체 학습 로드맵 조회",
-            description = "사용자의 학습 진행도를 포함한 전체 챕터 리스트를 조회합니다."
+            description = """
+                    사용자의 학습 진행도를 포함한 전체 챕터 리스트를 조회합니다.
+                    
+                    - 챕터는 순차적으로 오픈됩니다.
+                    - 이전 챕터가 'COMPLETED' 상태여야 다음 챕터가 'AVAILABLE'이 됩니다.
+                    - 진행 데이터가 없거나 이전 단계 미완료 시 'LOCKED'로 표시됩니다.
+                    """
     )
     @ApiResponses({
             @ApiResponse(
@@ -38,11 +44,6 @@ public class ChapterController {
                     description = "잘못된 요청 (userId 누락 등)",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "사용자를 찾을 수 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            )
     })
     @GetMapping("/base")
     public BaseChaptersResponse getBaseChapters(
