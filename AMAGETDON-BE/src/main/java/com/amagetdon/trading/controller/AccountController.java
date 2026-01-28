@@ -21,7 +21,7 @@ public class AccountController {
     @GetMapping("/holdings")
     public ResponseEntity<StockHoldingResponse> getStockHoldings(
             Long userId,  // 임시로 파라미터로 받음
-            @PageableDefault(sort = "stockCode", direction = Sort.Direction.ASC)
+            @PageableDefault(sort = "updatedAt", direction = Sort.Direction.ASC)
             Pageable pageable) {
 
         StockHoldingResponse response = accountService.getStockHoldings(userId, pageable);
