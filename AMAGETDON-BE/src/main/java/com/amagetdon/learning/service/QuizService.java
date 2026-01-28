@@ -71,30 +71,40 @@ public class QuizService {
     public QuizSubmitResponse submitQuiz(Long userId, QuizSubmitRequest request) {
         LocalDate today = LocalDate.now();
 
-        // 1. 검증: 퀴즈 존재 여부
+        // 1. 현재 sequence 계산 (서버에서!)
+        Integer currentSequence = historyRepository
+                .findMaxSequenceByUserIdAndQuizDate(userId, today);
+        Integer nextSequence = (currentSequence == null) ? 1 : currentSequence + 1;
+
+        // 2. 100개 초과 체크
+        if (nextSequence > 100) {
+            throw new IllegalStateException("오늘의 퀴즈를 모두 완료했습니다");
+        }
+
+        // 3. 퀴즈 존재 여부
         Quiz quiz = quizRepository.findById(request.quizId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 퀴즈입니다"));
 
-        // 2. 검증: 중복 제출 방지
+        // 4. 중복 제출 방지
         boolean alreadySolved = historyRepository
                 .existsByUserIdAndQuizIdAndQuizDate(userId, request.quizId(), today);
         if (alreadySolved) {
             throw new IllegalStateException("이미 푼 문제입니다");
         }
 
-        // 3. 정답 체크
+        // 5. 정답 체크
         boolean isCorrect = checkAnswer(quiz, request);
 
-        // 4. 히스토리 저장
+        // 6. 히스토리 저장
         DailyQuizHistory history = new DailyQuizHistory(
                 userId,
                 request.quizId(),
-                request.quizSequence(),
+                nextSequence,  // ← 서버에서 계산한 값 사용
                 isCorrect
         );
         historyRepository.save(history);
 
-        // 5. 틀렸으면 오답노트 저장
+        // 7. 틀렸으면 오답노트 저장
         boolean addedToReviewNote = false;
         if (!isCorrect) {
             boolean alreadyInReviewNote = reviewNoteRepository
@@ -107,13 +117,14 @@ public class QuizService {
             }
         }
 
-        // 6. 보상 지급
-        Integer rewardAmount = calculateRewardAmount(request.quizSequence());
+        // 8. 보상 지급
+        Integer rewardAmount = calculateRewardAmount(nextSequence);  // ← 서버 계산 값
 
         // TODO(민규): User balance 업데이트
-         Long currentBalance = 3000000L + rewardAmount;
+        // 보상 정책 테이블 생성 이후 진행
+        Long currentBalance = 3000000L + rewardAmount;
 
-        // 7. 정답 문자열 생성
+        // 9. 정답 문자열 생성
         String correctAnswer = getCorrectAnswerString(quiz);
 
         return new QuizSubmitResponse(
