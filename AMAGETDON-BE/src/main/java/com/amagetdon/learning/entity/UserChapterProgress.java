@@ -19,18 +19,18 @@ public class UserChapterProgress {
     @EmbeddedId
     private UserChapterProgressId id;
 
-    @Column(name = "is_completed", nullable = false)
+    @Column(nullable = false)
     private boolean isCompleted = false;
 
-    @Column(name = "completed_at")
+    @Column
     private LocalDateTime completedAt;
 
     @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
-    @Column(name = "recent_updated_at", nullable = false)
+    @Column(nullable = false)
     private LocalDateTime recentUpdatedAt;
 
     private UserChapterProgress(UserChapterProgressId id) {
@@ -55,10 +55,10 @@ public class UserChapterProgress {
     public static class UserChapterProgressId implements Serializable {
         private static final long serialVersionUID = 1L;
 
-        @Column(name = "chapter_id")
+        @Column
         private Long chapterId;
 
-        @Column(name = "user_id")
+        @Column
         private Long userId;
     }
 }
