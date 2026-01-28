@@ -18,7 +18,7 @@ bin/
 !**/src/test/**/bin/
 
 ### IntelliJ IDEA ###
-.idea
+.idea/
 *.iws
 *.iml
 *.ipr
@@ -37,7 +37,7 @@ out/
 .vscode/
 
 ### 보안 설정 파일 ###
-src/main/resources/application-secret.yml
+**/src/main/resources/application-secret.yml
 
 ### OS 관련 ###
 .DS_Store

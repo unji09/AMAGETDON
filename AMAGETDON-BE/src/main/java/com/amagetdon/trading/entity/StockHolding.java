@@ -1,22 +1,28 @@
 package com.amagetdon.trading.entity;
 
+import com.amagetdon.stock.entity.Stock;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "own_stocks")
+@Table(name = "stock_holdings")
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class OwnStock {
+public class StockHolding {
     @EmbeddedId
-    private OwnStockId id;
+    private StockHoldingId stockHoldingId;
 
-    @Column(nullable = false, length = 100)
-    private String stockName;
+    @MapsId("stockCode")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "stock_code", nullable = false)
+    private Stock stock;
 
     @Column(nullable = false)
     private Integer quantity;
@@ -24,6 +30,7 @@ public class OwnStock {
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal avgPrice;
 
+    @LastModifiedDate
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
@@ -32,7 +39,7 @@ public class OwnStock {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode
-    public static class OwnStockId implements Serializable {
+    public static class StockHoldingId implements Serializable {
         private String stockCode;
         private Long userId;
     }

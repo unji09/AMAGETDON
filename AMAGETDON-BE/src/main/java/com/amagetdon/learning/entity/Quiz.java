@@ -3,11 +3,15 @@ package com.amagetdon.learning.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "quizzes")
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor
 public class Quiz {
@@ -43,12 +47,14 @@ public class Quiz {
     @Column(name = "explanation_text", columnDefinition = "TEXT")
     private String explanationText;
 
-
-    @Column(name = "created_at")
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @LastModifiedDate
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
+
 
     @PrePersist
     protected void onCreate() {
