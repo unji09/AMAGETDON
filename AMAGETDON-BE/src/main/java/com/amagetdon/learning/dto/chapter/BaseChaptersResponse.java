@@ -19,7 +19,7 @@ public record BaseChaptersResponse(List<ChapterItem> chapters) {
 
     public record Progress(
             boolean isCompleted,
-            LocalDateTime completedAt,       // ISO string
-            LocalDateTime recentUpdatedAt    // ISO string
+            LocalDateTime completedAt,
+            LocalDateTime recentUpdatedAt
     ) {}
 }
