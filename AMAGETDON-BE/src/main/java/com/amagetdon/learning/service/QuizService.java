@@ -78,7 +78,7 @@ public class QuizService {
 
         // 2. 100개 초과 체크
         if (nextSequence > 100) {
-            throw new IllegalStateException("오늘의 퀴즈를 모두 완료했습니다");
+            throw new IllegalArgumentException("오늘의 퀴즈를 모두 완료했습니다");
         }
 
         // 3. 퀴즈 존재 여부
@@ -89,7 +89,7 @@ public class QuizService {
         boolean alreadySolved = historyRepository
                 .existsByUserIdAndQuizIdAndQuizDate(userId, request.quizId(), today);
         if (alreadySolved) {
-            throw new IllegalStateException("이미 푼 문제입니다");
+            throw new IllegalArgumentException("이미 푼 문제입니다");
         }
 
         // 5. 정답 체크
