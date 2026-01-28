@@ -26,7 +26,7 @@ class VolumeTracker:
             if stock_codes:
                 self.redis_client.setex(
                     self.top_stocks_key,
-                    300,
+                    300, 
                     ','.join(stock_codes)
                 )
                 logger.info(f"TOP 30 조회 완료: {len(stock_codes)}개")
@@ -65,8 +65,8 @@ class VolumeTracker:
                 "FID_INPUT_ISCD": "0000",
                 "FID_DIV_CLS_CODE": "0",
                 "FID_BLNG_CLS_CODE": "0",
-                "FID_TRGT_CLS_CODE": "0",
-                "FID_TRGT_EXLS_CLS_CODE": "100000000",
+                "FID_TRGT_CLS_CODE": "110000000",
+                "FID_TRGT_EXLS_CLS_CODE": "000000000",
                 "FID_INPUT_PRICE_1": "",
                 "FID_INPUT_PRICE_2": "",
                 "FID_VOL_CNT": "",
@@ -75,10 +75,6 @@ class VolumeTracker:
 
             response = requests.get(url, headers=headers, params=params, timeout=10)
             data = response.json()
-
-            logger.info(f"API 응답 코드: {data.get('rt_cd')}")
-            logger.info(f"API 응답 메시지: {data.get('msg1')}")
-            logger.info(f"API output 개수: {len(data.get('output', []))}")
             
             if data.get("rt_cd") == "0":
                 outputs = data.get("output", [])

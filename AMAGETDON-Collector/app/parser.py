@@ -38,7 +38,7 @@ class StockParser:
                         'market': market_type
                     })
             
-            logger.info(f"{market_type} 파싱 완료: {len(stocks)}개 (주권만)")
+            logger.info(f"{market_type} 파싱 완료: {len(stocks)}개")
             return stocks
             
         except Exception as e:
@@ -73,7 +73,7 @@ class StockParser:
         logger.info(f"DB 저장 완료: {success}개")
     
     def parse_and_save(self):
-        logger.info("=== 종목 파싱 시작 ===")
+        logger.info("종목 파싱 시작")
         
         kospi_stocks = self.parse_mst_file('./stock_code/kospi_code.mst', 'KOSPI')
         kosdaq_stocks = self.parse_mst_file('./stock_code/kosdaq_code.mst', 'KOSDAQ')
@@ -82,9 +82,9 @@ class StockParser:
         
         if len(all_stocks) > 0:
             self.save_to_db(all_stocks)
-            logger.info(f"=== 파싱 완료: 총 {len(all_stocks)}개 (주권만) ===")
+            logger.info(f"파싱 완료: 총 {len(all_stocks)}개")
         else:
-            logger.warning("파싱된 종목이 없습니다!")
+            logger.warning("파싱된 종목 없음")
         
         if self.conn:
             self.conn.close()

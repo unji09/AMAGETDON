@@ -145,16 +145,16 @@ class RealtimeCollector:
             start_time = time.time()
             
             stock_codes = self.get_user_stocks_excluding_top30()
-
+            
             if not stock_codes:
-                logger.debug("수집할 사용자 종목 없음")
+                logger.debug("수집할 종목 없음")
                 time.sleep(5)
                 continue
             
             total = len(stock_codes)
             processed = 0
 
-            logger.info(f"사용자 종목 수집 시작: {total}개")
+            logger.info(f"종목 수집 시작: {total}개")
 
             for code in stock_codes:
                 try:
