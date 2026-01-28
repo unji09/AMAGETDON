@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class StockHolding {
     @EmbeddedId
-    private StockHoldingId id;
+    private StockHoldingId stockHoldingId;
 
     @MapsId("stockCode")
     @ManyToOne(fetch = FetchType.LAZY)
