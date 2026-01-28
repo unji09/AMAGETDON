@@ -25,7 +25,7 @@ spring:
       port: 6379
 
   jwt:
-    secret-key: "AMAGETDON"
+    secret-key: "ArmageddonTemporarySecretKeyForTesting"
     access-token-expiration-ms: 1800000
     refresh-token-expiration-ms: 1209600000
 
@@ -33,6 +33,6 @@ spring:
     url: ${OPENVIDU_URL:http://localhost:4443/}
     secret: ${OPENVIDU_SECRET:need_to_fill_secret}
 
-  server:
-    servlet:
-      context-path: /api/v1
+server:
+  servlet:
+    context-path: /api/v1

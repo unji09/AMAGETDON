@@ -6,6 +6,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.TimeUnit;
+
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenService {
@@ -25,7 +27,7 @@ public class RefreshTokenService {
 
     public void save(String refreshToken, Long userId) {
         redisTemplate.opsForValue()
-                .set(refreshToken, userId, jwtProperties.getRefreshTokenExpirationMs());
+                .set(refreshToken, userId, jwtProperties.getRefreshTokenExpirationMs()/1000, TimeUnit.SECONDS);
     }
 
     public boolean exists(String refreshToken) {

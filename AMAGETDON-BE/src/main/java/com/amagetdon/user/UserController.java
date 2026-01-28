@@ -11,10 +11,6 @@ public class UserController {
 
     private final UserService userService;
 
-    //create
-
-    //login
-
     //logout
 
     //get user info
