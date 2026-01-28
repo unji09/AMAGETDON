@@ -1,0 +1,23 @@
+package com.amagetdon.community.config;
+
+import io.openvidu.java.client.OpenVidu;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class OpenViduConfig {
+
+    @Value("${openvidu.url}")
+    private String openViduUrl;
+
+    @Value("${openvidu.secret}")
+    private String openViduSecret;
+
+    @Bean
+    public OpenVidu openVidu() {
+        System.out.println("🚩 현재 연결된 OpenVidu 주소: " + openViduUrl);
+        return new OpenVidu(openViduUrl, openViduSecret);
+    }
+
+}

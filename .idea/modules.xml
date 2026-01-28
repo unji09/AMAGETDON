@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/S14P11A207.iml" filepath="$PROJECT_DIR$/.idea/S14P11A207.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/amagetdonbe.main.iml" filepath="$PROJECT_DIR$/.idea/modules/amagetdonbe.main.iml" />
     </modules>
   </component>
 </project>

@@ -1,10 +1,9 @@
 spring:
-  profiles:
-    include:
-      - db
-      - secret
   application:
     name: amagetdonbe
+  profiles:
+    include:
+      - secret
   datasource:
     url: jdbc:mysql://localhost:3306/amagetdon?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -29,3 +28,7 @@ spring:
     secret-key: "AMAGETDON"
     access-token-expiration-ms: 1800000
     refresh-token-expiration-ms: 1209600000
+
+  openvidu:
+    url: ${OPENVIDU_URL:http://localhost:4443/}
+    secret: ${OPENVIDU_SECRET:need_to_fill_secret}
