@@ -1,5 +1,6 @@
 package com.amagetdon.trading.entity;
 
+import com.amagetdon.stock.entity.Stock;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -15,8 +16,10 @@ public class StockHolding {
     @EmbeddedId
     private StockHoldingId id;
 
-    @Column(nullable = false, length = 100)
-    private String stockName;
+    @MapsId("stockCode")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "stock_code", nullable = false)
+    private Stock stock;
 
     @Column(nullable = false)
     private Integer quantity;
