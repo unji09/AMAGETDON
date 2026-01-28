@@ -1,16 +1,14 @@
-// com/amagetdon/learning/service/ReviewNoteService.java
 package com.amagetdon.learning.service;
 
 import com.amagetdon.learning.dto.reviewnote.ReviewNoteDetail;
 import com.amagetdon.learning.dto.reviewnote.ReviewNoteListResponse;
+import com.amagetdon.learning.dto.reviewnote.ReviewNoteSubmitRequest;
+import com.amagetdon.learning.dto.reviewnote.ReviewNoteSubmitResponse;
 import com.amagetdon.learning.entity.Quiz;
 import com.amagetdon.learning.entity.QuizChoice;
 import com.amagetdon.learning.entity.QuizType;
 import com.amagetdon.learning.entity.ReviewNote;
-import com.amagetdon.learning.repository.ChapterRepository;
-import com.amagetdon.learning.repository.DailyLearningRewardRepository;
-import com.amagetdon.learning.repository.QuizChoiceRepository;
-import com.amagetdon.learning.repository.ReviewNoteRepository;
+import com.amagetdon.learning.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +27,7 @@ public class ReviewNoteService {
     private final QuizChoiceRepository quizChoiceRepository;
     private final DailyLearningRewardRepository rewardRepository;
     private final ChapterRepository chapterRepository;
+    private final QuizRepository quizRepository;
 
     /**
      * 오답노트 목록 조회 (챕터별 필터링)
@@ -56,6 +55,62 @@ public class ReviewNoteService {
     }
 
     /**
+     * 오답노트 풀이 제출
+     */
+    public ReviewNoteSubmitResponse submitReviewNote(Long userId, ReviewNoteSubmitRequest request) {
+        LocalDate today = LocalDate.now();
+
+        // 1. 퀴즈 존재 여부
+        Quiz quiz = quizRepository.findById(request.quizId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 퀴즈입니다"));
+
+        // 2. 오답노트에 있는지 확인
+        ReviewNote reviewNote = reviewNoteRepository
+                .findByUserIdAndQuiz_QuizId(userId, request.quizId())
+                .orElseThrow(() -> new IllegalArgumentException("오답노트에 없는 문제입니다"));
+
+        // 3. 정답 체크
+        boolean isCorrect = checkAnswer(quiz, request);
+
+        // 4. 정답이면 오답노트에서 삭제
+        boolean deletedFromReviewNote = false;
+        if (isCorrect) {
+            reviewNoteRepository.delete(reviewNote);
+            deletedFromReviewNote = true;
+        }
+
+        // 5. 오늘 첫 풀이 여부 확인 및 보상 지급
+        Integer rewardAmount = 0;
+        boolean alreadyReceivedToday = rewardRepository
+                .existsByUserIdAndReviewRewardDate(userId, today);
+
+        if (!alreadyReceivedToday) {
+            rewardAmount = 50_000;
+            // TODO(민규): User balance 업데이트 & 보상 기록 테이블 저장
+            // 보상 정책 테이블 생성 이후 진행
+        }
+
+        // 6. 현재 잔액 계산 (임시)
+        Long currentBalance = 3000000L + rewardAmount;
+
+        // 7. 남은 오답노트 개수
+        Integer remainingReviewNoteCount = reviewNoteRepository
+                .countByUserId(userId);
+
+        // 8. 정답 문자열 생성
+        String correctAnswer = getCorrectAnswerString(quiz);
+
+        return new ReviewNoteSubmitResponse(
+                isCorrect,
+                correctAnswer,
+                deletedFromReviewNote,
+                rewardAmount,
+                currentBalance,
+                remainingReviewNoteCount
+        );
+    }
+
+    /**
      * 오답노트 삭제
      */
     public void deleteReviewNote(Long userId, Long reviewNoteId) {
@@ -71,6 +126,50 @@ public class ReviewNoteService {
         }
 
         reviewNoteRepository.delete(reviewNote);
+    }
+
+    /**
+     * 정답 체크 (OX / 객관식)
+     * QuizService의 로직과 동일하게 구현
+     */
+    private boolean checkAnswer(Quiz quiz, ReviewNoteSubmitRequest request) {
+        if (quiz.getQuizType() == QuizType.OX) {
+            Boolean userAnswer = request.getOxAnswerValue();
+            if (userAnswer == null) {
+                throw new IllegalArgumentException("OX 답안이 올바르지 않습니다");
+            }
+            return userAnswer.equals(quiz.getAnswerOx());
+
+        } else {
+            Long userChoiceId = request.getChoiceId();
+            if (userChoiceId == null) {
+                throw new IllegalArgumentException("객관식 답안이 올바르지 않습니다");
+            }
+
+            QuizChoice userChoice = quizChoiceRepository.findById(userChoiceId)
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 선택지입니다"));
+
+            return userChoice.getIsAnswer();
+        }
+    }
+
+    /**
+     * 정답 문자열 생성 (OX: "O"/"X", MCQ: choiceId)
+     * QuizService의 로직과 동일하게 구현
+     */
+    private String getCorrectAnswerString(Quiz quiz) {
+        if (quiz.getQuizType() == QuizType.OX) {
+            return quiz.getAnswerOx() ? "O" : "X";
+        } else {
+            List<QuizChoice> choices = quizChoiceRepository
+                    .findByQuiz_QuizId(quiz.getQuizId());
+
+            return choices.stream()
+                    .filter(QuizChoice::getIsAnswer)
+                    .findFirst()
+                    .map(choice -> String.valueOf(choice.getChoiceId()))
+                    .orElseThrow(() -> new IllegalStateException("정답이 설정되지 않은 퀴즈입니다"));
+        }
     }
 
     private ReviewNoteDetail convertToReviewNoteDetail(ReviewNote reviewNote) {
