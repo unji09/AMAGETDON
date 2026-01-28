@@ -29,3 +29,13 @@ spring:
     secret: AmagetdonSecretKeyForJWTGeneration
     access-token-expiration-ms: 1800000
     refresh-token-expiration-ms: 1209600000
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /api-docs
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
