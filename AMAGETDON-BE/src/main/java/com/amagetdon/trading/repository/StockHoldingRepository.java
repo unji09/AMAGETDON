@@ -7,5 +7,5 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface StockHoldingRepository extends JpaRepository<StockHolding, StockHoldingId> {
-    Page<StockHolding> findByIdUserId(Long userId, Pageable pageable);
+    Page<StockHolding> findByStockHoldingIdUserId(Long userId, Pageable pageable);
 }
