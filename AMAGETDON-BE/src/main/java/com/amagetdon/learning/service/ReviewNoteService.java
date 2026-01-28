@@ -66,7 +66,7 @@ public class ReviewNoteService {
 
         // 2. 오답노트에 있는지 확인
         ReviewNote reviewNote = reviewNoteRepository
-                .findByUserIdAndQuiz_QuizId(userId, request.quizId())
+                .findByUserIdAndQuizQuizId(userId, request.quizId())
                 .orElseThrow(() -> new IllegalArgumentException("오답노트에 없는 문제입니다"));
 
         // 3. 정답 체크

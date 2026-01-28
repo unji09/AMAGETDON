@@ -108,7 +108,7 @@ public class QuizService {
         boolean addedToReviewNote = false;
         if (!isCorrect) {
             boolean alreadyInReviewNote = reviewNoteRepository
-                    .existsByUserIdAndQuiz_QuizId(userId, request.quizId());
+                    .existsByUserIdAndQuizQuizId(userId, request.quizId());
 
             if (!alreadyInReviewNote) {
                 ReviewNote reviewNote = new ReviewNote(userId, quiz);
