@@ -47,7 +47,7 @@ public class ChapterController {
     })
     @GetMapping("/base")
     public BaseChaptersResponse getBaseChapters(
-            //    TODO : 유저서비스 이후에 @RequestParam Long userId 제거
+            //    TODO(지원) : 유저서비스 이후에 @RequestParam Long userId 제거
             @Parameter(description = "조회할 사용자의 고유 ID", example = "1")
             @RequestParam Long userId
     ) {
