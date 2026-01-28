@@ -1,17 +1,17 @@
 package com.amagetdon.learning.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user_chapter_progresses")
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserChapterProgress {
@@ -19,36 +19,46 @@ public class UserChapterProgress {
     @EmbeddedId
     private UserChapterProgressId id;
 
-    @Column(name = "is_completed", nullable = false)
+    @Column(nullable = false)
     private boolean isCompleted = false;
 
-    @Column(name = "completed_at")
+    @Column
     private LocalDateTime completedAt;
 
-    @Column(name = "created_at", nullable = false)
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "recent_updated_at", nullable = false)
+    @LastModifiedDate
+    @Column(nullable = false)
     private LocalDateTime recentUpdatedAt;
 
-    private UserChapterProgress(UserChapterProgressId id, LocalDateTime now) {
+    private UserChapterProgress(UserChapterProgressId id) {
         this.id = id;
         this.isCompleted = false;
-        this.createdAt = now;
-        this.recentUpdatedAt = now;
     }
 
-    public static UserChapterProgress create(Long chapterId, Long userId, LocalDateTime now) {
-        return new UserChapterProgress(new UserChapterProgressId(chapterId, userId), now);
-    }
-
-    public void touch(LocalDateTime now) {
-        this.recentUpdatedAt = now;
+    public static UserChapterProgress create(Long chapterId, Long userId) {
+        return new UserChapterProgress(new UserChapterProgressId(chapterId, userId));
     }
 
     public void complete(LocalDateTime now) {
         this.isCompleted = true;
         this.completedAt = now;
-        this.recentUpdatedAt = now;
+    }
+
+    @Embeddable
+    @Getter
+    @NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA용 기본 생성자
+    @AllArgsConstructor // 직접 생성 및 팩토리 메서드용 전체 생성자
+    @EqualsAndHashCode
+    public static class UserChapterProgressId implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        @Column
+        private Long chapterId;
+
+        @Column
+        private Long userId;
     }
 }
