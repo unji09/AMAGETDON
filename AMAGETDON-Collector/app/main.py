@@ -10,6 +10,7 @@ from config.config import DB_CONFIG
 import pymysql
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
+from core.market_hours import is_market_open
 
 token_manager = None
 ws_collector = None
@@ -19,7 +20,23 @@ ws_thread = None
 rest_thread = None
 collection_active = False
 
+def wait_for_db(max_retries=30, delay=2):
+    """DB 연결 대기"""
+    for i in range(max_retries):
+        try:
+            conn = pymysql.connect(**DB_CONFIG)
+            conn.close()
+            logger.info(f"DB 연결 성공 (시도 {i+1}회)")
+            return True
+        except Exception as e:
+            logger.warning(f"DB 연결 대기 중... ({i+1}/{max_retries}): {e}")
+            time.sleep(delay)
+    return False
+
 def check_and_initialize():
+    if not wait_for_db():
+        raise Exception("DB 연결 실패 - 최대 재시도 횟수 초과")
+
     try:
         conn = pymysql.connect(**DB_CONFIG)
         cursor = conn.cursor()
@@ -46,18 +63,18 @@ def check_and_initialize():
 def run_websocket_collector():
     global collection_active, ws_collector, volume_tracker
     
-    if not ws_collector.connect():
-        logger.error("WebSocket 연결 실패")
-        return
-    
-    time.sleep(2)
+    logger.info("웹소켓 연결 시도")
     
     while collection_active:
+        if not ws_collector.connected:
+            ws_collector.connect()
+
         top_30_stocks = volume_tracker.get_top_30_volume_stocks()
         
         if top_30_stocks:
             logger.info(f"TOP 30 종목: {len(top_30_stocks)}개")
-            ws_collector.subscribe_stocks(top_30_stocks)
+            if ws_collector.connected:
+                ws_collector.subscribe_stocks(top_30_stocks)
         else:
             logger.warning("TOP 30 조회 실패")
         
@@ -77,9 +94,10 @@ def start_collection():
     
     logger.info("장 시작 - 수집 시작")
     
+    import os
     token_manager = TokenManager(
-        redis_host='host.docker.internal',
-        redis_port=6379
+        redis_host=os.getenv('REDIS_HOST', 'redis'),
+        redis_port=int(os.getenv('REDIS_PORT', 6379))
     )
     
     volume_tracker = VolumeTracker(token_manager)
@@ -143,6 +161,10 @@ def main():
     scheduler.start()
     logger.info("스케줄 등록 완료: 평일 09:00~15:30")
     
+    if is_market_open():
+        logger.info("현재 장중 - 즉시 수집 시작")
+        start_collection()
+
     try:
         while True:
             time.sleep(1)
