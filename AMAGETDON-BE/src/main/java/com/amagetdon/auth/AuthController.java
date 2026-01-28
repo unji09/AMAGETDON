@@ -40,10 +40,12 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<AuthLoginResponse> refresh(@CookieValue("refreshToken") String refreshToken) {
-        TokenResponse token = authService.refresh(refreshToken);
+        TokenResponse tokenResponse = authService.refresh(refreshToken);
+
+        ResponseCookie newRefreshTokenCookie = refreshTokenService.createCookie(tokenResponse.refreshToken());
 
         return ResponseEntity.ok(AuthLoginResponse.builder()
-                .accessToken(token.accessToken())
+                .accessToken(tokenResponse.accessToken())
                 .tokenType("Bearer")
                 .expiration(jwtProperties.getAccessTokenExpirationMs() / 1000)
                 .firstLogin(false)

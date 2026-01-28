@@ -33,16 +33,15 @@ public class AuthService {
 
 
     public TokenResponse refresh(String refreshToken) {
-
         if (!refreshTokenService.exists(refreshToken)) {
             throw new SecurityException("유효하지 않은 refresh token입니다.");
         }
 
         Long userId = refreshTokenService.getUserId(refreshToken);
 
-        String newAccessToken = jwtTokenProvider.createAccessToken(userId);
+        refreshTokenService.delete(refreshToken);
 
-        return new TokenResponse(newAccessToken, null, false);
+        return createTokenAndSave(userId, false);
     }
 
     public TokenResponse createTokenAndSave(Long userId, boolean firstLogin) {
