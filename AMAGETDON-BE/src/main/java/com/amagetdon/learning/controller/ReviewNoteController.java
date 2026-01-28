@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "오답노트", description = "틀린 문제 관리 및 복습 API")
 @RestController
-@RequestMapping("/api/quizzes")
+@RequestMapping("/quizzes")
 @RequiredArgsConstructor
 public class ReviewNoteController {
 
