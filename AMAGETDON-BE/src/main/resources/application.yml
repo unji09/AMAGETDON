@@ -32,3 +32,7 @@ spring:
   openvidu:
     url: ${OPENVIDU_URL:http://localhost:4443/}
     secret: ${OPENVIDU_SECRET:need_to_fill_secret}
+
+  server:
+    servlet:
+      context-path: /api/v1
