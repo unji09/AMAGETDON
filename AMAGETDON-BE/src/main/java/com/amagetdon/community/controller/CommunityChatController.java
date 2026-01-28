@@ -11,7 +11,7 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/sessions")
+@RequestMapping("/sessions")
 public class CommunityChatController {
 
     private final OpenViduService openViduService;
