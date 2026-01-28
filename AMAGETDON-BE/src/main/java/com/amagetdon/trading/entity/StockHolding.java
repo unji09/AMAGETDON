@@ -8,12 +8,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "own_stocks")
+@Table(name = "stock_holdings")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class OwnStock {
+public class StockHolding {
     @EmbeddedId
-    private OwnStockId id;
+    private StockHoldingId id;
 
     @Column(nullable = false, length = 100)
     private String stockName;
@@ -32,7 +32,7 @@ public class OwnStock {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode
-    public static class OwnStockId implements Serializable {
+    public static class StockHoldingId implements Serializable {
         private String stockCode;
         private Long userId;
     }
