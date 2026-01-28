@@ -1,7 +1,10 @@
 package com.amagetdon.user.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -10,8 +13,11 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
-@Getter
 @EntityListeners(AuditingEntityListener.class)
+@Getter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,11 +47,13 @@ public class User {
     @Column
     private String currentTitle;
 
+    @Builder.Default
     @Column
-    private Integer totalPoints;
+    private Integer totalPoints = 0;
 
+    @Builder.Default
     @Column(nullable = false)
-    private Long balance;
+    private Long balance = 30000L;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
