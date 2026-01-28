@@ -1,7 +1,7 @@
 package com.amagetdon.trading.service;
 
-import com.amagetdon.trading.dto.response.TransactionItemResponse;
-import com.amagetdon.trading.dto.response.TransactionListResponse;
+import com.amagetdon.trading.dto.response.TransactionResponse;
+import com.amagetdon.trading.dto.response.TransactionResponse.TransactionItem;
 import com.amagetdon.trading.entity.Transaction;
 import com.amagetdon.trading.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
@@ -18,15 +18,15 @@ import java.util.List;
 public class TransactionService {
     private final TransactionRepository transactionRepository;
 
-    public TransactionListResponse getTransactions(Long userId, Pageable pageable) {
+    public TransactionResponse getTransactions(Long userId, Pageable pageable) {
         Page<Transaction> transactionPage = transactionRepository.findAllByUserId(userId, pageable);
 
-        List<TransactionItemResponse> items = transactionPage.getContent()
+        List<TransactionItem> items = transactionPage.getContent()
                 .stream()
-                .map(TransactionItemResponse::from)
+                .map(TransactionItem::from)
                 .toList();
 
-        return new TransactionListResponse(
+        return new TransactionResponse(
                 transactionPage.getNumber(),
                 transactionPage.getSize(),
                 transactionPage.getTotalElements(),
