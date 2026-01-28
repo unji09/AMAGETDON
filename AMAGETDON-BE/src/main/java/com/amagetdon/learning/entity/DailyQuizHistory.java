@@ -3,12 +3,15 @@ package com.amagetdon.learning.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "daily_quiz_histories")
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor
 public class DailyQuizHistory {
@@ -33,6 +36,7 @@ public class DailyQuizHistory {
     @Column(name = "is_correct", nullable = false)
     private Boolean isCorrect;
 
+    @LastModifiedDate
     @Column(name = "answered_at", nullable = false)
     private LocalDateTime answeredAt;
 
