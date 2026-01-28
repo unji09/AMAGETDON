@@ -59,6 +59,10 @@ public class ReviewNoteService {
      * 오답노트 삭제
      */
     public void deleteReviewNote(Long userId, Long reviewNoteId) {
+        // TODO(민규): Spring Security 도입 후 예외 처리 개선
+        //  - 404: NotFoundException 생성
+        //  - 403: ForbiddenException 생성 (비즈니스 권한)
+        //  - AccessDeniedException은 Security Layer에서 사용 (Role 권한)
         ReviewNote reviewNote = reviewNoteRepository.findById(reviewNoteId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 오답노트입니다"));
 
