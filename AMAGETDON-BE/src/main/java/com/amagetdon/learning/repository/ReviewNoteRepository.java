@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ReviewNoteRepository extends JpaRepository<ReviewNote, Long> {
@@ -26,4 +27,16 @@ public interface ReviewNoteRepository extends JpaRepository<ReviewNote, Long> {
      * 중복 저장 방지용
      */
     boolean existsByUserIdAndQuiz_QuizId(Long userId, Long quizId);
+
+    /**
+     * 특정 사용자의 특정 퀴즈 오답노트 조회
+     * 오답노트 풀이 제출 시 사용
+     */
+    Optional<ReviewNote> findByUserIdAndQuiz_QuizId(Long userId, Long quizId);
+
+    /**
+     * 사용자의 남은 오답노트 개수 조회
+     * Response에 반환용
+     */
+    Integer countByUserId(Long userId);
 }
