@@ -1,16 +1,17 @@
 import os
 import requests
 from typing import List
-from core.logger import logger
 from core.token_manager import TokenManager
-from core.market_hours import is_market_open
+from config.config import REDIS_KEYS
+from utils.logger import logger
+from utils.market_hours import is_market_open
 
 class VolumeTracker:
 
     def __init__(self, token_manager: TokenManager):
         self.token_manager = token_manager
         self.redis_client = token_manager.redis_client
-        self.top_stocks_key = 'kis:top_30_stocks'
+        self.top_stocks_key = REDIS_KEYS['top_30_stocks']
     
     def get_top_30_volume_stocks(self) -> List[str]:
         try:

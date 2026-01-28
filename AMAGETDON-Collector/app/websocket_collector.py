@@ -1,29 +1,12 @@
 import json
 import websocket
+import threading
 from typing import List
-from datetime import datetime
-from core.logger import logger
 from core.token_manager import TokenManager
 from models.dto import StockDTO
-from config.config import DB_CONFIG
-import pymysql
-import threading
-
-def safe_int(value: str):
-    if not value or value.strip() == '':
-        return None
-    try:
-        return int(value)
-    except (ValueError, TypeError):
-        return None
-
-def safe_float(value: str):
-    if not value or value.strip() == '':
-        return None
-    try:
-        return float(value)
-    except (ValueError, TypeError):
-        return None
+from utils.logger import logger
+from utils.helpers import safe_int, safe_float
+from utils.db import get_db_connection, save_stock_price
 
 class WebSocketCollector:
     
@@ -37,8 +20,7 @@ class WebSocketCollector:
         self.connect_event = threading.Event()
     
     def connect_db(self):
-        if self.conn is None or not self.conn.open:
-            self.conn = pymysql.connect(**DB_CONFIG)
+        self.conn = get_db_connection(self.conn)
     
     def connect(self):
         if self.ws and self.ws.sock and self.ws.sock.connected:
@@ -181,26 +163,7 @@ class WebSocketCollector:
     def save_to_db(self, stock: StockDTO):
         try:
             self.connect_db()
-            cursor = self.conn.cursor()
-            
-            sql = """
-                INSERT INTO stock_prices
-                (stock_code, current_price, volume, trading_value, change_amount, change_rate, created_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """
-            
-            cursor.execute(sql, (
-                stock.stock_code,
-                stock.current_price,
-                stock.volume,
-                stock.trading_value,
-                stock.change_amount,
-                stock.change_rate,
-                datetime.now()
-            ))
-            
-            self.conn.commit()
-            
+            save_stock_price(self.conn, stock)
         except Exception as e:
             logger.error(f"DB 저장 실패 ({stock.stock_code}): {e}")
     

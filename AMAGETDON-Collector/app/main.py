@@ -1,23 +1,21 @@
 import time
+import pymysql
 import threading
-from core.logger import logger
-from core.token_manager import TokenManager
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 from app.parser import StockParser
 from app.volume_tracker import VolumeTracker
 from app.websocket_collector import WebSocketCollector
 from app.collector import RealtimeCollector
 from config.config import DB_CONFIG
-import pymysql
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
-from core.market_hours import is_market_open
+from core.token_manager import TokenManager
+from utils.logger import logger
+from utils.market_hours import is_market_open
 
 token_manager = None
 ws_collector = None
 rest_collector = None
 volume_tracker = None
-ws_thread = None
-rest_thread = None
 collection_active = False
 
 def check_and_initialize():

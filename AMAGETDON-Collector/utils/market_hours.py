@@ -1,6 +1,6 @@
-from datetime import datetime
 import pytz
-from core.logger import logger
+from datetime import datetime
+from utils.logger import logger
 
 def is_market_open() -> bool:
     now = datetime.now(pytz.timezone('Asia/Seoul'))
@@ -17,7 +17,3 @@ def is_market_open() -> bool:
         return False
     
     return True
-
-def get_current_time() -> str:
-    now = datetime.now(pytz.timezone('Asia/Seoul'))
-    return now.strftime('%Y-%m-%d %H:%M:%S')

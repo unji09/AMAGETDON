@@ -1,6 +1,6 @@
 import pymysql
-from core.logger import logger
 from config.config import DB_CONFIG
+from utils.logger import logger
 
 class StockParser:
     
