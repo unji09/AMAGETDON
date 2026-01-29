@@ -48,6 +48,10 @@ public class Room {
     @Column(length = 100, nullable = true)
     private String openviduSessionId;
 
+    public void incrementCurrentMemberCount() {
+        this.currentMemberCount++;
+    }
+
     // 0명이 되면 방이 삭제 되는 로직이 필요하여 추가
     public boolean isEmpty() {
         return this.currentMemberCount != null && this.currentMemberCount <= 0;

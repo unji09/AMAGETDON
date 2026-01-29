@@ -29,9 +29,10 @@ public class RoomService {
     public RoomResponseDto createGroup(Long ownerId, RoomCreateRequestDto request)
     throws OpenViduJavaClientException, OpenViduHttpException {
 
-        if(roomRepository.existsByOwnerId(ownerId)){
-            throw new IllegalStateException("이미 참여 중이거나 생성한 그룹이 있습니다.");
-        }
+        memberRepository.findByUserIdAndIsActiveTrue(ownerId)
+                .ifPresent(member -> {
+                    throw new IllegalStateException("이미 참여 중이거나 생성한 그룹이 있습니다.");
+                });
 
         SessionProperties properties = new SessionProperties.Builder().build();
         Session session = openVidu.createSession(properties);
@@ -48,10 +49,19 @@ public class RoomService {
 
         Room savedRoom = roomRepository.save(room);
 
+        Member ownerMember = Member.builder()
+                .roomId(savedRoom.getId())
+                .userId(ownerId)
+                .build();
+        memberRepository.save(ownerMember);
+
         return RoomResponseDto.builder()
                 .roomId(savedRoom.getId())
                 .name(savedRoom.getName())
                 .openviduSessionId(savedRoom.getOpenviduSessionId())
+                .currentMemberCount(savedRoom.getCurrentMemberCount())
+                .maxMemberCount(savedRoom.getMaxMemberCount())
+                .isPublic(savedRoom.getIsPublic())
                 .joinCode(savedRoom.getJoinCode())
                 .build();
 
@@ -108,6 +118,8 @@ public class RoomService {
                 .build();
 
         Member savedMember = memberRepository.save(newMember);
+
+        room.incrementCurrentMemberCount();
 
         return MemberResponseDto.builder()
                 .memberId(savedMember.getId())
