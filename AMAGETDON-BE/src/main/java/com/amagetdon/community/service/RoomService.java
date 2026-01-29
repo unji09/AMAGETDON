@@ -1,8 +1,12 @@
 package com.amagetdon.community.service;
 
+import com.amagetdon.common.ErrorCode;
+import com.amagetdon.community.dto.MemberResponseDto;
 import com.amagetdon.community.dto.RoomCreateRequestDto;
 import com.amagetdon.community.dto.RoomResponseDto;
+import com.amagetdon.community.entity.Member;
 import com.amagetdon.community.entity.Room;
+import com.amagetdon.community.repository.MemberRepository;
 import com.amagetdon.community.repository.RoomRepository;
 import io.openvidu.java.client.*;
 import jakarta.transaction.Transactional;
@@ -19,6 +23,7 @@ public class RoomService {
 
     private final OpenVidu openVidu;
     private final RoomRepository roomRepository;
+    private final MemberRepository memberRepository;
 
     @Transactional
     public RoomResponseDto createGroup(Long ownerId, RoomCreateRequestDto request)
@@ -63,5 +68,51 @@ public class RoomService {
                 .maxMemberCount(room.getMaxMemberCount())
                 .isPublic(room.getIsPublic())
                 .build());
+    }
+
+    // 공개 그룹 참여
+    public MemberResponseDto joinPublicRoom(Long roomId, Long userId) {
+
+        // 이미 참여 중인 그룹이 있는지 확인
+        memberRepository.findByUserIdAndIsActiveTrue(userId)
+                .ifPresent(member -> {
+                    throw new IllegalArgumentException(ErrorCode.ALREADY_JOINED_ROOM.getMessage());
+                });
+
+        // 그룹이 존재하는지 확인
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException(ErrorCode.ROOM_NOT_FOUND.getMessage()));
+
+        // 공개 그룹인지 확인
+        if(!room.getIsPublic()) {
+            throw new IllegalArgumentException(ErrorCode.PRIVATE_ROOM_ACCESS_DENIED.getMessage());
+        }
+
+        // 중복 참여 확인
+        memberRepository.findByRoomIdAndUserIdAndIsActiveTrue(roomId, userId)
+                .ifPresent(member -> {
+                    throw new IllegalArgumentException(ErrorCode.ALREADY_JOINED_ROOM.getMessage());
+                });
+
+        // 정원 초과 확인
+        long currentMemberCount = memberRepository.countByRoomIdAndIsActiveTrue(roomId);
+        if (currentMemberCount >= room.getMaxMemberCount()) {
+            throw new IllegalArgumentException(ErrorCode.ROOM_FULL.getMessage());
+        }
+
+        Member newMember = Member.builder()
+                .roomId(roomId)
+                .userId(userId)
+                .build();
+
+        Member savedMember = memberRepository.save(newMember);
+
+        return MemberResponseDto.builder()
+                .memberId(savedMember.getId())
+                .roomId(savedMember.getRoomId())
+                .userId(savedMember.getUserId())
+                .isActive(savedMember.getIsActive())
+                .build();
+
     }
 }

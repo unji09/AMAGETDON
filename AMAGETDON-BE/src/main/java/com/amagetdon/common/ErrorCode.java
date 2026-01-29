@@ -40,6 +40,13 @@ public enum ErrorCode {
     MESSAGE_SENT_TO_DLQ("메시지가 Dead Letter Queue로 전송되었습니다. reason: %s"),
     MESSAGE_RETRY_EXHAUSTED("재시도 횟수를 초과했습니다. maxAttempts: %d"),
 
+    //Community
+    ALREADY_JOINED_ROOM("이미 가입된 그룹이 존재합니다."),
+    ROOM_FULL("정원이 가득 찼습니다."),
+    ROOM_NOT_FOUND("존재하지 않는 그룹입니다."),
+    PRIVATE_ROOM_ACCESS_DENIED("비공개 그룹은 참여 코드로만 입장할 수 있습니다."),
+    INVALID_JOIN_CODE("유효하지 않은 참여 코드입니다."),
+    ALREADY_ROOM_OWNER("이미 생성한 그룹이 있습니다."),
     ;
 
     private final String message;
