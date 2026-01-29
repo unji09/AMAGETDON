@@ -1,6 +1,7 @@
 package com.amagetdon.trading.entity;
 
 import com.amagetdon.stock.entity.Stock;
+import com.amagetdon.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -21,11 +22,12 @@ public class Transaction {
     private Long transactionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "stock_code")
+    @JoinColumn(name = "stock_code", nullable = false)
     private Stock stock;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -48,7 +50,7 @@ public class Transaction {
     private LocalDateTime createdAt;
 
     public static Transaction of(
-            Long userId,
+            User user,
             Stock stock,
             Integer quantity,
             Integer price,
@@ -56,7 +58,7 @@ public class Transaction {
     ) {
         Transaction transaction = new Transaction();
 
-        transaction.userId = userId;
+        transaction.user = user;
         transaction.stock = stock;
         transaction.transactionType = transactionType;
         transaction.quantity = quantity;
