@@ -47,7 +47,7 @@ public class TradingService {
         Integer currentPrice = getCurrentPrice(stock);
 
         // 거래 생성
-        Transaction transaction = Transaction.of(userId, stock, request.quantity(), currentPrice, type);
+        Transaction transaction = Transaction.of(user, stock, request.quantity(), currentPrice, type);
         Long netAmount = transaction.getNetAmount();
 
         // TransactionType별 처리
