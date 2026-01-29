@@ -27,7 +27,7 @@ spring:
 
   jwt:
     secret-key: "ArmageddonTemporarySecretKeyForTesting"
-    access-token-expiration-ms: 1800000000
+    access-token-expiration-ms: 180000000
     refresh-token-expiration-ms: 1209600000
 
 openvidu:
