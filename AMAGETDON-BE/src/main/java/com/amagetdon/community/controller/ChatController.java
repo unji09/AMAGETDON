@@ -35,7 +35,7 @@ public class ChatController {
     @PostMapping("/send")
     public ResponseEntity<Void> sendMessage(@RequestBody ChatMessageRequestDto request){
 
-        if(openVidu.getActiveSession(request.roomId()) == null){
+        if(openVidu.getActiveSession(request.openviduSessionId()) == null){
             return ResponseEntity.notFound().build();
         }
 
@@ -50,7 +50,7 @@ public class ChatController {
 
         // 전송할 데이터 구성
         Map<String, Object> body = new HashMap<>();
-        body.put("session", request.roomId());
+        body.put("session", request.openviduSessionId());
         body.put("data", request.message());
         body.put("type", request.type());
 
