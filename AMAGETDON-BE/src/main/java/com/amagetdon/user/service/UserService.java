@@ -7,6 +7,7 @@ import com.amagetdon.user.dto.request.UserSignupRequest;
 import com.amagetdon.user.entity.User;
 import com.amagetdon.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.constraints.Email;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -66,8 +67,17 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));
 
-        user.updateUser(updatedInfo.getEmail(), passwordEncoder.encode(updatedInfo.getPassword()), updatedInfo.getNickname());
+        @Email
+        String email = choose(user.getEmail(), updatedInfo.getEmail());
+        String password = updatedInfo.getPassword() == null ? user.getPassword() : passwordEncoder.encode(updatedInfo.getPassword());
+        String nickname = updatedInfo.getNickname();
+
+        user.updateUser(email, password, nickname);
 
         return user;
+    }
+
+    private String choose(String original, String updated) {
+        return updated != null ? updated : original;
     }
 }
