@@ -2,7 +2,6 @@ package com.amagetdon.learning.controller;
 
 import com.amagetdon.common.ErrorResponse;
 import com.amagetdon.common.security.SecurityUtil;
-import com.amagetdon.learning.dto.chapter.BaseChaptersResponse;
 import com.amagetdon.learning.dto.progress.ProgressResponse;
 import com.amagetdon.learning.entity.ChapterType;
 import com.amagetdon.learning.service.ProgressService;
