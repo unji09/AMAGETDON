@@ -24,7 +24,7 @@ public class RoomController {
 
     //생성
     @PostMapping
-    public ResponseEntity<RoomResponseDto> createGroup(@RequestBody RoomCreateRequestDto request) throws Exception{
+    public ResponseEntity<Map<String, Object>> createGroup(@RequestBody RoomCreateRequestDto request) throws Exception{
 
         // JWT 토큰에 담긴 유저 ID를 가지고 오기.
         Long userId = SecurityUtil.getCurrentUserId();
@@ -34,7 +34,10 @@ public class RoomController {
         }
 
         RoomResponseDto response = roomService.createGroup(userId, request);
-        return ResponseEntity.ok(response);
+
+        Map<String,Object> result = new HashMap<>();
+        result.put("data", response);
+        return ResponseEntity.ok(result);
 
     }
 
@@ -102,8 +105,9 @@ public class RoomController {
             return ResponseEntity.status(401).build();
         }
 
-        RoomLeaveResponseDto response = roomService.leaveRoom(userId, roomId);
-        Map<String, Object> data = new HashMap<>();
+        RoomLeaveResponseDto leaveResponse = roomService.leaveRoom(userId, roomId);
+        Map<String, Object> response = new HashMap<>();
+        response.put("data", leaveResponse);
 
         return ResponseEntity.ok(response);
     }
