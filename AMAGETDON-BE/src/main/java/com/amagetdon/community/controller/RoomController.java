@@ -1,6 +1,7 @@
 package com.amagetdon.community.controller;
 
 import com.amagetdon.common.security.SecurityUtil;
+import com.amagetdon.community.dto.JoinPrivateRoomRequest;
 import com.amagetdon.community.dto.MemberResponseDto;
 import com.amagetdon.community.dto.RoomCreateRequestDto;
 import com.amagetdon.community.dto.RoomResponseDto;
@@ -56,6 +57,7 @@ public class RoomController {
         return ResponseEntity.ok(response);
     }
 
+    // 공개방 참여
     @PostMapping("/{roomId}/join")
     public ResponseEntity<Map<String, Object>> joinPublicRoom(@PathVariable Long roomId) {
 
@@ -67,6 +69,23 @@ public class RoomController {
 
         MemberResponseDto memberResponse = roomService.joinPublicRoom(userId, roomId);
 
+        Map<String, Object> response = new HashMap<>();
+        response.put("data", memberResponse);
+
+        return ResponseEntity.ok(response);
+    }
+
+    // 비밀방 참여
+    @PostMapping("/joinPrivate")
+    public ResponseEntity<Map<String, Object>> joinPrivateRoom(@RequestBody JoinPrivateRoomRequest request) {
+
+        Long userId = SecurityUtil.getCurrentUserId();
+
+        if(userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        MemberResponseDto memberResponse = roomService.joinPrivateRoom(userId, request.getJoinCode());
         Map<String, Object> response = new HashMap<>();
         response.put("data", memberResponse);
 
