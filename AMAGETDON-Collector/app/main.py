@@ -15,6 +15,7 @@ from core.stock_manager import StockManager
 from core.token_manager import TokenManager
 from utils.logger import logger
 from utils.market_hours import is_market_open
+from utils.kis_api_client import KISApiClient
 
 token_manager = None
 ws_collector = None
@@ -193,6 +194,67 @@ def weekly_update():
     token_manager.close()
     logger.info("주봉 업데이트 완료")
 
+#재무 데이터 업데이트
+def update_financials():
+    logger.info("재무 데이터 업데이트 시작")
+    
+    try:
+        token_manager = TokenManager.get_instance()
+        api_client = KISApiClient(token_manager)
+        stock_manager = StockManager(token_manager.redis_client)
+        
+        conn = pymysql.connect(**DB_CONFIG)
+        cursor = conn.cursor()
+        
+        from datetime import datetime
+        today = datetime.now().date()
+        cursor.execute("SELECT COUNT(*) FROM stock WHERE DATE(updated_at) = %s AND per IS NOT NULL", (today,))
+        
+        if cursor.fetchone()[0] > 0:
+            logger.info("오늘 이미 재무 데이터 업데이트됨 - 스킵")
+            conn.close()
+            token_manager.close()
+            return
+        
+        stocks = stock_manager.get_all_target_stocks()
+        logger.info(f"총 {len(stocks)}개 종목 재무 데이터 수집 시작")
+        
+        success = 0
+        fail = 0
+        
+        for i, stock_code in enumerate(stocks, 1):
+            try:
+                info = api_client.fetch_stock_price_info(stock_code)
+                
+                if info:
+                    cursor.execute("""
+                        UPDATE stock 
+                        SET per=%s, pbr=%s, eps=%s, bps=%s, market_cap=%s, updated_at=NOW()
+                        WHERE stock_code=%s
+                    """, (info['per'], info['pbr'], info['eps'], info['bps'], info['market_cap'], stock_code))
+                    success += 1
+                else:
+                    fail += 1
+                
+                if i % 100 == 0:
+                    conn.commit()
+                    logger.info(f"진행: {i}/{len(stocks)} (성공: {success}, 실패: {fail})")
+                
+                time.sleep(0.05)
+                
+            except Exception as e:
+                fail += 1
+                logger.error(f"{stock_code} 실패: {e}")
+        
+        conn.commit()
+        conn.close()
+        token_manager.close()
+        
+        logger.info(f"재무 데이터 업데이트 완료 - 성공: {success}, 실패: {fail}")
+        
+    except Exception as e:
+        logger.error(f"재무 데이터 업데이트 실패: {e}")
+
 def main():
     logger.info("실시간 시세 수집 스케줄러 시작")
     
@@ -200,6 +262,12 @@ def main():
     
     scheduler = BackgroundScheduler(timezone='Asia/Seoul')
     
+    scheduler.add_job(
+        update_financials,
+        CronTrigger(day_of_week='mon-fri', hour=8, minute=40),
+        id='update_financials'
+    )
+
     scheduler.add_job(
         start_collection,
         CronTrigger(day_of_week='mon-fri', hour=9, minute=0),
