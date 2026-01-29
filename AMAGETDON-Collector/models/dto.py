@@ -10,11 +10,6 @@ class StockDTO:
     volume: int
     trading_value: int    
     
-    def __str__(self):
-        return (f"{self.stock_name}({self.stock_code}): "
-                f"{self.current_price:,}원 "
-                f"({self.change_rate:+.2f}%)")
-
 @dataclass
 class StockMasterDTO:
     stock_code: str         
