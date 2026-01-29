@@ -266,3 +266,31 @@ class KISApiClient:
                 break
         
         return candles
+    
+    #주식기본정보조회 api
+    def fetch_stock_basic_info(self, stock_code: str) -> dict:
+        url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/search-stock-info"
+        headers = self._get_headers("CTPF1002R")
+        
+        params = {
+            "PRDT_TYPE_CD": "300",
+            "PDNO": stock_code
+        }
+        
+        try:
+            response = requests.get(url, headers=headers, params=params, timeout=10)
+            data = response.json()
+            
+            if data.get("rt_cd") != "0":
+                return None
+            
+            output = data.get("output", {})
+            
+            return {
+                'stock_code': stock_code,
+                'sector_small_code': output.get('std_idst_clsf_cd')
+            }
+            
+        except Exception as e:
+            logger.error(f"종목 정보 조회 실패 ({stock_code}): {e}")
+            return None
