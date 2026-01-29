@@ -33,8 +33,8 @@ public class SwaggerConfig {
                                 """)
                 )
                 .servers(List.of(
-                        new Server().url("http://localhost:8080").description("로컬 서버"),
-                        new Server().url("https://api.amagetdon.com").description("운영 서버")
+                        new Server().url("http://localhost:8080/api/v1").description("로컬 서버"),
+                        new Server().url("https://api.amagetdon.com/api/v1").description("운영 서버")
                 ))
                 .components(new Components()
                         .addSecuritySchemes(securitySchemeName,
