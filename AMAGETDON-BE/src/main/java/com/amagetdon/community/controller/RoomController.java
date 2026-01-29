@@ -1,10 +1,10 @@
 package com.amagetdon.community.controller;
 
 import com.amagetdon.common.security.SecurityUtil;
-import com.amagetdon.community.dto.JoinPrivateRoomRequest;
-import com.amagetdon.community.dto.MemberResponseDto;
-import com.amagetdon.community.dto.RoomCreateRequestDto;
-import com.amagetdon.community.dto.RoomResponseDto;
+import com.amagetdon.community.dto.request.JoinPrivateRoomRequest;
+import com.amagetdon.community.dto.response.MemberResponseDto;
+import com.amagetdon.community.dto.request.RoomCreateRequestDto;
+import com.amagetdon.community.dto.response.RoomResponseDto;
 import com.amagetdon.community.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

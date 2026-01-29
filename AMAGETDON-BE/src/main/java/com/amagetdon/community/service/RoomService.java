@@ -1,9 +1,9 @@
 package com.amagetdon.community.service;
 
 import com.amagetdon.common.ErrorCode;
-import com.amagetdon.community.dto.MemberResponseDto;
-import com.amagetdon.community.dto.RoomCreateRequestDto;
-import com.amagetdon.community.dto.RoomResponseDto;
+import com.amagetdon.community.dto.response.MemberResponseDto;
+import com.amagetdon.community.dto.request.RoomCreateRequestDto;
+import com.amagetdon.community.dto.response.RoomResponseDto;
 import com.amagetdon.community.entity.Member;
 import com.amagetdon.community.entity.Room;
 import com.amagetdon.community.repository.MemberRepository;
