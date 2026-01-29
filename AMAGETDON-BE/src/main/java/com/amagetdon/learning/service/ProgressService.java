@@ -76,6 +76,7 @@ public class ProgressService {
             progressItems.add(new ProgressResponse.ProgressItem(
                     c.getChapterId(),
                     c.getChapterType(),
+                    c.getBaseChapterNo(),
                     p.isCompleted(),
                     p.getCompletedAt(),
                     p.getRecentUpdatedAt()

@@ -10,6 +10,7 @@ public record ProgressResponse(List<ProgressItem> progresses) {
     public record ProgressItem(
             Long chapterId,
             ChapterType chapterType,
+            Integer baseChapterNo,
             boolean isCompleted,
             LocalDateTime completedAt,
             LocalDateTime recentUpdatedAt
