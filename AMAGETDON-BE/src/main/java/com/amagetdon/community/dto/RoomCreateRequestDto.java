@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class GroupCreateRequestDto {
+public class RoomCreateRequestDto {
     private String name;
     private int maxMemberCount;
     private Boolean isPublic;

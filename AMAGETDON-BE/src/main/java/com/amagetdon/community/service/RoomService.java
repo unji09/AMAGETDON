@@ -1,8 +1,8 @@
 package com.amagetdon.community.service;
 
-import com.amagetdon.community.dto.GroupCreateRequestDto;
-import com.amagetdon.community.entity.Group;
-import com.amagetdon.community.repository.GroupRepository;
+import com.amagetdon.community.dto.RoomCreateRequestDto;
+import com.amagetdon.community.entity.Room;
+import com.amagetdon.community.repository.RoomRepository;
 import io.openvidu.java.client.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -10,23 +10,23 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class GroupService {
+public class RoomService {
 
     private final OpenVidu openVidu;
-    private final GroupRepository groupRepository;
+    private final RoomRepository roomRepository;
 
     @Transactional
-    public String createGroup(Long ownerId, GroupCreateRequestDto request)
+    public String createGroup(Long ownerId, RoomCreateRequestDto request)
     throws OpenViduJavaClientException, OpenViduHttpException {
 
-        if(groupRepository.existsByOwnerId(ownerId)){
+        if(roomRepository.existsByOwnerId(ownerId)){
             throw new IllegalStateException("이미 참여 중이거나 생성한 그룹이 있습니다.");
         }
 
         SessionProperties properties = new SessionProperties.Builder().build();
         Session session = openVidu.createSession(properties);
 
-        Group group = Group.builder().
+        Room room = Room.builder().
                 ownerId(ownerId).
                 name(request.getName()).
                 maxMemberCount(request.getMaxMemberCount())
@@ -36,7 +36,7 @@ public class GroupService {
                 .currentMemberCount(1) //방장은 즉시 참여하므로 기본 값 1로 설정
                 .build();
 
-        groupRepository.save(group);
+        roomRepository.save(room);
 
         return session.getSessionId();
 

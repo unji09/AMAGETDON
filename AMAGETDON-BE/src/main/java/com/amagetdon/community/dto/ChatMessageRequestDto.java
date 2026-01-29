@@ -1,7 +1,7 @@
 package com.amagetdon.community.dto;
 
 public record ChatMessageRequestDto(
-        String roomId,
+        String openviduSessionId,
         String sender,
         String message,
         String type
