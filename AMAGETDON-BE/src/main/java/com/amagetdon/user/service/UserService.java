@@ -53,7 +53,7 @@ public class UserService {
     public void withdraw() {
         Long userId = SecurityUtil.getCurrentUserId();
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));;
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));
         userRepository.delete(user);
     }
 
