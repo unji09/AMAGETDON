@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class User {
 
-    public static final Integer INITIAL_TOTALPOINTS = 0;
+    public static final Integer INITIAL_TOTAL_POINTS = 0;
     public static final Long INITIAL_BALANCE = 3000000L;
 
     @Id
@@ -53,7 +53,7 @@ public class User {
 
     @Builder.Default
     @Column
-    private Integer totalPoints = INITIAL_TOTALPOINTS;
+    private Integer totalPoints = INITIAL_TOTAL_POINTS;
 
     @Builder.Default
     @Column(nullable = false)
