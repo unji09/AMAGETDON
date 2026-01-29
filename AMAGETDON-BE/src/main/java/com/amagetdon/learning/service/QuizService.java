@@ -174,7 +174,7 @@ public class QuizService {
             return quiz.getAnswerOx() ? "O" : "X";
         } else {
             List<QuizChoice> choices = quizChoiceRepository
-                    .findByQuiz_QuizId(quiz.getQuizId());
+                    .findByQuizId(quiz.getQuizId());
 
             return choices.stream()
                     .filter(QuizChoice::getIsAnswer)
@@ -192,7 +192,7 @@ public class QuizService {
         List<QuizResponse.ChoiceInfo> choices = null;
         if (quiz.getQuizType() == QuizType.MCQ) {
             List<QuizChoice> quizChoices = quizChoiceRepository
-                    .findByQuiz_QuizId(quiz.getQuizId());
+                    .findByQuizId(quiz.getQuizId());
 
             choices = quizChoices.stream()
                     .map(choice -> new QuizResponse.ChoiceInfo(
