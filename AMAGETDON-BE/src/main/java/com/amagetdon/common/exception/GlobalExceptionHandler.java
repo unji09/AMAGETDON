@@ -7,6 +7,7 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
@@ -112,5 +113,13 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleSecurityException(SecurityException e) {
         log.warn(e.getMessage());
         return new ErrorResponse(e.getMessage());
+    }
+
+    // OpenVidu 세션이 존재하지 않거나(404), 세션에 접속한 참가자가 없어(406) 신호를 보낼 수 없는 경우를 처리
+    @ExceptionHandler(org.springframework.web.client.HttpClientErrorException.class)
+    public ResponseEntity<ErrorResponse> handleHttpClientError(org.springframework.web.client.HttpClientErrorException e) {
+        log.warn("OpenVidu API Status: {}, Message: {}", e.getStatusCode(), e.getMessage());
+        return ResponseEntity.status(e.getStatusCode())
+                .body(new ErrorResponse("외부 서비스 응답: "  + e.getStatusCode()));
     }
 }

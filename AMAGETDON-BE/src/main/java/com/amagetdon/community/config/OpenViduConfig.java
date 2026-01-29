@@ -16,7 +16,6 @@ public class OpenViduConfig {
 
     @Bean
     public OpenVidu openVidu() {
-        System.out.println("🚩 현재 연결된 OpenVidu 주소: " + openViduUrl);
         return new OpenVidu(openViduUrl, openViduSecret);
     }
 
