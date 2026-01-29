@@ -1,6 +1,7 @@
 package com.amagetdon.community.controller;
 
 import com.amagetdon.community.dto.RoomCreateRequestDto;
+import com.amagetdon.community.dto.RoomResponseDto;
 import com.amagetdon.community.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,12 +18,12 @@ public class RoomController {
     private final RoomService roomService;
 
     @PostMapping
-    public ResponseEntity<String> createGroup(@RequestBody RoomCreateRequestDto request) throws Exception{
+    public ResponseEntity<RoomResponseDto> createGroup(@RequestBody RoomCreateRequestDto request) throws Exception{
 
         Long currentUserId = 1L;
 
-        String sessionId = roomService.createGroup(currentUserId, request);
-        return ResponseEntity.ok(sessionId);
+        RoomResponseDto response = roomService.createGroup(currentUserId, request);
+        return ResponseEntity.ok(response);
 
     }
 }

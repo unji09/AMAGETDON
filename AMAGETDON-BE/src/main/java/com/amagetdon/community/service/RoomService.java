@@ -1,6 +1,7 @@
 package com.amagetdon.community.service;
 
 import com.amagetdon.community.dto.RoomCreateRequestDto;
+import com.amagetdon.community.dto.RoomResponseDto;
 import com.amagetdon.community.entity.Room;
 import com.amagetdon.community.repository.RoomRepository;
 import io.openvidu.java.client.*;
@@ -16,7 +17,7 @@ public class RoomService {
     private final RoomRepository roomRepository;
 
     @Transactional
-    public String createGroup(Long ownerId, RoomCreateRequestDto request)
+    public RoomResponseDto createGroup(Long ownerId, RoomCreateRequestDto request)
     throws OpenViduJavaClientException, OpenViduHttpException {
 
         if(roomRepository.existsByOwnerId(ownerId)){
@@ -36,9 +37,13 @@ public class RoomService {
                 .currentMemberCount(1) //방장은 즉시 참여하므로 기본 값 1로 설정
                 .build();
 
-        roomRepository.save(room);
+        Room savedRoom = roomRepository.save(room);
 
-        return session.getSessionId();
+        return RoomResponseDto.builder()
+                .roomId(savedRoom.getId())
+                .name(savedRoom.getName())
+                .openviduSessionId(savedRoom.getOpenviduSessionId())
+                .build();
 
     }
 }
