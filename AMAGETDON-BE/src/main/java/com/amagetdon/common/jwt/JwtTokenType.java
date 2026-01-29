@@ -1,6 +1,6 @@
 package com.amagetdon.common.jwt;
 
-public enum TokenType {
+public enum JwtTokenType {
     ACCESS,
     REFRESH
 }
