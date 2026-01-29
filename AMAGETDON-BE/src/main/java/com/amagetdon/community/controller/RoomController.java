@@ -69,7 +69,6 @@ public class RoomController {
         }
 
         MemberResponseDto memberResponse = roomService.joinPublicRoom(userId, roomId);
-
         Map<String, Object> response = new HashMap<>();
         response.put("data", memberResponse);
 
@@ -95,7 +94,7 @@ public class RoomController {
 
     // 방 나가기
     @DeleteMapping("/{roomId}/leave")
-    public ResponseEntity<RoomLeaveResponseDto> leaveRoom(@PathVariable Long roomId) {
+    public ResponseEntity<Map<String, Object>> leaveRoom(@PathVariable Long roomId) {
 
         Long userId = SecurityUtil.getCurrentUserId();
 
@@ -104,6 +103,8 @@ public class RoomController {
         }
 
         RoomLeaveResponseDto response = roomService.leaveRoom(userId, roomId);
+        Map<String, Object> data = new HashMap<>();
+
         return ResponseEntity.ok(response);
     }
 }

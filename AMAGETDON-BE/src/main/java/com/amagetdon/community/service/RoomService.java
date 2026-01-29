@@ -188,5 +188,25 @@ public class RoomService {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException(ErrorCode.ROOM_NOT_FOUND.getMessage()));
 
+        member.deactivate();
+        memberRepository.save(member);
+
+        room.decrementCurrentMemberCount();
+
+        // 인원이 0명이면 삭제
+        boolean isRoomDeleted = false;
+        if(room.isEmpty()) {
+            roomRepository.delete(room);
+            isRoomDeleted = true;
+        } else {
+            roomRepository.save(room);
+        }
+
+        return RoomLeaveResponseDto.builder()
+                .roomId(roomId)
+                .isRoomDeleted(isRoomDeleted)
+                .leftAt(LocalDateTime.now())
+                .build();
+
     }
 }
