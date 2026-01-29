@@ -51,7 +51,7 @@ public class UserService {
 
     public void withdraw() {
         Long userId = SecurityUtil.getCurrentUserId();
-        User user = userRepository.findByUserId(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new SecurityException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));;
         userRepository.delete(user);
     }
