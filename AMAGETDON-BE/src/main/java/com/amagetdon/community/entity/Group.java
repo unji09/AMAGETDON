@@ -28,7 +28,7 @@ public class Group {
     @Column(name = "name", nullable = false, length = 50)
     private String name;
 
-    @Column(name = "max_members", nullable = false)
+    @Column(name = "max_member_count", nullable = false)
     private Integer maxMembers;
 
     @Column(name = "current_member_count", nullable = false)
@@ -43,5 +43,13 @@ public class Group {
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "openvidu_session_id", length = 100, nullable = true)
+    private String openviduSession;
+
+    // 0명이 되면 방이 삭제 되는 로직이 필요하여 추가
+    public boolean isEmpty() {
+        return this.currentMemberCount != null && this.currentMemberCount <= 0;
+    }
 
 }
