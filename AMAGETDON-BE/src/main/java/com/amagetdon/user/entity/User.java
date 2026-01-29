@@ -19,6 +19,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class User {
+
+    public static final Integer INITIAL_TOTALPOINTS = 0;
+    public static final Long INITIAL_BALANCE = 3000000L;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
@@ -49,11 +53,11 @@ public class User {
 
     @Builder.Default
     @Column
-    private Integer totalPoints = 0;
+    private Integer totalPoints = INITIAL_TOTALPOINTS;
 
     @Builder.Default
     @Column(nullable = false)
-    private Long balance = 30000L;
+    private Long balance = INITIAL_BALANCE;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

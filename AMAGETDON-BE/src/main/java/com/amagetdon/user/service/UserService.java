@@ -1,12 +1,9 @@
-package com.amagetdon.user;
+package com.amagetdon.user.service;
 
 import com.amagetdon.user.dto.request.UserLoginRequest;
 import com.amagetdon.user.dto.request.UserSignupRequest;
-import com.amagetdon.user.entity.InvestmentType;
-import com.amagetdon.user.entity.LoginType;
 import com.amagetdon.user.entity.User;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
+import com.amagetdon.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

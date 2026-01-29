@@ -1,4 +1,4 @@
-package com.amagetdon.auth;
+package com.amagetdon.auth.controller;
 
 import com.amagetdon.auth.dto.request.AuthLoginRequest;
 import com.amagetdon.auth.dto.request.AuthSignupRequest;

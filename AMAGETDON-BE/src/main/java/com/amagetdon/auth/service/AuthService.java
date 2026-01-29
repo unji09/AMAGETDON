@@ -5,7 +5,7 @@ import com.amagetdon.auth.dto.request.AuthSignupRequest;
 import com.amagetdon.auth.dto.response.TokenResponse;
 import com.amagetdon.common.jwt.JwtProperties;
 import com.amagetdon.common.jwt.JwtTokenProvider;
-import com.amagetdon.user.UserService;
+import com.amagetdon.user.service.UserService;
 import com.amagetdon.user.dto.request.UserLoginRequest;
 import com.amagetdon.user.dto.request.UserSignupRequest;
 import com.amagetdon.user.entity.User;

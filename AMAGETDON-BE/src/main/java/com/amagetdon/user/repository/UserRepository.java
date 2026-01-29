@@ -1,4 +1,4 @@
-package com.amagetdon.user;
+package com.amagetdon.user.repository;
 
 import com.amagetdon.user.entity.User;
 import jakarta.validation.constraints.Email;
