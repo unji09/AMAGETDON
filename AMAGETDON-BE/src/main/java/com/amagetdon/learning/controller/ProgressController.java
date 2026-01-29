@@ -1,6 +1,7 @@
 package com.amagetdon.learning.controller;
 
 import com.amagetdon.common.ErrorResponse;
+import com.amagetdon.common.security.SecurityUtil;
 import com.amagetdon.learning.dto.progress.ProgressResponse;
 import com.amagetdon.learning.entity.ChapterType;
 import com.amagetdon.learning.service.ProgressService;
@@ -60,10 +61,6 @@ public class ProgressController {
     })
     @GetMapping
     public ProgressResponse getProgress(
-            // TODO(지원) : 유저서비스/인증 이후 userId 제거
-            @Parameter(description = "조회할 사용자의 고유 ID", example = "1")
-            @RequestParam Long userId,
-
             @Parameter(
                     description = "조회할 챕터 타입 (미입력 시 전체). 예: NORMAL/AGGRESSIVE/NEUTRAL/STABLE",
                     example = "NORMAL"
@@ -73,6 +70,7 @@ public class ProgressController {
             @Parameter(description = "완료된 진행도만 조회할지 여부 (기본값=false)", example = "false")
             @RequestParam(defaultValue = "false") boolean onlyCompleted
     ){
+        Long userId = SecurityUtil.getCurrentUserId();
         return progressService.getProgress(userId, chapterType, onlyCompleted);
     }
 }
