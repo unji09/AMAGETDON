@@ -55,13 +55,28 @@ public class AuthController {
                         .build());
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@CookieValue("refreshToken") String refreshToken) {
+        refreshTokenService.delete(refreshToken);
+
+        ResponseCookie deleteCookie = refreshTokenService.deleteCookie();
+
+        //TODO(수정) : 추가적인 로그아웃 처리 (예: 기발급된 accesstoken 무효화 등)
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
+                .body("로그아웃 되었습니다.");
+    }
+
     @PostMapping("/refresh")
     public ResponseEntity<AuthLoginResponse> refresh(@CookieValue("refreshToken") String refreshToken) {
         TokenResponse tokenResponse = authService.refresh(refreshToken);
 
         ResponseCookie newRefreshTokenCookie = refreshTokenService.createCookie(tokenResponse.refreshToken());
 
-        return ResponseEntity.ok(AuthLoginResponse.builder()
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, newRefreshTokenCookie.toString())
+                .body(AuthLoginResponse.builder()
                 .accessToken(tokenResponse.accessToken())
                 .tokenType("Bearer")
                 .expiration(jwtProperties.getAccessTokenExpirationMs() / 1000)
