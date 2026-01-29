@@ -1,6 +1,7 @@
 package com.amagetdon.learning.service;
 
 import com.amagetdon.learning.dto.chapter.BaseChaptersResponse;
+import com.amagetdon.learning.dto.chapter.SideChaptersResponse;
 import com.amagetdon.learning.entity.Chapter;
 import com.amagetdon.learning.entity.ChapterStatus;
 import com.amagetdon.learning.entity.ChapterType;
@@ -20,13 +21,12 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ChapterServiceImpl implements ChapterService{
+public class ChapterService{
 
     private final ChapterRepository chapterRepository;
     private final UserChapterProgressRepository progressRepository;
     private final UserRepository userRepository;
 
-    @Override
     public BaseChaptersResponse getBaseChapters(Long userId) {
 
         List<Chapter> chapterList = chapterRepository.findAllByChapterTypeOrderByBaseChapterNoAsc(ChapterType.NORMAL);
@@ -83,5 +83,9 @@ public class ChapterServiceImpl implements ChapterService{
             progressMap.put(key, p);
         }
         return progressMap;
+    }
+
+    public SideChaptersResponse getSideChapters(Long userId, ChapterType chapterType) {
+        return null;
     }
 }

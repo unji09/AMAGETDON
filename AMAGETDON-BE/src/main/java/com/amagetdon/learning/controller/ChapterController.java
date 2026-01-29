@@ -3,6 +3,8 @@ package com.amagetdon.learning.controller;
 import com.amagetdon.common.ErrorResponse;
 import com.amagetdon.common.security.SecurityUtil;
 import com.amagetdon.learning.dto.chapter.BaseChaptersResponse;
+import com.amagetdon.learning.dto.chapter.SideChaptersResponse;
+import com.amagetdon.learning.entity.ChapterType;
 import com.amagetdon.learning.service.ChapterService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -50,6 +52,22 @@ public class ChapterController {
     public BaseChaptersResponse getBaseChapters() {
         Long userId = SecurityUtil.getCurrentUserId();
         return chapterService.getBaseChapters(userId);
+    }
+
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "샛길 조회 성공",
+                    content = @Content(schema = @Schema(implementation = SideChaptersResponse.class))
+            ),
+    })
+    @GetMapping("/side")
+    public SideChaptersResponse getSideChapters(
+            @Parameter(description = "조회할 성향(미입력 시 사용자 성향)", example = "AGGRESSIVE")
+            @RequestParam(required = false) ChapterType chapterType
+    ) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        return chapterService.getSideChapters(userId, chapterType);
     }
 
 }
