@@ -1,10 +1,11 @@
 package com.amagetdon.community.controller;
 
 import com.amagetdon.common.security.SecurityUtil;
-import com.amagetdon.community.dto.JoinPrivateRoomRequest;
-import com.amagetdon.community.dto.MemberResponseDto;
-import com.amagetdon.community.dto.RoomCreateRequestDto;
-import com.amagetdon.community.dto.RoomResponseDto;
+import com.amagetdon.community.dto.request.JoinPrivateRoomRequest;
+import com.amagetdon.community.dto.response.MemberResponseDto;
+import com.amagetdon.community.dto.request.RoomCreateRequestDto;
+import com.amagetdon.community.dto.response.RoomLeaveResponseDto;
+import com.amagetdon.community.dto.response.RoomResponseDto;
 import com.amagetdon.community.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,7 +24,7 @@ public class RoomController {
 
     //생성
     @PostMapping
-    public ResponseEntity<RoomResponseDto> createGroup(@RequestBody RoomCreateRequestDto request) throws Exception{
+    public ResponseEntity<Map<String, Object>> createGroup(@RequestBody RoomCreateRequestDto request) throws Exception{
 
         // JWT 토큰에 담긴 유저 ID를 가지고 오기.
         Long userId = SecurityUtil.getCurrentUserId();
@@ -33,7 +34,10 @@ public class RoomController {
         }
 
         RoomResponseDto response = roomService.createGroup(userId, request);
-        return ResponseEntity.ok(response);
+
+        Map<String,Object> result = new HashMap<>();
+        result.put("data", response);
+        return ResponseEntity.ok(result);
 
     }
 
@@ -68,7 +72,6 @@ public class RoomController {
         }
 
         MemberResponseDto memberResponse = roomService.joinPublicRoom(userId, roomId);
-
         Map<String, Object> response = new HashMap<>();
         response.put("data", memberResponse);
 
@@ -88,6 +91,23 @@ public class RoomController {
         MemberResponseDto memberResponse = roomService.joinPrivateRoom(userId, request.getJoinCode());
         Map<String, Object> response = new HashMap<>();
         response.put("data", memberResponse);
+
+        return ResponseEntity.ok(response);
+    }
+
+    // 방 나가기
+    @DeleteMapping("/{roomId}/leave")
+    public ResponseEntity<Map<String, Object>> leaveRoom(@PathVariable Long roomId) {
+
+        Long userId = SecurityUtil.getCurrentUserId();
+
+        if(userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        RoomLeaveResponseDto leaveResponse = roomService.leaveRoom(userId, roomId);
+        Map<String, Object> response = new HashMap<>();
+        response.put("data", leaveResponse);
 
         return ResponseEntity.ok(response);
     }

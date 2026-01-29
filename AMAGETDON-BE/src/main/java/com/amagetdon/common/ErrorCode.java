@@ -47,6 +47,7 @@ public enum ErrorCode {
     PRIVATE_ROOM_ACCESS_DENIED("비공개 그룹은 참여 코드로만 입장할 수 있습니다."),
     INVALID_JOIN_CODE("유효하지 않은 참여 코드입니다."),
     ALREADY_ROOM_OWNER("이미 생성한 그룹이 있습니다."),
+    NOT_ROOM_MEMBER("해당 그룹의 멤버가 아닙니다."),
     ;
 
     private final String message;

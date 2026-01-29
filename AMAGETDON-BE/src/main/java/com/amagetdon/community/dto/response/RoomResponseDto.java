@@ -1,8 +1,7 @@
-package com.amagetdon.community.dto;
+package com.amagetdon.community.dto.response;
 
 import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 

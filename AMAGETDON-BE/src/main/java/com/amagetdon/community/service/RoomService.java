@@ -1,9 +1,10 @@
 package com.amagetdon.community.service;
 
 import com.amagetdon.common.ErrorCode;
-import com.amagetdon.community.dto.MemberResponseDto;
-import com.amagetdon.community.dto.RoomCreateRequestDto;
-import com.amagetdon.community.dto.RoomResponseDto;
+import com.amagetdon.community.dto.response.MemberResponseDto;
+import com.amagetdon.community.dto.request.RoomCreateRequestDto;
+import com.amagetdon.community.dto.response.RoomLeaveResponseDto;
+import com.amagetdon.community.dto.response.RoomResponseDto;
 import com.amagetdon.community.entity.Member;
 import com.amagetdon.community.entity.Room;
 import com.amagetdon.community.repository.MemberRepository;
@@ -137,22 +138,22 @@ public class RoomService {
     // 비밀 그룹 참여
     @Transactional
     public MemberResponseDto joinPrivateRoom(Long userId, String joinCode) {
-        // 1. 참여코드로 방 찾기
+        // 참여코드로 방 찾기
         Room room = roomRepository.findByJoinCode(joinCode)
                 .orElseThrow(() -> new IllegalArgumentException(ErrorCode.INVALID_JOIN_CODE.getMessage()));
 
-        // 2. 공개방 검증
+        // 공개방 검증
         if (room.getIsPublic()) {
             throw new IllegalArgumentException(ErrorCode.PRIVATE_ROOM_ACCESS_DENIED.getMessage());
         }
 
-        // 3. 1인 1그룹 검증 (기존 패턴 사용)
+        // 1인 1그룹 검증
         memberRepository.findByUserIdAndIsActiveTrue(userId)
                 .ifPresent(member -> {
                     throw new IllegalArgumentException(ErrorCode.ALREADY_JOINED_ROOM.getMessage());
                 });
 
-        // 4. 정원 체크
+        // 정원 체크
         if (room.getCurrentMemberCount() >= room.getMaxMemberCount()) {
             throw new IllegalArgumentException(ErrorCode.ROOM_FULL.getMessage());
         }
@@ -173,5 +174,39 @@ public class RoomService {
                 .userId(userId)
                 .isActive(true)
                 .build();
+    }
+
+    // 방 나가기
+    @Transactional
+    public RoomLeaveResponseDto leaveRoom(Long userId, Long roomId) {
+
+        // Member 찾기
+        Member member = memberRepository.findByUserIdAndRoomIdAndIsActiveTrue(userId, roomId)
+                .orElseThrow(() -> new IllegalArgumentException(ErrorCode.NOT_ROOM_MEMBER.getMessage()));
+
+        // Room 찾기
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException(ErrorCode.ROOM_NOT_FOUND.getMessage()));
+
+        member.deactivate();
+        memberRepository.save(member);
+
+        room.decrementCurrentMemberCount();
+
+        // 인원이 0명이면 삭제
+        boolean isRoomDeleted = false;
+        if(room.isEmpty()) {
+            roomRepository.delete(room);
+            isRoomDeleted = true;
+        } else {
+            roomRepository.save(room);
+        }
+
+        return RoomLeaveResponseDto.builder()
+                .roomId(roomId)
+                .isRoomDeleted(isRoomDeleted)
+                .leftAt(LocalDateTime.now())
+                .build();
+
     }
 }
