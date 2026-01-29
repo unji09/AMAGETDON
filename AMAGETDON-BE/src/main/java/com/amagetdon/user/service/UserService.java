@@ -11,6 +11,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -52,7 +54,12 @@ public class UserService {
     public void withdraw() {
         Long userId = SecurityUtil.getCurrentUserId();
         User user = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new SecurityException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));;
+                .orElseThrow(() -> new SecurityException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));
         userRepository.delete(user);
+    }
+
+    public User getUserInfo(Long userId) {
+        return userRepository.findByUserId(userId)
+                .orElseThrow(() -> new SecurityException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));
     }
 }
