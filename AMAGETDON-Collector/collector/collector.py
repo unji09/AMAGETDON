@@ -22,18 +22,10 @@ class RealtimeCollector:
     def connect_db(self):
         self.conn = get_db_connection(self.conn)
     
+    #사용자가 조회한 종목 조회
     def get_user_stocks_excluding_top30(self) -> List[str]:
         try:
-            user_cached = self.redis_client.get(self.user_stocks_key)
-            if not user_cached:
-                return []
-            
-            user_stocks = set(user_cached.split(','))
-            
-            top_cached = self.redis_client.get(self.top_stocks_key)
-            if top_cached:
-                top_30 = set(top_cached.split(','))
-                return list(user_stocks - top_30)
+            user_stocks = self.redis_client.smembers(self.user_stocks_key) or set()
             
             return list(user_stocks)
             
@@ -41,6 +33,7 @@ class RealtimeCollector:
             logger.error(f"종목 조회 실패: {e}")
             return []
 
+    #개별 종목의 현재가 조회
     def fetch_price(self, stock_code: str) -> Optional[StockDTO]:
         if not is_market_open():
             return None
@@ -104,6 +97,7 @@ class RealtimeCollector:
         except Exception as e:
             logger.error(f"{stock.stock_code} 저장 실패: {e}")
     
+    #5초마다 종목 목록의 가격 조회
     def collect(self):
         while True:
             start_time = time.time()
