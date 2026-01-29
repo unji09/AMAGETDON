@@ -47,6 +47,7 @@ public class RoomService {
                 .roomId(savedRoom.getId())
                 .name(savedRoom.getName())
                 .openviduSessionId(savedRoom.getOpenviduSessionId())
+                .joinCode(savedRoom.getJoinCode())
                 .build();
 
     }
