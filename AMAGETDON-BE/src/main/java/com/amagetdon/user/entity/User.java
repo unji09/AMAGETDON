@@ -1,4 +1,5 @@
 package com.amagetdon.user.entity;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
@@ -66,4 +67,15 @@ public class User {
     @LastModifiedDate
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    public void deductBalance(Long amount) {
+        if (this.balance < amount) {
+            throw new IllegalArgumentException("잔액이 부족합니다.");
+        }
+        this.balance -= amount;
+    }
+
+    public void addBalance(Long amount) {
+        this.balance += amount;
+    }
 }
