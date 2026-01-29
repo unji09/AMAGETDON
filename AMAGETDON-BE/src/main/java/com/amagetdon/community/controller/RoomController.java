@@ -1,6 +1,7 @@
 package com.amagetdon.community.controller;
 
 import com.amagetdon.common.security.SecurityUtil;
+import com.amagetdon.community.dto.MemberResponseDto;
 import com.amagetdon.community.dto.RoomCreateRequestDto;
 import com.amagetdon.community.dto.RoomResponseDto;
 import com.amagetdon.community.service.RoomService;
@@ -13,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/rooms")
+@RequestMapping("/community/rooms")
 @RequiredArgsConstructor
 public class RoomController {
 
@@ -51,6 +52,23 @@ public class RoomController {
         data.put("currentPage", roomsPage.getNumber());
 
         response.put("data", data);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{roomId}/join")
+    public ResponseEntity<Map<String, Object>> joinPublicRoom(@PathVariable Long roomId) {
+
+        Long userId = SecurityUtil.getCurrentUserId();
+
+        if(userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        MemberResponseDto memberResponse = roomService.joinPublicRoom(userId, roomId);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("data", memberResponse);
 
         return ResponseEntity.ok(response);
     }
