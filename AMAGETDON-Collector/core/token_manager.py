@@ -1,7 +1,7 @@
+import os
 import redis
 import requests
-import os
-from core.logger import logger
+from utils.logger import logger
 
 class TokenManager:
     

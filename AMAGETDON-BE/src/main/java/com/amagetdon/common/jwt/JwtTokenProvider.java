@@ -22,14 +22,14 @@ public class JwtTokenProvider {
     }
 
     public String createAccessToken(Long userId) {
-        return createToken(userId, TokenType.ACCESS,jwtProperties.getAccessTokenExpirationMs());
+        return createToken(userId, JwtTokenType.ACCESS,jwtProperties.getAccessTokenExpirationMs());
     }
 
     public String createRefreshToken(Long userId) {
-        return createToken(userId, TokenType.REFRESH, jwtProperties.getRefreshTokenExpirationMs());
+        return createToken(userId, JwtTokenType.REFRESH, jwtProperties.getRefreshTokenExpirationMs());
     }
 
-    public String createToken(Long userId, TokenType tokenType, long expirationMs) {
+    public String createToken(Long userId, JwtTokenType tokenType, long expirationMs) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationMs);
 

@@ -1,30 +1,14 @@
-import pymysql
-import requests
-import time
 import os
-from datetime import datetime
-from config.config import DB_CONFIG
-from core.token_manager import TokenManager 
-from core.logger import logger
-from models.dto import StockDTO
+import time
+import requests
 from typing import Optional, List
-from core.market_hours import is_market_open
-
-def safe_int(value: str) -> Optional[int]:
-    if not value or value.strip() == '':
-        return None
-    try:
-        return int(value)
-    except (ValueError, TypeError):
-        return None
-
-def safe_float(value: str) -> Optional[float]:
-    if not value or value.strip() == '':
-        return None
-    try:
-        return float(value)
-    except (ValueError, TypeError):
-        return None
+from config.config import REDIS_KEYS
+from core.token_manager import TokenManager 
+from models.dto import StockDTO
+from utils.logger import logger
+from utils.market_hours import is_market_open
+from utils.helpers import safe_int, safe_float
+from utils.db import get_db_connection, save_stock_price
 
 class RealtimeCollector:
     
@@ -32,12 +16,11 @@ class RealtimeCollector:
         self.conn = None
         self.token_manager = token_manager
         self.redis_client = token_manager.redis_client
-        self.top_stocks_key = 'kis:top_30_stocks'
-        self.user_stocks_key = 'kis:user_stocks'
+        self.top_stocks_key = REDIS_KEYS['top_30_stocks']
+        self.user_stocks_key = REDIS_KEYS['user_stocks']
     
     def connect_db(self):
-        if self.conn is None or not self.conn.open:
-            self.conn = pymysql.connect(**DB_CONFIG)
+        self.conn = get_db_connection(self.conn)
     
     def get_user_stocks_excluding_top30(self) -> List[str]:
         try:
@@ -117,26 +100,7 @@ class RealtimeCollector:
     def save_price(self, stock: StockDTO):
         try:
             self.connect_db()
-            cursor = self.conn.cursor()
-
-            sql = """
-                INSERT INTO stock_prices
-                (stock_code, current_price, volume, trading_value, change_amount, change_rate, created_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """
-
-            cursor.execute(sql, (
-                stock.stock_code,
-                stock.current_price,
-                stock.volume,
-                stock.trading_value,
-                stock.change_amount,
-                stock.change_rate,
-                datetime.now()
-            ))
-
-            self.conn.commit()
-
+            save_stock_price(self.conn, stock)
         except Exception as e:
             logger.error(f"{stock.stock_code} 저장 실패: {e}")
     
@@ -145,16 +109,16 @@ class RealtimeCollector:
             start_time = time.time()
             
             stock_codes = self.get_user_stocks_excluding_top30()
-
+            
             if not stock_codes:
-                logger.debug("수집할 사용자 종목 없음")
+                logger.debug("수집할 종목 없음")
                 time.sleep(5)
                 continue
             
             total = len(stock_codes)
             processed = 0
 
-            logger.info(f"사용자 종목 수집 시작: {total}개")
+            logger.info(f"종목 수집 시작: {total}개")
 
             for code in stock_codes:
                 try:

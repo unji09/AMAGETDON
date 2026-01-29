@@ -108,6 +108,13 @@ public class GlobalExceptionHandler {
         return new ErrorResponse(e.getMessage());
     }
 
+    @ExceptionHandler(SecurityException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse handleSecurityException(SecurityException e) {
+        log.warn(e.getMessage());
+        return new ErrorResponse(e.getMessage());
+    }
+
     // OpenVidu 세션이 존재하지 않거나(404), 세션에 접속한 참가자가 없어(406) 신호를 보낼 수 없는 경우를 처리
     @ExceptionHandler(org.springframework.web.client.HttpClientErrorException.class)
     public ResponseEntity<ErrorResponse> handleHttpClientError(org.springframework.web.client.HttpClientErrorException e) {
