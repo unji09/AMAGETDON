@@ -7,6 +7,10 @@ import com.amagetdon.community.repository.RoomRepository;
 import io.openvidu.java.client.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -45,5 +49,18 @@ public class RoomService {
                 .openviduSessionId(savedRoom.getOpenviduSessionId())
                 .build();
 
+    }
+
+    public Page<RoomResponseDto> getPublicRooms(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Room> rooms = roomRepository.findByIsPublicTrue(pageable);
+
+        return rooms.map(room -> RoomResponseDto.builder()
+                .roomId(room.getId())
+                .name(room.getName())
+                .currentMemberCount(room.getCurrentMemberCount())
+                .maxMemberCount(room.getMaxMemberCount())
+                .isPublic(room.getIsPublic())
+                .build());
     }
 }
