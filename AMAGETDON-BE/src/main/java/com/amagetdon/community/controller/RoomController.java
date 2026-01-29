@@ -1,5 +1,6 @@
 package com.amagetdon.community.controller;
 
+import com.amagetdon.common.security.SecurityUtil;
 import com.amagetdon.community.dto.RoomCreateRequestDto;
 import com.amagetdon.community.dto.RoomResponseDto;
 import com.amagetdon.community.service.RoomService;
@@ -20,7 +21,12 @@ public class RoomController {
     @PostMapping
     public ResponseEntity<RoomResponseDto> createGroup(@RequestBody RoomCreateRequestDto request) throws Exception{
 
-        Long currentUserId = 1L;
+        // JWT 토큰에 담긴 유저 ID를 가지고 오기.
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+
+        if(currentUserId == null) {
+            return ResponseEntity.status(401).build();
+        }
 
         RoomResponseDto response = roomService.createGroup(currentUserId, request);
         return ResponseEntity.ok(response);
