@@ -55,6 +55,7 @@ public class AuthController {
                         .build());
     }
 
+    //TODO(추가) : @CookieValue(value = "refreshToken", required = false)으로의 변경 고려해보기
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@CookieValue("refreshToken") String refreshToken) {
         refreshTokenService.delete(refreshToken);
@@ -66,6 +67,17 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
                 .body("로그아웃 되었습니다.");
+    }
+
+    @DeleteMapping("/withdraw")
+    public ResponseEntity<?> withdraw(@CookieValue("refreshToken") String refreshToken) {
+        authService.withdraw(refreshToken);
+
+        ResponseCookie deleteCookie = refreshTokenService.deleteCookie();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
+                .body("회원 탈퇴가 완료되었습니다.");
     }
 
     @PostMapping("/refresh")

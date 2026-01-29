@@ -1,5 +1,7 @@
 package com.amagetdon.user.service;
 
+import com.amagetdon.common.ErrorCode;
+import com.amagetdon.common.security.SecurityUtil;
 import com.amagetdon.user.dto.request.UserLoginRequest;
 import com.amagetdon.user.dto.request.UserSignupRequest;
 import com.amagetdon.user.entity.User;
@@ -45,5 +47,12 @@ public class UserService {
                 .build();
 
         return userRepository.save(user);
+    }
+
+    public void withdraw() {
+        Long userId = SecurityUtil.getCurrentUserId();
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new SecurityException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));;
+        userRepository.delete(user);
     }
 }
