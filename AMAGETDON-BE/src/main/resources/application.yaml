@@ -30,6 +30,10 @@ spring:
     access-token-expiration-ms: 1800000
     refresh-token-expiration-ms: 1209600000
 
+openvidu:
+  url: http://localhost:4443/
+  secret: MY_SECRET
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
