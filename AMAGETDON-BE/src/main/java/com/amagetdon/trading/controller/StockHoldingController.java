@@ -1,7 +1,7 @@
 package com.amagetdon.trading.controller;
 
 import com.amagetdon.trading.dto.response.StockHoldingResponse;
-import com.amagetdon.trading.service.AccountService;
+import com.amagetdon.trading.service.StockHoldingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/accounts")
-public class AccountController {
-    private final AccountService accountService;
+public class StockHoldingController {
+    private final StockHoldingService stockHoldingService;
 
     // TODO(재훈) : @AuthenticationPrincipal로 userId 받기
     @GetMapping("/holdings")
@@ -24,7 +24,7 @@ public class AccountController {
             @PageableDefault(sort = "updatedAt", direction = Sort.Direction.ASC)
             Pageable pageable) {
 
-        StockHoldingResponse response = accountService.getStockHoldings(userId, pageable);
+        StockHoldingResponse response = stockHoldingService.getStockHoldings(userId, pageable);
         return ResponseEntity.ok(response);
     }
 }
