@@ -10,10 +10,21 @@ services:
     ports:
       - "3306:3306"
     volumes:
+      # DB 데이터 영구 저장
       - mysql-data:/var/lib/mysql
+
+      # CSV 파일 마운트
+      - ./data/chapters.csv:/var/lib/mysql-files/chapters.csv
+      - ./data/quizzes.csv:/var/lib/mysql-files/quizzes.csv
+      - ./data/quiz_choices.csv:/var/lib/mysql-files/quiz_choices.csv
+
+      # 초기화 스크립트 마운트
+      - ./init-scripts/01-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./init-scripts/02-load-data.sql:/docker-entrypoint-initdb.d/02-load-data.sql
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
+      - --secure-file-priv=/var/lib/mysql-files
 
   # Redis
   redis:
@@ -33,6 +44,10 @@ services:
     volumes:
       - ./fastapi:/app
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  app:
+    env_file:
+      - .env
 
 volumes:
   mysql-data:
