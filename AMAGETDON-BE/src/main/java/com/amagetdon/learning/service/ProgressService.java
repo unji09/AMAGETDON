@@ -82,8 +82,27 @@ public class ProgressService {
             ));
         }
 
+        // 정렬 : baseChapterNo -> chapterId 순으로 정렬
+        progressItems.sort(new Comparator<ProgressResponse.ProgressItem>() {
+            @Override
+            public int compare(ProgressResponse.ProgressItem a, ProgressResponse.ProgressItem b) {
+                Chapter ca = chapterMap.get(a.chapterId());
+                Chapter cb = chapterMap.get(b.chapterId());
 
-        return null;
+                Integer na = (ca != null ? ca.getBaseChapterNo() : null);
+                Integer nb = (cb != null ? cb.getBaseChapterNo() : null);
+
+                if (na == null && nb != null) return 1;
+                if (na != null && nb == null) return -1;
+                if (na != null && nb != null) {
+                    int cmp = Integer.compare(na, nb);
+                    if (cmp != 0) return cmp;
+                }
+                return Long.compare(a.chapterId(), b.chapterId());
+            }
+        });
+
+        return new ProgressResponse(progressItems);
     }
 
 }
