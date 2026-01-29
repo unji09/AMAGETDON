@@ -12,4 +12,5 @@ import java.util.List;
 public interface ChapterRepository extends JpaRepository<Chapter, Long> {
     List<Chapter> findAllByChapterTypeOrderByBaseChapterNoAsc(ChapterType chapterType);
     List<Chapter> findAllByChapterIdIn(Collection<Long> chapterIds);
+    List<Chapter> findAllByChapterTypeOrderByChapterIdAsc(ChapterType chapterType);
 }

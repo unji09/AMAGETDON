@@ -8,6 +8,8 @@ import com.amagetdon.learning.entity.ChapterType;
 import com.amagetdon.learning.entity.UserChapterProgress;
 import com.amagetdon.learning.repository.ChapterRepository;
 import com.amagetdon.learning.repository.UserChapterProgressRepository;
+import com.amagetdon.user.entity.InvestmentType;
+import com.amagetdon.user.entity.User;
 import com.amagetdon.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -86,6 +88,51 @@ public class ChapterService{
     }
 
     public SideChaptersResponse getSideChapters(Long userId, ChapterType chapterType) {
-        return null;
+
+        //유저 조회, 사용자 투자 성향 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        InvestmentType userInvestmentType = user.getInvestmentType();
+
+        // requestedType이 없으면 유저 성향 기준
+        ChapterType requestedType = (chapterType != null)
+                ? chapterType
+                : ChapterType.valueOf(userInvestmentType.name());
+
+        // 해당 타입의 사이드 챕터 조회 (기본 챕터와 동일 로직)
+        List<Chapter> chapterList = chapterRepository.findAllByChapterTypeOrderByChapterIdAsc(requestedType);
+        Map<Long, UserChapterProgress> progressMap = getProgressMap(userId);
+
+        boolean prevCompleted = true;
+        List<SideChaptersResponse.ChapterItem> chapterItemList = new ArrayList<>();
+
+        for (Chapter c : chapterList) {
+            UserChapterProgress p = progressMap.get(c.getChapterId());
+
+            ChapterStatus status = calculateStatus(p, prevCompleted);
+
+            SideChaptersResponse.Progress progressDto = null;
+            if (p != null && status != ChapterStatus.LOCKED) {
+                progressDto = new SideChaptersResponse.Progress(
+                        p.isCompleted(),
+                        p.getCompletedAt(),
+                        p.getRecentUpdatedAt()
+                );
+            }
+
+            chapterItemList .add(new SideChaptersResponse.ChapterItem(
+                    c.getChapterId(),
+                    c.getChapterType(),
+                    c.getBaseChapterNo(),
+                    c.getChapterTitle(),
+                    c.getChapterSummary(),
+                    status,
+                    progressDto
+            ));
+
+            prevCompleted = (status == ChapterStatus.COMPLETED);
+        }
+
+        return new SideChaptersResponse(userInvestmentType, requestedType, chapterItemList );
     }
 }
