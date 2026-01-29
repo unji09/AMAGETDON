@@ -23,11 +23,6 @@ public class ProgressService {
 
     public ProgressResponse getProgress(Long userId, ChapterType chapterType, boolean onlyCompleted){
 
-        // 유저 검증
-        if (!userRepository.existsById(userId)) {
-            throw new IllegalArgumentException("존재하지 않는 회원입니다.");
-        }
-
         // 유저 progress 전체 조회
         List<UserChapterProgress> progressList = userChapterProgressRepository.findAllByIdUserId(userId);
 
