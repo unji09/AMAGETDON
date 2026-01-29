@@ -1,4 +1,4 @@
-package com.amagetdon.user;
+package com.amagetdon.user.repository;
 
 import com.amagetdon.user.entity.User;
 import jakarta.validation.constraints.Email;
@@ -10,4 +10,8 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByEmail(@NotBlank @Email String email);
+
+    boolean existsByEmail(@Email String email);
+
+    boolean existsByNickname(String nickname);
 }

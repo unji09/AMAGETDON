@@ -1,4 +1,10 @@
 package com.amagetdon.user.dto.request;
 
-public class UserLoginRequest {
+import jakarta.validation.constraints.Email;
+
+public record UserLoginRequest(
+        @Email
+        String email,
+        String password
+) {
 }
