@@ -17,6 +17,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class RoomService {
@@ -45,6 +47,7 @@ public class RoomService {
                 .joinCode(request.getJoinCode())
                 .openviduSessionId(session.getSessionId())
                 .currentMemberCount(1) //방장은 즉시 참여하므로 기본 값 1로 설정
+                .createdAt(LocalDateTime.now())
                 .build();
 
         Room savedRoom = roomRepository.save(room);
@@ -63,6 +66,7 @@ public class RoomService {
                 .maxMemberCount(savedRoom.getMaxMemberCount())
                 .isPublic(savedRoom.getIsPublic())
                 .joinCode(savedRoom.getJoinCode())
+                .createdAt(LocalDateTime.now())
                 .build();
 
     }
