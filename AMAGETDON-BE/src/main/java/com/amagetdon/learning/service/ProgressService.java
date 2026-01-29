@@ -6,7 +6,7 @@ import com.amagetdon.learning.entity.ChapterType;
 import com.amagetdon.learning.entity.UserChapterProgress;
 import com.amagetdon.learning.repository.ChapterRepository;
 import com.amagetdon.learning.repository.UserChapterProgressRepository;
-import com.amagetdon.user.UserRepository;
+import com.amagetdon.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
