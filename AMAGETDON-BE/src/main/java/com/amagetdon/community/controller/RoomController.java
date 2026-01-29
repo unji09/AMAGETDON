@@ -5,11 +5,12 @@ import com.amagetdon.community.dto.RoomCreateRequestDto;
 import com.amagetdon.community.dto.RoomResponseDto;
 import com.amagetdon.community.service.RoomService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/rooms")
@@ -18,6 +19,7 @@ public class RoomController {
 
     private final RoomService roomService;
 
+    //생성
     @PostMapping
     public ResponseEntity<RoomResponseDto> createGroup(@RequestBody RoomCreateRequestDto request) throws Exception{
 
@@ -31,5 +33,25 @@ public class RoomController {
         RoomResponseDto response = roomService.createGroup(userId, request);
         return ResponseEntity.ok(response);
 
+    }
+
+    //조회
+    @GetMapping
+    public ResponseEntity<Map<String, Object>> getPublicRooms(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<RoomResponseDto> roomsPage = roomService.getPublicRooms(page, size);
+
+        Map<String, Object> response = new HashMap<>();
+        Map<String, Object> data = new HashMap<>();
+
+        data.put("rooms", roomsPage.getContent());
+        data.put("totalElements", roomsPage.getTotalElements());
+        data.put("totalPages", roomsPage.getTotalPages());
+        data.put("currentPage", roomsPage.getNumber());
+
+        response.put("data", data);
+
+        return ResponseEntity.ok(response);
     }
 }
