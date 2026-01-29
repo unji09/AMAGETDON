@@ -44,6 +44,11 @@ springdoc:
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
 
+fastapi:
+  url: http://localhost:8000
+  quiz:
+    generate-endpoint: /api/quiz/generate
+
 server:
   servlet:
     context-path: /api/v1
