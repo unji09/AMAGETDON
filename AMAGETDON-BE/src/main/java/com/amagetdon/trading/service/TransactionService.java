@@ -19,7 +19,7 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
 
     public TransactionResponse getTransactions(Long userId, Pageable pageable) {
-        Page<Transaction> transactionPage = transactionRepository.findByUserId(userId, pageable);
+        Page<Transaction> transactionPage = transactionRepository.findByUserUserId(userId, pageable);
 
         List<TransactionItem> items = transactionPage.getContent()
                 .stream()
