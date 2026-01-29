@@ -59,7 +59,7 @@ public class ProgressService {
         }
 
         // response 값 조합
-        List<ProgressResponse.ProgressItem> items = new ArrayList<>();
+        List<ProgressResponse.ProgressItem> progressItems = new ArrayList<>();
 
         for (UserChapterProgress p : progressList) {
             Long chapterId = p.getId().getChapterId();
@@ -73,7 +73,7 @@ public class ProgressService {
                 continue;
             }
 
-            items.add(new ProgressResponse.ProgressItem(
+            progressItems.add(new ProgressResponse.ProgressItem(
                     c.getChapterId(),
                     c.getChapterType(),
                     p.isCompleted(),
