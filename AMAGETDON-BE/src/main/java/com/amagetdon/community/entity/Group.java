@@ -21,31 +21,31 @@ public class Group {
     @Column(name = "group_id")
     private Long id;
 
-    @Column(name = "owner_id", nullable = false)
+    @Column(nullable = false)
     private Long ownerId;
 
     //그룹명
-    @Column(name = "name", nullable = false, length = 50)
+    @Column(nullable = false, length = 50)
     private String name;
 
-    @Column(name = "max_member_count", nullable = false)
-    private Integer maxMembers;
+    @Column(nullable = false)
+    private Integer maxMemberCount;
 
-    @Column(name = "current_member_count", nullable = false)
+    @Column(nullable = false)
     private Integer currentMemberCount;
 
-    @Column(name = "is_public", nullable = false)
+    @Column(nullable = false)
     private Boolean isPublic;
 
-    @Column(name = "join_code", length = 20, unique = true)
+    @Column(length = 20, unique = true)
     private String joinCode;
 
     @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "openvidu_session_id", length = 100, nullable = true)
-    private String openviduSession;
+    @Column(length = 100, nullable = true)
+    private String openviduSessionId;
 
     // 0명이 되면 방이 삭제 되는 로직이 필요하여 추가
     public boolean isEmpty() {
