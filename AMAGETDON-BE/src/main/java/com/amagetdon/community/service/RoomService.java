@@ -133,4 +133,45 @@ public class RoomService {
                 .build();
 
     }
+
+    // 비밀 그룹 참여
+    @Transactional
+    public MemberResponseDto joinPrivateRoom(Long userId, String joinCode) {
+        // 1. 참여코드로 방 찾기
+        Room room = roomRepository.findByJoinCode(joinCode)
+                .orElseThrow(() -> new IllegalArgumentException(ErrorCode.INVALID_JOIN_CODE.getMessage()));
+
+        // 2. 공개방 검증
+        if (room.getIsPublic()) {
+            throw new IllegalArgumentException(ErrorCode.PRIVATE_ROOM_ACCESS_DENIED.getMessage());
+        }
+
+        // 3. 1인 1그룹 검증 (기존 패턴 사용)
+        memberRepository.findByUserIdAndIsActiveTrue(userId)
+                .ifPresent(member -> {
+                    throw new IllegalArgumentException(ErrorCode.ALREADY_JOINED_ROOM.getMessage());
+                });
+
+        // 4. 정원 체크
+        if (room.getCurrentMemberCount() >= room.getMaxMemberCount()) {
+            throw new IllegalArgumentException(ErrorCode.ROOM_FULL.getMessage());
+        }
+
+        Member member = Member.builder()
+                .userId(userId)
+                .roomId(room.getId())
+                .isActive(true)
+                .build();
+
+        Member savedMember = memberRepository.save(member);
+
+        room.incrementCurrentMemberCount();
+
+        return MemberResponseDto.builder()
+                .memberId(savedMember.getId())
+                .roomId(room.getId())
+                .userId(userId)
+                .isActive(true)
+                .build();
+    }
 }
