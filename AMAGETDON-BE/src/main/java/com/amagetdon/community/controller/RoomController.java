@@ -111,4 +111,24 @@ public class RoomController {
 
         return ResponseEntity.ok(response);
     }
+
+    // 내가 속한 그룹 조회
+    @GetMapping("/myRooms")
+    public ResponseEntity<Map<String, Object>> getMyRooms() {
+
+        Long userId = SecurityUtil.getCurrentUserId();
+
+        if(userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        RoomResponseDto myRoom = roomService.getMyRoom(userId);
+
+        Map<String, Object> response = new HashMap<>();
+        Map<String, Object> data = new HashMap<>();
+        data.put("room", myRoom);
+        response.put("data", data);
+
+        return ResponseEntity.ok(response);
+    }
 }

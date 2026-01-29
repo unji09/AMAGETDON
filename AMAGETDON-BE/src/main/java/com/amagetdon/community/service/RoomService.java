@@ -19,6 +19,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -208,5 +209,31 @@ public class RoomService {
                 .leftAt(LocalDateTime.now())
                 .build();
 
+    }
+
+    // 내가 속한 그룹 조회
+    public RoomResponseDto getMyRoom(Long userId) {
+
+        Optional<Member> memberOpt =  memberRepository.findByUserIdAndIsActiveTrue(userId);
+
+        if(memberOpt.isEmpty()) {
+            return null;
+        }
+
+        Member member = memberOpt.get();
+
+        Room room = roomRepository.findById(member.getRoomId())
+                .orElseThrow(() -> new IllegalArgumentException(ErrorCode.ROOM_NOT_FOUND.getMessage()));
+
+        return RoomResponseDto.builder()
+                .roomId(room.getId())
+                .name(room.getName())
+                .currentMemberCount(room.getCurrentMemberCount())
+                .maxMemberCount(room.getMaxMemberCount())
+                .isPublic(room.getIsPublic())
+                .joinCode(room.getJoinCode())
+                .openviduSessionId(room.getOpenviduSessionId())
+                .createdAt(room.getCreatedAt())
+                .build();
     }
 }
