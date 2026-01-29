@@ -123,40 +123,39 @@ class WebSocketCollector:
     
     def on_message(self, ws, message):
         try:
-            data = json.loads(message)
-            
-            if data.get('header', {}).get('tr_id') == 'H0STCNT0':
-                body = data.get('body', {})
-                output = body.get('output', {})
-                
-                stock_code = output.get('MKSC_SHRN_ISCD', '')
-                
-                current_price = safe_int(output.get('STCK_PRPR', ''))
-                if current_price is None:
-                    return
-                
-                volume = safe_int(output.get('ACML_VOL', '')) or 0
-                trading_value = safe_int(output.get('ACML_TR_PBMN', '')) or 0 
-                change_amount_raw = safe_int(output.get('PRDY_VRSS', '')) or 0
-                change_rate = safe_float(output.get('PRDY_CTRT', '')) or 0.0
-                
-                sign = -1 if output.get('PRDY_VRSS_SIGN') in ('4', '5') else 1
-                change_amount = sign * change_amount_raw
-                
-                stock_dto = StockDTO(
-                    stock_code=stock_code,
-                    stock_name=output.get('HTS_KOR_ISNM', ''),
-                    current_price=current_price,
-                    change_amount=change_amount,
-                    change_rate=change_rate,
-                    volume=volume,
-                    trading_value=trading_value 
-                )
-                
-                self.save_to_db(stock_dto)
-                
-                logger.debug(f"{stock_code}: {current_price:,}원 저장")
-                
+            parts = message.split('|')
+            if len(parts) < 4:
+                return
+
+            tr_id = parts[1]
+            if tr_id != 'H0STCNT0':
+                return
+
+            fields = parts[3].split('^')
+
+            stock_code = fields[0]
+            current_price = safe_int(fields[2])
+            change_amount = safe_int(fields[4])
+            change_rate = safe_float(fields[5])
+            volume = safe_int(fields[12])
+            trading_value = safe_int(fields[13])
+
+            if current_price is None:
+                return
+
+            stock_dto = StockDTO(
+                stock_code=stock_code,
+                stock_name='',
+                current_price=current_price,
+                change_amount=change_amount,
+                change_rate=change_rate,
+                volume=volume,
+                trading_value=trading_value
+            )
+
+            self.save_to_db(stock_dto)
+            logger.info(f"{stock_code}: {current_price:,}원 저장")
+
         except Exception as e:
             logger.error(f"메시지 처리 오류: {e}")
     
