@@ -20,8 +20,6 @@ public class UserController {
 
     private final UserService userService;
 
-    //TODO(수정) : logout
-
     //TODO(수정) : get user info
 
     //TODO(수정) : update user info

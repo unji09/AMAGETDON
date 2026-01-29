@@ -32,6 +32,7 @@ public class RefreshTokenService {
         redisTemplate.delete(refreshToken);
     }
 
+    //TODO(수정) : 쿠키 관련 공통 부분 private 메서드로 분리해서 작업하기
     public ResponseCookie createCookie(String refreshToken) {
         return ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
