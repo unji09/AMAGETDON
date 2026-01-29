@@ -93,19 +93,54 @@ public class ProgressService {
             return Long.compare(a.chapterId(), b.chapterId());
         });
 
+        // summary 계산
         ProgressResponse.Summary summary = buildSummary(progressItems);
 
         return new ProgressResponse(summary, progressItems);
     }
 
+    // summary 계산 메서드
     private ProgressResponse.Summary buildSummary(List<ProgressResponse.ProgressItem> progressItems) {
+        int total = progressItems.size();
+        int completed = 0;
 
-        return null;
+        Map<ChapterType, int[]> counters = new EnumMap<>(ChapterType.class);
+        for (ChapterType t : ChapterType.values()) {
+            counters.put(t, new int[]{0, 0}); // [0]=total, [1]=completed
+        }
+
+        // 숫자 계산
+        for (ProgressResponse.ProgressItem item : progressItems) {
+            if (item.isCompleted()) completed++;
+
+            ChapterType type = item.chapterType();
+            int[] arr = counters.get(type);
+            if (arr == null) {
+                arr = new int[]{0, 0};
+                counters.put(type, arr);
+            }
+
+            arr[0]++; // total++
+            if (item.isCompleted()) arr[1]++; // completed++
+        }
+
+        // 응답 객체로 변환
+        Map<ChapterType, ProgressResponse.TypeSummary> byType = new EnumMap<>(ChapterType.class);
+        for (Map.Entry<ChapterType, int[]> e : counters.entrySet()) {
+            int[] arr = e.getValue();
+            byType.put(e.getKey(), new ProgressResponse.TypeSummary(arr[0], arr[1]));
+        }
+
+        return new ProgressResponse.Summary(total, completed, byType);
     }
 
+    // summary 정보 0일 때 메서드
     private ProgressResponse.Summary buildEmptySummary() {
-
-        return null;
+        Map<ChapterType, ProgressResponse.TypeSummary> byType = new EnumMap<>(ChapterType.class);
+        for (ChapterType t : ChapterType.values()) {
+            byType.put(t, new ProgressResponse.TypeSummary(0, 0));
+        }
+        return new ProgressResponse.Summary(0, 0, byType);
     }
 
 }
