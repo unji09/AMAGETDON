@@ -31,24 +31,21 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable())
+
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/auth/login",
-                                "/auth/signup",
-                                "/auth/refresh",
+                                "/auth/**",
                                 "/swagger-ui/**",
-                                "/v3/api-docs/**"
-//                                "/api/v1/**"
+                                "/swagger-ui.html",
+                                "/api-docs/**"
                         )
                         .permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
                         UsernamePasswordAuthenticationFilter.class);
-
-//                .authorizeHttpRequests(auth -> auth
-//                .anyRequest().permitAll()
-//                );
 
         return http.build();
     }
