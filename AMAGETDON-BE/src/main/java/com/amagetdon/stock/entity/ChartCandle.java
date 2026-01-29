@@ -20,6 +20,7 @@ public class ChartCandle {
     @JoinColumn(name = "stock_code")
     private Stock stockCode;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private IntervalType intervalType;
 
