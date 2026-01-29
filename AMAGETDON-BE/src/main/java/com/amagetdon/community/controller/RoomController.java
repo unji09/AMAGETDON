@@ -4,6 +4,7 @@ import com.amagetdon.common.security.SecurityUtil;
 import com.amagetdon.community.dto.request.JoinPrivateRoomRequest;
 import com.amagetdon.community.dto.response.MemberResponseDto;
 import com.amagetdon.community.dto.request.RoomCreateRequestDto;
+import com.amagetdon.community.dto.response.RoomLeaveResponseDto;
 import com.amagetdon.community.dto.response.RoomResponseDto;
 import com.amagetdon.community.service.RoomService;
 import lombok.RequiredArgsConstructor;
@@ -89,6 +90,20 @@ public class RoomController {
         Map<String, Object> response = new HashMap<>();
         response.put("data", memberResponse);
 
+        return ResponseEntity.ok(response);
+    }
+
+    // 방 나가기
+    @DeleteMapping("/{roomId}/leave")
+    public ResponseEntity<RoomLeaveResponseDto> leaveRoom(@PathVariable Long roomId) {
+
+        Long userId = SecurityUtil.getCurrentUserId();
+
+        if(userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        RoomLeaveResponseDto response = roomService.leaveRoom(userId, roomId);
         return ResponseEntity.ok(response);
     }
 }
