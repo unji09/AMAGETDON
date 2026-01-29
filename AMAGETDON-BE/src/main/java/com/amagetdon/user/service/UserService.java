@@ -55,4 +55,9 @@ public class UserService {
                 .orElseThrow(() -> new SecurityException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));;
         userRepository.delete(user);
     }
+
+    public User getUserInfo(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new SecurityException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));
+    }
 }
