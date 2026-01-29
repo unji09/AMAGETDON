@@ -107,7 +107,7 @@ public class TradingService {
     }
 
     private Stock findStock(String stockCode) {
-        return stockRepository.findByStockCode(stockCode)
+        return stockRepository.findById(stockCode)
                 .orElseThrow(() -> new IllegalArgumentException("주식 정보를 찾을 수 없습니다."));
     }
 
