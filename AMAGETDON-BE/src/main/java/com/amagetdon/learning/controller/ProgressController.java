@@ -30,11 +30,15 @@ public class ProgressController {
             description = """
                     로그인 사용자의 전체 챕터 진행도를 조회합니다.
                     
-                    - chapterType을 지정하면 해당 타입의 진행도만 조회합니다.
-                    - onlyCompleted=true이면 완료된 진행도만 반환합니다.
-                    - 진행 데이터가 없으면 progresses는 빈 배열([])로 반환됩니다.
-                    
+                    ### 조회 규칙
+                    - 기본적으로 사용자의 모든 챕터 진행도를 반환합니다.
+                    - chapterType이 전달되면 해당 성향의 챕터만 조회합니다.
+                    - onlyCompleted=true 인 경우 완료된 챕터만 반환합니다.
                     (현재는 인증/인가 미도입 상태로 userId를 임시로 RequestParam으로 받습니다.)
+                    
+                    ### 응답 구성
+                    - summary : 전체/완료 챕터 수 및 성향별 요약 정보
+                    - progresses : 챕터별 상세 진행도 목록
                     """
     )
     @ApiResponses({
@@ -48,6 +52,11 @@ public class ProgressController {
                     description = "잘못된 요청 (필수 파라미터 누락 등)",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "존재하지 않는 사용자",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
     })
     @GetMapping
     public ProgressResponse getProgress(
