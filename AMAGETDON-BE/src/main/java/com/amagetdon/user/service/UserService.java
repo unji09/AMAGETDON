@@ -6,6 +6,7 @@ import com.amagetdon.user.dto.request.UserLoginRequest;
 import com.amagetdon.user.dto.request.UserSignupRequest;
 import com.amagetdon.user.entity.User;
 import com.amagetdon.user.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -52,12 +53,21 @@ public class UserService {
     public void withdraw() {
         Long userId = SecurityUtil.getCurrentUserId();
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new SecurityException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));;
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));;
         userRepository.delete(user);
     }
 
     public User getUserInfo(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new SecurityException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));
+    }
+
+    public User updateUserInfo(Long userId, User updatedInfo) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));
+
+        user.updateUser(updatedInfo.getEmail(), passwordEncoder.encode(updatedInfo.getPassword()), updatedInfo.getNickname());
+
+        return user;
     }
 }

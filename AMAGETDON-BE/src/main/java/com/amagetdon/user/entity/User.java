@@ -68,6 +68,12 @@ public class User {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    public void updateUser(@Email String email, String password, String nickname) {
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname;
+    }
+
     public void deductBalance(Long amount) {
         if (this.balance < amount) {
             throw new IllegalArgumentException("잔액이 부족합니다.");
