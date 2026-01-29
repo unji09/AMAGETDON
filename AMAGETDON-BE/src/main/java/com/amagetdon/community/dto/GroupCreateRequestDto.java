@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class GroupCreateRequestDto {
     private String name;
-    private String maxMemberCount;
-    private String isPublic;
+    private int maxMemberCount;
+    private Boolean isPublic;
     private String joinCode;
 }
