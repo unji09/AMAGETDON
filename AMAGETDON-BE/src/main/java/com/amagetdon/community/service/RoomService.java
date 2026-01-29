@@ -71,7 +71,8 @@ public class RoomService {
     }
 
     // 공개 그룹 참여
-    public MemberResponseDto joinPublicRoom(Long roomId, Long userId) {
+    @Transactional
+    public MemberResponseDto joinPublicRoom(Long userId, Long roomId) {
 
         // 이미 참여 중인 그룹이 있는지 확인
         memberRepository.findByUserIdAndIsActiveTrue(userId)
@@ -100,6 +101,7 @@ public class RoomService {
             throw new IllegalArgumentException(ErrorCode.ROOM_FULL.getMessage());
         }
 
+        // 멤버 생성
         Member newMember = Member.builder()
                 .roomId(roomId)
                 .userId(userId)
