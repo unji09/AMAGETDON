@@ -4,8 +4,22 @@ import com.amagetdon.learning.entity.ChapterType;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
-public record ProgressResponse(List<ProgressItem> progresses) {
+public record ProgressResponse(
+        Summary summary,
+        List<ProgressItem> progresses
+) {
+    public record Summary(
+        int totalChapters,
+        int completedChapters,
+        Map<ChapterType, TypeSummary> byType
+    ) {}
+
+    public record TypeSummary(
+        int total,
+        int completed
+    ) {}
 
     public record ProgressItem(
             Long chapterId,

@@ -40,9 +40,10 @@ public class ProgressService {
             progressList = completedOnly;
         }
 
-        // 진행도 없으면 빈 배열 반환
+        // 진행도 없으면 요약은 0, 리스트는 빈 배열
         if (progressList.isEmpty()) {
-            return new ProgressResponse(Collections.emptyList());
+            ProgressResponse.Summary emptySummary = buildEmptySummary();
+            return new ProgressResponse(emptySummary, List.of());
         }
 
         // 챕터 id 중복 제거하여 수집
@@ -84,26 +85,27 @@ public class ProgressService {
         }
 
         // 정렬 : baseChapterNo -> chapterId 순으로 정렬
-        progressItems.sort(new Comparator<ProgressResponse.ProgressItem>() {
-            @Override
-            public int compare(ProgressResponse.ProgressItem a, ProgressResponse.ProgressItem b) {
-                Chapter ca = chapterMap.get(a.chapterId());
-                Chapter cb = chapterMap.get(b.chapterId());
+        progressItems.sort((a, b) -> {
+            int baseA = a.baseChapterNo() == null ? Integer.MAX_VALUE : a.baseChapterNo();
+            int baseB = b.baseChapterNo() == null ? Integer.MAX_VALUE : b.baseChapterNo();
 
-                Integer na = (ca != null ? ca.getBaseChapterNo() : null);
-                Integer nb = (cb != null ? cb.getBaseChapterNo() : null);
-
-                if (na == null && nb != null) return 1;
-                if (na != null && nb == null) return -1;
-                if (na != null && nb != null) {
-                    int cmp = Integer.compare(na, nb);
-                    if (cmp != 0) return cmp;
-                }
-                return Long.compare(a.chapterId(), b.chapterId());
-            }
+            if (baseA != baseB) return Integer.compare(baseA, baseB);
+            return Long.compare(a.chapterId(), b.chapterId());
         });
 
-        return new ProgressResponse(progressItems);
+        ProgressResponse.Summary summary = buildSummary(progressItems);
+
+        return new ProgressResponse(summary, progressItems);
+    }
+
+    private ProgressResponse.Summary buildSummary(List<ProgressResponse.ProgressItem> progressItems) {
+
+        return null;
+    }
+
+    private ProgressResponse.Summary buildEmptySummary() {
+
+        return null;
     }
 
 }
