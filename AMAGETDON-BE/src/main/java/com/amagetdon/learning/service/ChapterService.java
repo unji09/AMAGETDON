@@ -114,36 +114,30 @@ public class ChapterService{
 
     private ChapterStatus resolveChapterStatus(Long userId, Chapter chapter) {
 
-        if (chapter.getChapterType() == ChapterType.NORMAL) {
-            // CASE 1 BASE 챕터
-            List<Chapter> baseChapters = chapterRepository.findAllByChapterTypeOrderByBaseChapterNoAsc(ChapterType.NORMAL);
-            Map<Long, UserChapterProgress> progressMap = getProgressMap(userId);
+        // 챕터 타입에 따른 리스트 생성
+        List<Chapter> targetChapters = (chapter.getChapterType() == ChapterType.NORMAL)
+                ? chapterRepository.findAllByChapterTypeOrderByBaseChapterNoAsc(ChapterType.NORMAL)
+                : chapterRepository.findAllByChapterTypeOrderByChapterIdAsc(chapter.getChapterType());
 
-            // 다음 챕터의 이전 완료 여부를 확인
-            boolean prevCompleted = true;
-            for (Chapter c : baseChapters) {
-                UserChapterProgress p = progressMap.get(c.getChapterId());
-                ChapterStatus s = calculateStatus(p, prevCompleted);
-                if (c.getChapterId().equals(chapter.getChapterId())) {
-                    return s;
-                }
-                prevCompleted = (s == ChapterStatus.COMPLETED);
-            }
-        } else {
-            // CASE 2 SIDE 챕터
-            List<Chapter> sideChapters = chapterRepository.findAllByChapterTypeOrderByChapterIdAsc(chapter.getChapterType());
-            Map<Long, UserChapterProgress> progressMap = getProgressMap(userId);
+        // 진행도 맵 가져오기, 상태 판별 루프
+        Map<Long, UserChapterProgress> progressMap = getProgressMap(userId);
+        return calculateStatusInSequence(targetChapters, progressMap, chapter.getChapterId());
+    }
 
-            // 다음 챕터의 이전 완료 여부를 확인
-            boolean prevCompleted = true;
-            for (Chapter c : sideChapters) {
-                UserChapterProgress p = progressMap.get(c.getChapterId());
-                ChapterStatus s = calculateStatus(p, prevCompleted);
-                if (c.getChapterId().equals(chapter.getChapterId())) {
-                    return s;
-                }
-                prevCompleted = (s == ChapterStatus.COMPLETED);
+    // 주어진 리스트를 순차적으로 탐색하며 타겟 챕터의 상태를 계산
+    private ChapterStatus calculateStatusInSequence(List<Chapter> chapters, Map<Long, UserChapterProgress> progressMap, Long targetChapterId) {
+        boolean prevCompleted = true;
+
+        for (Chapter c : chapters) {
+            UserChapterProgress p = progressMap.get(c.getChapterId());
+            ChapterStatus s = calculateStatus(p, prevCompleted);
+
+            // 우리가 찾는 챕터라면 즉시 반환
+            if (c.getChapterId().equals(targetChapterId)) {
+                return s;
             }
+            // 다음 챕터 판단을 위해 현재 챕터의 완료 여부 저장
+            prevCompleted = (s == ChapterStatus.COMPLETED);
         }
         return ChapterStatus.LOCKED;
     }
