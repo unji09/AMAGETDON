@@ -8,6 +8,6 @@ public class SecurityUtil {
         if (authentication == null || authentication.getPrincipal() == null) {
             return null;
         }
-        return (Long) authentication.getPrincipal();
+        return Long.valueOf(authentication.getPrincipal().toString());
     }
 }

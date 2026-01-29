@@ -1,6 +1,7 @@
 package com.amagetdon.common.config;
 
 import com.amagetdon.common.jwt.JwtTokenProvider;
+import com.amagetdon.common.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,6 +10,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @RequiredArgsConstructor
@@ -29,22 +31,24 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-//                .authorizeHttpRequests(auth -> auth
-//                        .requestMatchers(
-//                                "/auth/login",
-//                                "/auth/signup",
-//                                "/auth/refresh",
-//                                "/swagger-ui/**",
-//                                "/v3/api-docs/**",
-//                                "/api/v1/sessions/**"
-//                        )
-//                        .permitAll()
-//                        .anyRequest().authenticated()
-//                );
-
                 .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll()
-                );
+                        .requestMatchers(
+                                "/auth/login",
+                                "/auth/signup",
+                                "/auth/refresh",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**"
+//                                "/api/v1/**"
+                        )
+                        .permitAll()
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
+                        UsernamePasswordAuthenticationFilter.class);
+
+//                .authorizeHttpRequests(auth -> auth
+//                .anyRequest().permitAll()
+//                );
 
         return http.build();
     }
