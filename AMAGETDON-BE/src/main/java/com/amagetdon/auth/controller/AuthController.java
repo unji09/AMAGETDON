@@ -1,6 +1,7 @@
-package com.amagetdon.auth;
+package com.amagetdon.auth.controller;
 
 import com.amagetdon.auth.dto.request.AuthLoginRequest;
+import com.amagetdon.auth.dto.request.AuthSignupRequest;
 import com.amagetdon.auth.dto.response.AuthLoginResponse;
 import com.amagetdon.auth.dto.response.TokenResponse;
 import com.amagetdon.auth.service.AuthService;
@@ -38,12 +39,30 @@ public class AuthController {
                         .build());
     }
 
+    @PostMapping("/signup")
+    public ResponseEntity<AuthLoginResponse> signup(@RequestBody AuthSignupRequest request) {
+        TokenResponse tokenResponse = authService.signup(request);
+
+        ResponseCookie refreshTokenCookie = refreshTokenService.createCookie(tokenResponse.refreshToken());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
+                .body(AuthLoginResponse.builder()
+                        .accessToken(tokenResponse.accessToken())
+                        .tokenType("Bearer")
+                        .expiration(jwtProperties.getAccessTokenExpirationMs() / 1000) //내부 시스템 Ms 단위를 프론트 S 단위로 변경
+                        .firstLogin(tokenResponse.firstLogin())
+                        .build());
+    }
+
     @PostMapping("/refresh")
     public ResponseEntity<AuthLoginResponse> refresh(@CookieValue("refreshToken") String refreshToken) {
-        TokenResponse token = authService.refresh(refreshToken);
+        TokenResponse tokenResponse = authService.refresh(refreshToken);
+
+        ResponseCookie newRefreshTokenCookie = refreshTokenService.createCookie(tokenResponse.refreshToken());
 
         return ResponseEntity.ok(AuthLoginResponse.builder()
-                .accessToken(token.accessToken())
+                .accessToken(tokenResponse.accessToken())
                 .tokenType("Bearer")
                 .expiration(jwtProperties.getAccessTokenExpirationMs() / 1000)
                 .firstLogin(false)
