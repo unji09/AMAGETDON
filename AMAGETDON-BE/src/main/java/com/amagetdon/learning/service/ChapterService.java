@@ -1,6 +1,7 @@
 package com.amagetdon.learning.service;
 
 import com.amagetdon.learning.dto.chapter.BaseChaptersResponse;
+import com.amagetdon.learning.dto.chapter.ChapterDetailResponse;
 import com.amagetdon.learning.dto.chapter.SideChaptersResponse;
 import com.amagetdon.learning.entity.Chapter;
 import com.amagetdon.learning.entity.ChapterStatus;
@@ -85,6 +86,66 @@ public class ChapterService{
             progressMap.put(key, p);
         }
         return progressMap;
+    }
+
+    public ChapterDetailResponse getChapterDetail(Long userId, Long chapterId) {
+
+        // 챕터 존재 여부 확인
+        Chapter chapter = chapterRepository.findById(chapterId)
+                .orElseThrow(() -> new IllegalArgumentException("챕터를 찾을 수 없습니다."));
+
+        // LOCKED 여부 판별
+        ChapterStatus status = resolveChapterStatus(userId, chapter);
+        if (status == ChapterStatus.LOCKED) {
+            throw new SecurityException("잠긴 챕터는 조회할 수 없습니다.");
+        }
+
+        return new ChapterDetailResponse(
+                chapter.getChapterId(),
+                chapter.getChapterType(),
+                chapter.getBaseChapterNo(),
+                chapter.getChapterTitle(),
+                chapter.getChapterSummary(),
+                chapter.getChapterContent(),
+                chapter.getCreatedAt(),
+                chapter.getUpdatedAt()
+        );
+    }
+
+    private ChapterStatus resolveChapterStatus(Long userId, Chapter chapter) {
+
+        if (chapter.getChapterType() == ChapterType.NORMAL) {
+            // CASE 1 BASE 챕터
+            List<Chapter> baseChapters = chapterRepository.findAllByChapterTypeOrderByBaseChapterNoAsc(ChapterType.NORMAL);
+            Map<Long, UserChapterProgress> progressMap = getProgressMap(userId);
+
+            // 다음 챕터의 이전 완료 여부를 확인
+            boolean prevCompleted = true;
+            for (Chapter c : baseChapters) {
+                UserChapterProgress p = progressMap.get(c.getChapterId());
+                ChapterStatus s = calculateStatus(p, prevCompleted);
+                if (c.getChapterId().equals(chapter.getChapterId())) {
+                    return s;
+                }
+                prevCompleted = (s == ChapterStatus.COMPLETED);
+            }
+        } else {
+            // CASE 2 SIDE 챕터
+            List<Chapter> sideChapters = chapterRepository.findAllByChapterTypeOrderByChapterIdAsc(chapter.getChapterType());
+            Map<Long, UserChapterProgress> progressMap = getProgressMap(userId);
+
+            // 다음 챕터의 이전 완료 여부를 확인
+            boolean prevCompleted = true;
+            for (Chapter c : sideChapters) {
+                UserChapterProgress p = progressMap.get(c.getChapterId());
+                ChapterStatus s = calculateStatus(p, prevCompleted);
+                if (c.getChapterId().equals(chapter.getChapterId())) {
+                    return s;
+                }
+                prevCompleted = (s == ChapterStatus.COMPLETED);
+            }
+        }
+        return ChapterStatus.LOCKED;
     }
 
     public SideChaptersResponse getSideChapters(Long userId, ChapterType chapterType) {
