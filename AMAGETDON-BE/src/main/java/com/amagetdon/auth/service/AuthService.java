@@ -41,6 +41,15 @@ public class AuthService {
         return createTokenAndSave(user.getUserId(), true);
     }
 
+    public void withdraw(String refreshToken) {
+        if (!refreshTokenService.exists(refreshToken)) {
+            throw new SecurityException("유효하지 않은 refresh token입니다.");
+        }
+
+        userService.withdraw();
+
+        refreshTokenService.delete(refreshToken);
+    }
 
     public TokenResponse refresh(String refreshToken) {
         if (!refreshTokenService.exists(refreshToken)) {
