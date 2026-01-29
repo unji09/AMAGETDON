@@ -5,7 +5,7 @@ import com.amagetdon.stock.repository.StockPriceRepository;
 import com.amagetdon.trading.dto.response.StockHoldingResponse;
 import com.amagetdon.trading.dto.response.StockHoldingResponse.StockHoldingItem;
 import com.amagetdon.trading.entity.StockHolding;
-import com.amagetdon.trading.repository.StockHoldingRepository;
+import com.amagetdon.trading.repository.AccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,12 +17,12 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class AccountService {
-    private final StockHoldingRepository stockHoldingRepository;
+public class StockHoldingService {
+    private final AccountRepository accountRepository;
     private final StockPriceRepository stockPriceRepository;
 
     public StockHoldingResponse getStockHoldings(Long userId, Pageable pageable) {
-        Page<StockHolding> holdingsPage = stockHoldingRepository.findByStockHoldingIdUserId(userId, pageable);
+        Page<StockHolding> holdingsPage = accountRepository.findByStockHoldingIdUserId(userId, pageable);
         List<StockHoldingItem> items = convertToItems(holdingsPage.getContent());
 
         return new StockHoldingResponse(
