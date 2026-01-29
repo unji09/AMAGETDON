@@ -22,13 +22,13 @@ public class RoomController {
     public ResponseEntity<RoomResponseDto> createGroup(@RequestBody RoomCreateRequestDto request) throws Exception{
 
         // JWT 토큰에 담긴 유저 ID를 가지고 오기.
-        Long currentUserId = SecurityUtil.getCurrentUserId();
+        Long userId = SecurityUtil.getCurrentUserId();
 
-        if(currentUserId == null) {
+        if(userId == null) {
             return ResponseEntity.status(401).build();
         }
 
-        RoomResponseDto response = roomService.createGroup(currentUserId, request);
+        RoomResponseDto response = roomService.createGroup(userId, request);
         return ResponseEntity.ok(response);
 
     }
