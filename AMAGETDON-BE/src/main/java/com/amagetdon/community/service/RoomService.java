@@ -36,7 +36,7 @@ public class RoomService {
 
         memberRepository.findByUserIdAndIsActiveTrue(ownerId)
                 .ifPresent(member -> {
-                    throw new IllegalStateException("이미 참여 중이거나 생성한 그룹이 있습니다.");
+                    throw new IllegalStateException(ErrorCode.ALREADY_JOINED_ROOM.getMessage());
                 });
 
         SessionProperties properties = new SessionProperties.Builder().build();

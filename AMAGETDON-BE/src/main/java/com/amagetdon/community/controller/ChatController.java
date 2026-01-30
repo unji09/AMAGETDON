@@ -1,6 +1,11 @@
 package com.amagetdon.community.controller;
 
+import com.amagetdon.common.ErrorCode;
+import com.amagetdon.common.security.SecurityUtil;
 import com.amagetdon.community.dto.request.ChatMessageRequestDto;
+import com.amagetdon.community.entity.Room;
+import com.amagetdon.community.repository.RoomRepository;
+import com.amagetdon.community.service.ChatMessageService;
 import io.openvidu.java.client.OpenVidu;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +28,8 @@ import java.util.Map;
 public class ChatController {
 
     private final OpenVidu openVidu;
+    private final ChatMessageService chatMessageService;
+    private final RoomRepository roomRepository;
 
     @Value("${openvidu.url}")
     private String openViduUrl;
@@ -35,9 +42,27 @@ public class ChatController {
     @PostMapping("/send")
     public ResponseEntity<Void> sendMessage(@RequestBody ChatMessageRequestDto request){
 
+        Long userId = SecurityUtil.getCurrentUserId();
+        if(userId == null){
+            return ResponseEntity.status(401).build();
+        }
+
+        // 세션 확인
         if(openVidu.getActiveSession(request.openviduSessionId()) == null){
             return ResponseEntity.notFound().build();
         }
+
+        // 방 찾기
+        Room room = roomRepository.findByOpenviduSessionId(request.openviduSessionId())
+                .orElseThrow(() -> new IllegalArgumentException(ErrorCode.ROOM_NOT_FOUND.getMessage()));
+
+        chatMessageService.saveMessage(
+                room.getId(),
+                userId,
+                request.sender(),
+                request.message(),
+                request.type()
+        );
 
         // 오픈비두 서버 REST API 엔드포인트 설정
         String baseUrl = openViduUrl.endsWith("/") ? openViduUrl : openViduUrl + "/";
