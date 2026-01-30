@@ -61,6 +61,8 @@ public enum ErrorCode {
     WATCHLIST_ALREADY_EXISTS("이미 관심 종목으로 등록된 종목입니다."),
     STOCK_NOT_FOUND("존재하지 않는 종목입니다."),
     STOCK_CODE_REQUIRED("종목 코드는 필수입니다."),
+    WATCHLIST_NOT_FOUND("관심 종목을 찾을 수 없습니다."),
+    WATCHLIST_ACCESS_DENIED("본인의 관심 종목만 삭제할 수 있습니다."),
     ;
 
     private final String message;
