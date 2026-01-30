@@ -68,6 +68,10 @@ public class User {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    public void updateInvestmentType(InvestmentType investmentType) {
+        this.investmentType = investmentType;
+    }
+
     public void updatePassword(String password) {
         this.password = password;
     }
