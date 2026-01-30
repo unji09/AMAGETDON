@@ -30,6 +30,7 @@ public record WatchlistResponse(
     }
 
     public record WatchlistStockItem(
+            Long watchlistId,
             String stockCode,
             String stockName,
             MarketType marketType,
@@ -38,6 +39,7 @@ public record WatchlistResponse(
         public static WatchlistStockItem from(Watchlist watchlist) {
             Stock stock = watchlist.getStock();
             return new WatchlistStockItem(
+                    watchlist.getWatchlistId(),
                     stock.getStockCode(),
                     stock.getStockName(),
                     stock.getMarketType(),
