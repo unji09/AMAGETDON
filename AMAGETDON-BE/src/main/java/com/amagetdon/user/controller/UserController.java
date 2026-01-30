@@ -6,10 +6,7 @@ import com.amagetdon.user.repository.UserRepository;
 import com.amagetdon.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
@@ -20,13 +17,15 @@ public class UserController {
 
     private final UserService userService;
 
-    //TODO(수정) : logout
-
     //TODO(수정) : get user info
+    @GetMapping("/me")
+    public ResponseEntity<?> getUserInfo() {
+        Long userId = SecurityUtil.getCurrentUserId();
+        User user = userService.getUserInfo(userId);
+        return ResponseEntity.ok(user);
+    }
 
     //TODO(수정) : update user info
-
-    //TODO(수정) : delete user
 
     //TODO(수정) : check duplicate username
 
