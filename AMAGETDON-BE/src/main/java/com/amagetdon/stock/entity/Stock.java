@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -22,6 +23,26 @@ public class Stock {
     @Column(nullable = false)
     private MarketType marketType;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sector_code")
+    private Sector sector;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal per;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal pbr;
+
+    private Integer eps;
+
+    private Integer bps;
+
+    private Long marketCap;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
 }

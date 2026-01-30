@@ -20,6 +20,7 @@ public class ChartCandle {
     @JoinColumn(name = "stock_code")
     private Stock stockCode;
 
+    @Convert(converter = IntervalTypeConverter.class)
     @Column(nullable = false, length = 10)
     private IntervalType intervalType;
 

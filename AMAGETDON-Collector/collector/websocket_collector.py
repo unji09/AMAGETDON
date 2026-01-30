@@ -169,6 +169,8 @@ class WebSocketCollector:
             }
             self.on_tick(stock_code, tick_data)
 
+            logger.debug(f"체결: {stock_code} {current_price}원")
+
         except Exception as e:
             logger.error(f"메시지 처리 오류: {e}")
     
