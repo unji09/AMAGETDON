@@ -105,7 +105,8 @@ def start_collection():
     token_manager = TokenManager.get_instance()
     volume_tracker = VolumeTracker(token_manager)
     ws_collector = WebSocketCollector(token_manager)
-    rest_collector = RealtimeCollector(token_manager)
+    stock_manager = StockManager(token_manager.redis_client)
+    rest_collector = RealtimeCollector(token_manager, stock_manager)
     
     ws_collector.connect()
     top_30_stocks = volume_tracker.get_top_30_volume_stocks()

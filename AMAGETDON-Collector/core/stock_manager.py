@@ -17,9 +17,10 @@ class StockManager:
             if top_cached:
                 stock_set.update(top_cached)
             
-            user_cached = self.redis_client.smembers(self.user_stocks_key)
-            if user_cached:
-                stock_set.update(user_cached)
+            user_keys = self.redis_client.keys(f"{self.user_stocks_key}:*")
+            if user_keys:
+                stock_codes = [key.split(":")[-1] for key in user_keys]
+                stock_set.update(stock_codes)
             
             stocks = list(stock_set)
             logger.info(f"대상 종목: {len(stocks)}개")
