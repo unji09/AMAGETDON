@@ -1,13 +1,13 @@
 import time
 import pymysql
 import threading
+from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from app.parser import StockParser
 from app.volume_tracker import VolumeTracker
 from collector.websocket_collector import WebSocketCollector
-from collector.collector import RealtimeCollector
-from collector.realtime_candle_monitor import RealtimeCandleMonitor
+from collector.realtime_collector import RealtimeCollector
 from collector.candle_filler import CandleFiller
 from collector.candle_collector import CandleCollector
 from config.config import DB_CONFIG
@@ -94,7 +94,7 @@ def run_rest_collector():
 #주식 시장 시작 호출(websocket/rest 수집 시작)
 def start_collection():
     global token_manager, ws_collector, rest_collector, volume_tracker
-    global ws_thread, rest_thread, collection_active
+    global ws_thread, rest_thread, collection_active, candle_filler
     
     if collection_active:
         logger.warning("이미 수집 중")
@@ -103,20 +103,21 @@ def start_collection():
     logger.info("장 시작")
     
     token_manager = TokenManager.get_instance()
-    
     volume_tracker = VolumeTracker(token_manager)
     ws_collector = WebSocketCollector(token_manager)
     rest_collector = RealtimeCollector(token_manager)
+    
+    ws_collector.connect()
+    top_30_stocks = volume_tracker.get_top_30_volume_stocks()
+    if top_30_stocks:
+        ws_collector.subscribe_stocks(top_30_stocks)
+        logger.info(f"초기 구독 완료: {len(top_30_stocks)}개 종목")
     
     collection_active = True
     
     ws_thread = threading.Thread(target=run_websocket_collector)
     ws_thread.daemon = True
     ws_thread.start()
-
-    global candle_filler
-    candle_filler = RealtimeCandleMonitor()
-    candle_filler.start_async()
     
     rest_thread = threading.Thread(target=run_rest_collector)
     rest_thread.daemon = True
@@ -201,12 +202,10 @@ def update_financials():
     try:
         token_manager = TokenManager.get_instance()
         api_client = KISApiClient(token_manager)
-        stock_manager = StockManager(token_manager.redis_client)
         
         conn = pymysql.connect(**DB_CONFIG)
         cursor = conn.cursor()
         
-        from datetime import datetime
         today = datetime.now().date()
         cursor.execute("SELECT COUNT(*) FROM stock WHERE DATE(updated_at) = %s AND per IS NOT NULL", (today,))
         
@@ -216,7 +215,9 @@ def update_financials():
             token_manager.close()
             return
         
-        stocks = stock_manager.get_all_target_stocks()
+        cursor.execute("SELECT stock_code FROM stock")
+        stocks = [row[0] for row in cursor.fetchall()]
+        
         logger.info(f"총 {len(stocks)}개 종목 재무 데이터 수집 시작")
         
         success = 0
@@ -259,6 +260,11 @@ def main():
     logger.info("실시간 시세 수집 스케줄러 시작")
     
     check_and_initialize()
+
+    now = datetime.now()
+    if now.hour > 8 or (now.hour == 8 and now.minute >= 50):
+        logger.info("8시 50분 이후 - 즉시 재무 데이터 업데이트")
+        update_financials()
     
     scheduler = BackgroundScheduler(timezone='Asia/Seoul')
     

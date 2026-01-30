@@ -105,18 +105,12 @@ class CandleCollector:
             target_date = (datetime.now() - timedelta(days=i)).date()
             target_date_str = target_date.strftime('%Y%m%d')
 
-            if target_date == today and now.hour >= 9:
-                candles_dict = self.api_client.fetch_minute_candles_by_time(
-                    stock_code=stock_code
-                )
-                logger.info(f"{stock_code} 오늘({target_date_str}) 당일분봉 조회")
-            else:
-                candles_dict = self.api_client.fetch_minute_candles_by_date(
-                    stock_code=stock_code,
-                    target_date=target_date_str
-                )
-                logger.info(f"{stock_code} 과거({target_date_str}) 일별분봉 조회")
-            
+            candles_dict = self.api_client.fetch_minute_candles_by_date(
+                stock_code=stock_code,
+                target_date=target_date_str
+            )
+            logger.info(f"{stock_code} ({target_date_str}) 분봉 조회")
+
             if candles_dict:
                 all_candles.update(candles_dict)
                 logger.debug(f"{target_date_str} {len(candles_dict)}개 수집")
