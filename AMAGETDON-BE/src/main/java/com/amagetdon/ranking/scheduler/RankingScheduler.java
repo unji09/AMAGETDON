@@ -27,9 +27,9 @@ public class RankingScheduler {
             log.info("수익 랭킹 집계 스케줄러 완료");
             log.info("==================");
         } catch (Exception e){
-            log.info("==================");
-            log.info("수익 랭킹 집계 스케줄러 실패", e);
-            log.info("==================");
+            log.error("==================");
+            log.error("수익 랭킹 집계 스케줄러 실패", e);
+            log.error("==================");
         }
     }
 }
