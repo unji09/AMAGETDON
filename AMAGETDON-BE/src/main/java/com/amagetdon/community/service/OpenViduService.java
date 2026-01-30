@@ -1,5 +1,6 @@
 package com.amagetdon.community.service;
 
+import com.amagetdon.common.ErrorCode;
 import io.openvidu.java.client.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,7 @@ public class OpenViduService {
 
     public String createConnection(String sessionId, Map<String,Object> params) throws OpenViduJavaClientException, OpenViduHttpException {
         Session session = openVidu.getActiveSession(sessionId);
-        if(session == null) throw new RuntimeException("세션을 찾을 수 없습니다.");
+        if(session == null) throw new IllegalArgumentException(ErrorCode.SESSION_NOT_FOUND.getMessage());
 
         ConnectionProperties properties = ConnectionProperties.fromJson(params).build();
         Connection connection = session.createConnection(properties);
