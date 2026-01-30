@@ -56,6 +56,11 @@ public enum ErrorCode {
     STOCK_INFO_NOT_FOUND("주식 정보를 찾을 수 없습니다."),
     NO_OWNED_STOCK("보유한 주식이 없습니다."),
     INSUFFICIENT_STOCK_QUANTITY("보유 수량이 부족합니다."),
+
+    // Watchlist
+    WATCHLIST_ALREADY_EXISTS("이미 관심 종목으로 등록된 종목입니다."),
+    STOCK_NOT_FOUND("존재하지 않는 종목입니다."),
+    STOCK_CODE_REQUIRED("종목 코드는 필수입니다."),
     ;
 
     private final String message;

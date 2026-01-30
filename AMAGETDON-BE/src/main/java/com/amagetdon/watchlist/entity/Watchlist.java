@@ -4,6 +4,7 @@ import com.amagetdon.stock.entity.Stock;
 import com.amagetdon.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
@@ -32,4 +33,10 @@ public class Watchlist {
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Builder
+    public Watchlist(User user, Stock stock) {
+        this.user = user;
+        this.stock = stock;
+    }
 }
