@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import static com.amagetdon.common.ErrorCode.*;
 
@@ -31,6 +32,10 @@ public class WatchlistService {
 
     @Transactional
     public void addToWatchlist(Long userId, String stockCode) {
+        if (!StringUtils.hasText(stockCode)) {
+            throw new IllegalArgumentException(INVALID_INPUT.getMessage());
+        }
+
         if (watchlistRepository.existsByUserUserIdAndStockStockCode(userId, stockCode)) {
             throw new IllegalArgumentException(WATCHLIST_ALREADY_EXISTS.getMessage());
         }
