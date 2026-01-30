@@ -60,6 +60,8 @@ public enum ErrorCode {
     // Ranking
     RANKING_AGGREGATION_FAILED("랭킹 집계 중 오류가 발생했습니다."),
     USER_PROFIT_CALCULATION_FAILED("유저 수익 계산에 실패했습니다. UserId: %d"),
+    LEARNING_RANKING_NOT_FOUND("학습 랭킹 정보를 찾을 수 없습니다."),
+
 
     // Watchlist
     WATCHLIST_ALREADY_EXISTS("이미 관심 종목으로 등록된 종목입니다."),

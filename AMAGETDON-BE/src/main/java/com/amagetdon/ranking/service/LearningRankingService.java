@@ -1,9 +1,11 @@
 package com.amagetdon.ranking.service;
 
+import com.amagetdon.common.ErrorCode;
 import com.amagetdon.ranking.entity.LearningRanking;
 import com.amagetdon.ranking.repository.LearningRankingRepository;
 import com.amagetdon.user.entity.User;
 import com.amagetdon.user.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -91,5 +93,14 @@ public class LearningRankingService {
         }
 
         return rankings;
+    }
+
+    // 특정 유저의 학습 랭킹 정보를 조회
+    @Transactional(readOnly = true)
+    public LearningRanking getMyLearningRanking(Long userId) {
+        return learningRankingRepository.findByUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        ErrorCode.LEARNING_RANKING_NOT_FOUND.getMessage()
+                ));
     }
 }
