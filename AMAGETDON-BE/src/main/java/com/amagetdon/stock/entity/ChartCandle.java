@@ -21,7 +21,7 @@ public class ChartCandle {
     private Stock stockCode;
 
     @Column(nullable = false, length = 10)
-    private String intervalType;
+    private IntervalType intervalType;
 
     @Column(nullable = false)
     private LocalDateTime candleTime;

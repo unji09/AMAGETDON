@@ -11,6 +11,7 @@ class StockParser:
         if self.conn is None or not self.conn.open:
             self.conn = pymysql.connect(**DB_CONFIG)
     
+    #.mst 파일 파싱
     def parse_mst_file(self, filepath, market_type):
         stocks = []
         

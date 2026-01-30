@@ -4,8 +4,24 @@ import requests
 from utils.logger import logger
 
 class TokenManager:
+    _instance = None
+
+    def __new__(cls, redis_host='host.docker.internal', redis_port=6379):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
     
     def __init__(self, redis_host='host.docker.internal', redis_port=6379):
+        if self._initialized:
+            return
+        
+        self.redis_client = redis.Redis(
+            host=redis_host, 
+            port=redis_port, 
+            decode_responses=True
+        )
+
         self.appkey = os.getenv('API_KEY')
         self.appsecret = os.getenv('API_SECRET')
         
@@ -20,6 +36,14 @@ class TokenManager:
         
         self.auth_url = "https://openapi.koreainvestment.com:9443/oauth2/tokenP"
         self.ws_auth_url = "https://openapi.koreainvestment.com:9443/oauth2/Approval"
+
+        self._initialized = True
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
     
     #rest 토큰 발급
     def get_token(self):
@@ -167,3 +191,8 @@ class TokenManager:
     def close(self):
         if self.redis_client:
             self.redis_client.close()
+
+    def force_close(self):
+        if self.redis_client:
+            self.redis_client.close()
+        TokenManager._instance = None
