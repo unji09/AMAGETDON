@@ -95,6 +95,7 @@ public class ChapterService{
                 .orElseThrow(() -> new IllegalArgumentException("챕터를 찾을 수 없습니다."));
 
         // LOCKED 여부 판별
+        // TODO (지원) : 에러 통일하는 작업 할 때, 글로벌 익셉션을 사용하여 403으로 변경
         ChapterStatus status = resolveChapterStatus(userId, chapter);
         if (status == ChapterStatus.LOCKED) {
             throw new SecurityException("잠긴 챕터는 조회할 수 없습니다.");
