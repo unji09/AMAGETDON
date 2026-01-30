@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 
+import static com.amagetdon.common.ErrorCode.USER_NOT_FOUND_SIMPLE;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -24,7 +26,7 @@ public class AssetService {
 
     public AssetResponse getAsset(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException(USER_NOT_FOUND_SIMPLE.getMessage()));
 
         Long balance = user.getBalance();
         List<StockHolding> holdings = accountRepository.findByStockHoldingIdUserId(userId);

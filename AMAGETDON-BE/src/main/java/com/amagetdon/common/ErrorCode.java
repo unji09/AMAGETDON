@@ -22,6 +22,7 @@ public enum ErrorCode {
 
     // User
     USER_NOT_FOUND("회원을 찾을 수 없습니다. UserId: %d"),
+    USER_NOT_FOUND_SIMPLE("회원을 찾을 수 없습니다."),
 
     // Token
     TOKEN_EXPIRED("토큰이 만료되었습니다. 새로운 토큰을 재발급 받으세요."),
@@ -48,6 +49,12 @@ public enum ErrorCode {
     INVALID_JOIN_CODE("유효하지 않은 참여 코드입니다."),
     ALREADY_ROOM_OWNER("이미 생성한 그룹이 있습니다."),
     NOT_ROOM_MEMBER("해당 그룹의 멤버가 아닙니다."),
+
+    // Trading
+    PRICE_NOT_AVAILABLE("현재가를 조회할 수 없습니다."),
+    STOCK_INFO_NOT_FOUND("주식 정보를 찾을 수 없습니다."),
+    NO_OWNED_STOCK("보유한 주식이 없습니다."),
+    INSUFFICIENT_STOCK_QUANTITY("보유 수량이 부족합니다."),
     ;
 
     private final String message;
