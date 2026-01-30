@@ -20,7 +20,7 @@ public class ChartCandle {
     @JoinColumn(name = "stock_code")
     private Stock stockCode;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = IntervalTypeConverter.class)
     @Column(nullable = false, length = 10)
     private IntervalType intervalType;
 
