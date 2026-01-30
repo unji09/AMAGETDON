@@ -50,9 +50,16 @@ public class Room {
         this.currentMemberCount++;
     }
 
+    public void decrementCurrentMemberCount() {
+        if(this.currentMemberCount > 0) {
+            this.currentMemberCount--;
+        }
+    }
+
     // 0명이 되면 방이 삭제 되는 로직이 필요하여 추가
     public boolean isEmpty() {
         return this.currentMemberCount != null && this.currentMemberCount <= 0;
     }
+
 
 }

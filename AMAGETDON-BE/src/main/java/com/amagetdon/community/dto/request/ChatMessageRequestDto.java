@@ -1,4 +1,4 @@
-package com.amagetdon.community.dto;
+package com.amagetdon.community.dto.request;
 
 public record ChatMessageRequestDto(
         String openviduSessionId,

@@ -3,6 +3,7 @@ package com.amagetdon.common.exception;
 import com.amagetdon.common.ErrorCode;
 import com.amagetdon.common.ErrorResponse;
 import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.connector.ClientAbortException;
@@ -113,6 +114,13 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleSecurityException(SecurityException e) {
         log.warn(e.getMessage());
         return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleEntityNotFoundException(EntityNotFoundException e) {
+        log.warn(e.getMessage());
+        return new ErrorResponse(ErrorCode.RESOURCE_NOT_FOUND.getMessage());
     }
 
     // OpenVidu 세션이 존재하지 않거나(404), 세션에 접속한 참가자가 없어(406) 신호를 보낼 수 없는 경우를 처리

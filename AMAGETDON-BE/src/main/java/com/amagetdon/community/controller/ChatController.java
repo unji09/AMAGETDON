@@ -1,6 +1,6 @@
 package com.amagetdon.community.controller;
 
-import com.amagetdon.community.dto.ChatMessageRequestDto;
+import com.amagetdon.community.dto.request.ChatMessageRequestDto;
 import io.openvidu.java.client.OpenVidu;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
