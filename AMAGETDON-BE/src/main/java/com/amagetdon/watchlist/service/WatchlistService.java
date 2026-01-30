@@ -48,4 +48,16 @@ public class WatchlistService {
 
         watchlistRepository.save(watchlist);
     }
+
+    @Transactional
+    public void removeFromWatchlist(Long userId, Long watchlistId) {
+        Watchlist watchlist = watchlistRepository.findById(watchlistId)
+                .orElseThrow(() -> new IllegalArgumentException(WATCHLIST_NOT_FOUND.getMessage()));
+
+        if (!watchlist.getUser().getUserId().equals(userId)) {
+            throw new IllegalArgumentException(WATCHLIST_ACCESS_DENIED.getMessage());
+        }
+
+        watchlistRepository.delete(watchlist);
+    }
 }
