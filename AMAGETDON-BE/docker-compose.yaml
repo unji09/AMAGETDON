@@ -17,6 +17,7 @@ services:
       - ./data/chapters.csv:/var/lib/mysql-files/chapters.csv
       - ./data/quizzes.csv:/var/lib/mysql-files/quizzes.csv
       - ./data/quiz_choices.csv:/var/lib/mysql-files/quiz_choices.csv
+      - ./data/survey_questions.csv:/var/lib/mysql-files/survey_questions.csv
 
       # 초기화 스크립트 마운트
       - ./init-scripts/01-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql

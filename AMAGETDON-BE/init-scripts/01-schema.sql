@@ -33,3 +33,8 @@ CREATE TABLE IF NOT EXISTS quiz_choices (
     is_answer VARCHAR(10) NOT NULL,
     FOREIGN KEY (quiz_id) REFERENCES quizzes(quiz_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS survey_questions (
+    question_id BIGINT PRIMARY KEY,
+    question_text TEXT NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

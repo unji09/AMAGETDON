@@ -41,10 +41,4 @@ public class UserController {
     //TODO(수정) : update user title
 
     //TODO(수정) : get user title
-
-    //TODO(수정) : get survey
-
-    //TODO(수정) : submit survey
-
-
 }
