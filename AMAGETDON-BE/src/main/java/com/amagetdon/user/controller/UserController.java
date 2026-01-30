@@ -1,7 +1,9 @@
 package com.amagetdon.user.controller;
 
 import com.amagetdon.common.security.SecurityUtil;
+import com.amagetdon.user.dto.request.PasswordResetEmailRequest;
 import com.amagetdon.user.entity.User;
+import com.amagetdon.user.service.PasswordResetService;
 import com.amagetdon.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final PasswordResetService passwordResetService;
 
     @GetMapping("/me")
     public ResponseEntity<?> getUserInfo() {
@@ -28,11 +31,12 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    //TODO(수정) : check duplicate username
-
-    //TODO(수정) : check duplicate email
-
-    //TODO(수정) : reset password
+    @PostMapping(("/password/email"))
+    public ResponseEntity<String> sendPasswordResetEmail(@RequestBody PasswordResetEmailRequest request) {
+        String email = request.getEmail().trim();
+        passwordResetService.sendTempPasswordEmail(email);
+        return ResponseEntity.ok("비밀번호 재설정 이메일이 전송되었습니다.");
+    }
 
     //TODO(수정) : update user title
 
