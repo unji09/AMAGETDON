@@ -56,6 +56,9 @@ public enum ErrorCode {
     STOCK_INFO_NOT_FOUND("주식 정보를 찾을 수 없습니다."),
     NO_OWNED_STOCK("보유한 주식이 없습니다."),
     INSUFFICIENT_STOCK_QUANTITY("보유 수량이 부족합니다."),
+
+    //Chart
+    WRONG_PERIOD("잘못된 기간입니다.")
     ;
 
     private final String message;
