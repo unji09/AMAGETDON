@@ -1,5 +1,9 @@
 package com.amagetdon.watchlist.service;
 
+import com.amagetdon.stock.entity.Stock;
+import com.amagetdon.stock.repository.StockRepository;
+import com.amagetdon.user.entity.User;
+import com.amagetdon.user.repository.UserRepository;
 import com.amagetdon.watchlist.dto.response.WatchlistResponse;
 import com.amagetdon.watchlist.entity.Watchlist;
 import com.amagetdon.watchlist.repository.WatchlistRepository;
@@ -9,15 +13,39 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import static com.amagetdon.common.ErrorCode.*;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class WatchlistService {
 
     private final WatchlistRepository watchlistRepository;
+    private final UserRepository userRepository;
+    private final StockRepository stockRepository;
 
     public WatchlistResponse getWatchlist(Long userId, Pageable pageable) {
         Page<Watchlist> watchlistPage = watchlistRepository.findByUserUserId(userId, pageable);
         return WatchlistResponse.from(watchlistPage);
+    }
+
+    @Transactional
+    public void addToWatchlist(Long userId, String stockCode) {
+        if (watchlistRepository.existsByUserUserIdAndStockStockCode(userId, stockCode)) {
+            throw new IllegalArgumentException(WATCHLIST_ALREADY_EXISTS.getMessage());
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException(USER_NOT_FOUND_SIMPLE.getMessage()));
+
+        Stock stock = stockRepository.findById(stockCode)
+                .orElseThrow(() -> new IllegalArgumentException(STOCK_NOT_FOUND.getMessage()));
+
+        Watchlist watchlist = Watchlist.builder()
+                .user(user)
+                .stock(stock)
+                .build();
+
+        watchlistRepository.save(watchlist);
     }
 }
