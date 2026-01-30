@@ -57,6 +57,10 @@ public enum ErrorCode {
     NO_OWNED_STOCK("보유한 주식이 없습니다."),
     INSUFFICIENT_STOCK_QUANTITY("보유 수량이 부족합니다."),
 
+    // Ranking
+    RANKING_AGGREGATION_FAILED("랭킹 집계 중 오류가 발생했습니다."),
+    USER_PROFIT_CALCULATION_FAILED("유저 수익 계산에 실패했습니다. UserId: %d"),
+
     // Watchlist
     WATCHLIST_ALREADY_EXISTS("이미 관심 종목으로 등록된 종목입니다."),
     STOCK_NOT_FOUND("존재하지 않는 종목입니다."),
