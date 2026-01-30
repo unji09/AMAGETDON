@@ -1,5 +1,6 @@
 package com.amagetdon.trading.controller;
 
+import com.amagetdon.common.security.SecurityUtil;
 import com.amagetdon.trading.dto.response.StockHoldingResponse;
 import com.amagetdon.trading.service.StockHoldingService;
 import lombok.RequiredArgsConstructor;
@@ -17,13 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class StockHoldingController {
     private final StockHoldingService stockHoldingService;
 
-    // TODO(재훈) : @AuthenticationPrincipal로 userId 받기
     @GetMapping("/holdings")
     public ResponseEntity<StockHoldingResponse> getStockHoldings(
-            Long userId,  // 임시로 파라미터로 받음
             @PageableDefault(sort = "updatedAt", direction = Sort.Direction.ASC)
             Pageable pageable) {
-
+        Long userId = SecurityUtil.getCurrentUserId();
         StockHoldingResponse response = stockHoldingService.getStockHoldings(userId, pageable);
         return ResponseEntity.ok(response);
     }
