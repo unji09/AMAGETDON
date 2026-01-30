@@ -1,5 +1,6 @@
 package com.amagetdon.stock.controller.swagger;
 
+import com.amagetdon.stock.dto.response.CandleChartResponse;
 import com.amagetdon.stock.dto.response.StockDetailResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -47,5 +48,47 @@ public interface StockControllerSwagger {
     })
     StockDetailResponse getStock(
             @Parameter(description = "종목 코드", example = "005930") String stockCode
+    );
+
+    @Operation(summary = "차트 데이터 조회", description = "종목 코드와 기간으로 차트 캔들 데이터를 조회")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = CandleChartResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "stockName": "삼성전자",
+                                      "period": "1D",
+                                      "interval": "5m",
+                                      "candles": [
+                                        {
+                                          "candleTime": "2026-01-19T09:00:00",
+                                          "openPrice": 74500,
+                                          "highPrice": 74800,
+                                          "lowPrice": 74300,
+                                          "closePrice": 74600,
+                                          "volume": 125430
+                                        },
+                                        {
+                                          "candleTime": "2026-01-19T09:05:00",
+                                          "openPrice": 74600,
+                                          "highPrice": 75000,
+                                          "lowPrice": 74500,
+                                          "closePrice": 74900,
+                                          "volume": 234561
+                                        }
+                                      ]
+                                    }
+                                    """)
+                    )
+            ),
+            @ApiResponse(responseCode = "400", description = "잘못된 기간"),
+            @ApiResponse(responseCode = "404", description = "종목을 찾을 수 없음")
+    })
+    CandleChartResponse getCandleChart(
+            @Parameter(description = "종목 코드", example = "005930") String stockCode,
+            @Parameter(description = "기간 (1D, 1W, 3M, 1Y)") String period
     );
 }
