@@ -22,8 +22,10 @@ class TokenManager:
             decode_responses=True
         )
 
-        self.appkey = os.getenv('API_KEY')
-        self.appsecret = os.getenv('API_SECRET')
+        self.stock_api_key = os.getenv("STOCK_API_KEY")
+        self.stock_api_secret = os.getenv("STOCK_API_SECRET")
+        self.candle_api_key = os.getenv("CANDLE_API_KEY")
+        self.candle_api_secret = os.getenv("CANDLE_API_SECRET")
         
         self.redis_client = redis.Redis(
             host=redis_host,
@@ -31,13 +33,37 @@ class TokenManager:
             decode_responses=True
         )
         
-        self.token_key = 'kis:access_token'
-        self.ws_approval_key = 'kis:ws_approval_key'
-        
+        self.stock_token_key = "kis:stock_access_token"
+        self.candle_token_key = "kis:candle_access_token"
+        self.ws_approval_key = "kis:ws_approval_key"
+
         self.auth_url = "https://openapi.koreainvestment.com:9443/oauth2/tokenP"
         self.ws_auth_url = "https://openapi.koreainvestment.com:9443/oauth2/Approval"
 
         self._initialized = True
+
+    #개별 키로 토큰 발급
+    def _issue_token(self, api_key: str, api_secret: str) -> str:
+        url = "https://openapi.koreainvestment.com:9443/oauth2/tokenP"
+        headers = {"content-type": "application/json"}
+        body = {
+            "grant_type": "client_credentials",
+            "appkey": api_key,
+            "appsecret": api_secret
+        }
+        
+        try:
+            response = requests.post(url, headers=headers, json=body, timeout=10)
+            data = response.json()
+            
+            if "access_token" in data:
+                return data["access_token"]
+            else:
+                logger.error(f"토큰 발급 실패: {data}")
+                return None
+        except Exception as e:
+            logger.error(f"토큰 발급 오류: {e}")
+            return None
 
     @classmethod
     def get_instance(cls):
@@ -46,81 +72,49 @@ class TokenManager:
         return cls._instance
     
     #rest 토큰 발급
-    def get_token(self):
-        try:
-            cached_token = self.redis_client.get(self.token_key)
-            
-            if cached_token:
-                logger.debug("Redis에서 토큰 가져오기")
-                return cached_token
-            
-            logger.info("새 토큰 발급")
-            token = self._issue_new_token()
+    def get_stock_token(self) -> str:
+        token = self.redis_client.get(self.stock_token_key)
+        
+        if not token:
+            logger.info("STOCK API 토큰 발급")
+            token = self._issue_token(self.stock_api_key, self.stock_api_secret)
             
             if token:
-                ttl_seconds = 23 * 60 * 60
                 self.redis_client.setex(
-                    self.token_key,
-                    ttl_seconds,
+                    self.stock_token_key,
+                    86400,
                     token
                 )
-                logger.info(f"토큰 발급 완료")
-                
-                return token
-            else:
-                logger.error("토큰 발급 실패")
-                return None
-                
-        except redis.ConnectionError as e:
-            logger.error(f"Redis 연결 실패: {e}")
-            return None
-        except Exception as e:
-            logger.error(f"토큰 조회 오류: {e}")
-            return None
+                logger.info("STOCK API 토큰 발급 완료")
+        
+        return token
     
-    def _issue_new_token(self):
-        try:
-            headers = {"content-type": "application/json"}
+    def get_candle_token(self) -> str:
+        token = self.redis_client.get(self.candle_token_key)
+        
+        if not token:
+            logger.info("CANDLE API 토큰 발급")
+            token = self._issue_token(self.candle_api_key, self.candle_api_secret)
             
-            body = {
-                "grant_type": "client_credentials",
-                "appkey": self.appkey,
-                "appsecret": self.appsecret
-            }
-            
-            response = requests.post(
-                self.auth_url,
-                headers=headers,
-                json=body,
-                timeout=10
-            )
-            
-            if response.status_code != 200:
-                logger.error(f"API 응답 오류: {response.status_code}")
-                return None
-            
-            data = response.json()
-            
-            if 'access_token' in data:
-                token = data['access_token']
-                return token
-            else:
-                logger.error(f"API 응답 오류: {data}")
-                return None
-                
-        except requests.RequestException as e:
-            logger.error(f"API 호출 실패: {e}")
-            return None
-        except Exception as e:
-            logger.error(f"토큰 발급 오류: {e}")
-            return None
+            if token:
+                self.redis_client.setex(
+                    self.candle_token_key,
+                    86400,
+                    token
+                )
+                logger.info("CANDLE API 토큰 발급 완료")
+        
+        return token
+
+    def get_token(self) -> str:
+        return self.get_stock_token()
     
+    #토큰 갱신
     def refresh_token(self):
-        logger.info("토큰 갱신")
-        
-        self.redis_client.delete(self.token_key)
-        
-        return self.get_token()
+        self.redis_client.delete(self.stock_token_key)
+        self.redis_client.delete(self.candle_token_key)
+        return self.get_stock_token()
+
     
     #웹소켓 접속키 발급
     def get_approval_key(self):
@@ -160,8 +154,8 @@ class TokenManager:
             headers = {"content-type": "application/json"}
             body = {
                 "grant_type": "client_credentials",
-                "appkey": self.appkey,
-                "secretkey": self.appsecret
+                "appkey": self.stock_api_key,
+                "secretkey": self.stock_api_secret
             }
 
             response = requests.post(
