@@ -28,6 +28,7 @@ public class RoomService {
     private final OpenVidu openVidu;
     private final RoomRepository roomRepository;
     private final MemberRepository memberRepository;
+    private final ChatMessageService chatMessageService;
 
     @Transactional
     public RoomResponseDto createGroup(Long ownerId, RoomCreateRequestDto request)
@@ -49,7 +50,6 @@ public class RoomService {
                 .joinCode(request.getJoinCode())
                 .openviduSessionId(session.getSessionId())
                 .currentMemberCount(1) //방장은 즉시 참여하므로 기본 값 1로 설정
-                .createdAt(LocalDateTime.now())
                 .build();
 
         Room savedRoom = roomRepository.save(room);
@@ -68,7 +68,7 @@ public class RoomService {
                 .maxMemberCount(savedRoom.getMaxMemberCount())
                 .isPublic(savedRoom.getIsPublic())
                 .joinCode(savedRoom.getJoinCode())
-                .createdAt(LocalDateTime.now())
+                .createdAt(savedRoom.getCreatedAt())
                 .build();
 
     }
@@ -83,6 +83,7 @@ public class RoomService {
                 .currentMemberCount(room.getCurrentMemberCount())
                 .maxMemberCount(room.getMaxMemberCount())
                 .isPublic(room.getIsPublic())
+                .createdAt(room.getCreatedAt())
                 .build());
     }
 
@@ -197,6 +198,7 @@ public class RoomService {
         // 인원이 0명이면 삭제
         boolean isRoomDeleted = false;
         if(room.isEmpty()) {
+            chatMessageService.deleteMessages(roomId);
             roomRepository.delete(room);
             isRoomDeleted = true;
         } else {

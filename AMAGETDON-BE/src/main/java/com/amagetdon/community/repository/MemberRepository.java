@@ -18,6 +18,8 @@ public interface MemberRepository extends JpaRepository<Member,Long> {
     // 특정 그룹의 특정 유저 찾기(그룹 나가기용)
     Optional<Member> findByUserIdAndRoomIdAndIsActiveTrue(Long userId, Long roomId);
 
+    Optional<Member> findByRoomIdAndUserId(Long roomId, Long userId);
+
     // 특정 그룹의 확성 멤버 수 조회
     long countByRoomIdAndIsActiveTrue(Long roomId);
 
