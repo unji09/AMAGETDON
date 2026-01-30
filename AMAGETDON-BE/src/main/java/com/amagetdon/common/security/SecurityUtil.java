@@ -6,8 +6,8 @@ public class SecurityUtil {
     public static Long getCurrentUserId() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getPrincipal() == null) {
-            return null;
+            throw new SecurityException("인증 정보가 없습니다.");
         }
-        return (Long) authentication.getPrincipal();
+        return Long.valueOf(authentication.getPrincipal().toString());
     }
 }
