@@ -1,5 +1,6 @@
 package com.amagetdon.trading.controller;
 
+import com.amagetdon.common.security.SecurityUtil;
 import com.amagetdon.trading.dto.response.AssetResponse;
 import com.amagetdon.trading.service.AssetService;
 import lombok.RequiredArgsConstructor;
@@ -14,9 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class AssetController {
     private final AssetService assetService;
 
-    // TODO(재훈) : @AuthenticationPrincipal로 userId 받기
     @GetMapping("/assets")
-    public ResponseEntity<AssetResponse> getAsset(Long userId) {
+    public ResponseEntity<AssetResponse> getAsset() {
+        Long userId = SecurityUtil.getCurrentUserId();
         AssetResponse response = assetService.getAsset(userId);
         return ResponseEntity.ok(response);
     }

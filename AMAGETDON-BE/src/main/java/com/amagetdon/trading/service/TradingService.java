@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import static com.amagetdon.common.ErrorCode.*;
+
 @Service
 @RequiredArgsConstructor
 public class TradingService {
@@ -90,7 +92,7 @@ public class TradingService {
         // 보유 주식 확인 및 감소
         StockHoldingId holdingId = new StockHoldingId(request.stockCode(), user.getUserId());
         StockHolding holding = accountRepository.findById(holdingId)
-                .orElseThrow(() -> new IllegalArgumentException("보유한 주식이 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException(NO_OWNED_STOCK.getMessage()));
 
         holding.subtractQuantity(request.quantity());
 
@@ -103,12 +105,12 @@ public class TradingService {
 
     private User findUser(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException(USER_NOT_FOUND_SIMPLE.getMessage()));
     }
 
     private Stock findStock(String stockCode) {
         return stockRepository.findById(stockCode)
-                .orElseThrow(() -> new IllegalArgumentException("주식 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException(STOCK_INFO_NOT_FOUND.getMessage()));
     }
 
     private StockHolding createNewHolding(StockHoldingId holdingId, Stock stock, User user) {
@@ -126,7 +128,7 @@ public class TradingService {
                 .findTopByStockOrderByCreatedAtDesc(stock)
                 .map(StockPrice::getCurrentPrice)
                 .map(Integer::parseInt)
-                .orElseThrow(() -> new IllegalStateException("현재가를 조회할 수 없습니다."));
+                .orElseThrow(() -> new IllegalStateException(PRICE_NOT_AVAILABLE.getMessage()));
     }
 
     private BigDecimal calculateNewAvgPrice(

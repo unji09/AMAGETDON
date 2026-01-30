@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static com.amagetdon.common.ErrorCode.PRICE_NOT_AVAILABLE;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -49,6 +51,6 @@ public class StockHoldingService {
                 .findTopByStockOrderByCreatedAtDesc(holding.getStock())
                 .map(StockPrice::getCurrentPrice)
                 .map(Integer::parseInt)
-                .orElseThrow(() -> new IllegalStateException("주가 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalStateException(PRICE_NOT_AVAILABLE.getMessage()));
     }
 }

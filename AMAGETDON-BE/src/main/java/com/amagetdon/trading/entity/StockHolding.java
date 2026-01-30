@@ -11,6 +11,8 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import static com.amagetdon.common.ErrorCode.INSUFFICIENT_STOCK_QUANTITY;
+
 @Entity
 @Table(name = "stock_holdings")
 @EntityListeners(AuditingEntityListener.class)
@@ -50,7 +52,7 @@ public class StockHolding {
 
     public void subtractQuantity(Integer quantity) {
         if (this.quantity < quantity) {
-            throw new IllegalArgumentException("보유 수량이 부족합니다.");
+            throw new IllegalArgumentException(INSUFFICIENT_STOCK_QUANTITY.getMessage());
         }
         this.quantity -= quantity;
         this.updatedAt = LocalDateTime.now();
