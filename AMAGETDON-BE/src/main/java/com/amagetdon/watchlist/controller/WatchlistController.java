@@ -1,6 +1,7 @@
 package com.amagetdon.watchlist.controller;
 
 import com.amagetdon.common.security.SecurityUtil;
+import com.amagetdon.watchlist.dto.request.WatchlistAddRequest;
 import com.amagetdon.watchlist.dto.response.WatchlistResponse;
 import com.amagetdon.watchlist.service.WatchlistService;
 import lombok.RequiredArgsConstructor;
@@ -27,5 +28,12 @@ public class WatchlistController {
         WatchlistResponse response = watchlistService.getWatchlist(userId, pageable);
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping
+    public ResponseEntity<Void> addToWatchlist(@RequestBody WatchlistAddRequest request) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        watchlistService.addToWatchlist(userId, request.stockCode());
+        return ResponseEntity.ok().build();
     }
 }
