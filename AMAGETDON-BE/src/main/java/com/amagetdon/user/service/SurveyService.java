@@ -15,7 +15,6 @@ public class SurveyService {
 
     private final SurveyRepository surveyRepository;
 
-
     public List<Survey> getAllSurveys() {
         return surveyRepository.findAll();
     }

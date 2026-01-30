@@ -34,3 +34,13 @@ LOAD DATA INFILE '/var/lib/mysql-files/quiz_choices.csv'
     LINES TERMINATED BY '\r\n'
     IGNORE 1 ROWS
     (choice_id, quiz_id, choice_no, choice_text, is_answer);
+
+-- survey_questions 데이터 로드 (중복 시 자동 스킵)
+LOAD DATA INFILE '/var/lib/mysql-files/survey_questions.csv'
+    INTO TABLE survey_questions
+    CHARACTER SET utf8mb4
+    FIELDS TERMINATED BY ','
+    ENCLOSED BY '"'
+    LINES TERMINATED BY '\r\n'
+    IGNORE 1 ROWS
+    (question_id, question_text);
