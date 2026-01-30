@@ -66,7 +66,7 @@ public class ReviewNoteService {
 
         // 2. 오답노트에 있는지 확인
         ReviewNote reviewNote = reviewNoteRepository
-                .findByUserIdAndQuizQuizId(userId, request.quizId())
+                .findByUserAndQuiz(userId, request.quizId())
                 .orElseThrow(() -> new IllegalArgumentException("오답노트에 없는 문제입니다"));
 
         // 3. 정답 체크
@@ -162,7 +162,7 @@ public class ReviewNoteService {
             return quiz.getAnswerOx() ? "O" : "X";
         } else {
             List<QuizChoice> choices = quizChoiceRepository
-                    .findByQuiz_QuizId(quiz.getQuizId());
+                    .findByQuizId(quiz.getQuizId());
 
             return choices.stream()
                     .filter(QuizChoice::getIsAnswer)
@@ -178,7 +178,7 @@ public class ReviewNoteService {
         List<ReviewNoteDetail.ChoiceInfo> choices = null;
         if (quiz.getQuizType() == QuizType.MCQ) {
             List<QuizChoice> quizChoices = quizChoiceRepository
-                    .findByQuiz_QuizId(quiz.getQuizId());
+                    .findByQuizId(quiz.getQuizId());
 
             choices = quizChoices.stream()
                     .map(choice -> new ReviewNoteDetail.ChoiceInfo(

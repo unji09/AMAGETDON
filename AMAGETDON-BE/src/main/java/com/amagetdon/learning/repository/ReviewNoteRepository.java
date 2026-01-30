@@ -26,17 +26,21 @@ public interface ReviewNoteRepository extends JpaRepository<ReviewNote, Long> {
      * 특정 퀴즈가 오답노트에 이미 있는지 확인
      * 중복 저장 방지용
      */
-    boolean existsByUserIdAndQuizQuizId(Long userId, Long quizId);
-
+    @Query("SELECT CASE WHEN COUNT(rn) > 0 THEN true ELSE false END " +
+            "FROM ReviewNote rn " +
+            "WHERE rn.userId = :userId AND rn.quiz.quizId = :quizId")
+    boolean existsByUserAndQuiz(@Param("userId") Long userId, @Param("quizId") Long quizId);
     /**
      * 특정 사용자의 특정 퀴즈 오답노트 조회
      * 오답노트 풀이 제출 시 사용
      */
-    Optional<ReviewNote> findByUserIdAndQuizQuizId(Long userId, Long quizId);
+    @Query("SELECT rn FROM ReviewNote rn WHERE rn.userId = :userId AND rn.quiz.quizId = :quizId")
+    Optional<ReviewNote> findByUserAndQuiz(@Param("userId") Long userId, @Param("quizId") Long quizId);
 
     /**
      * 사용자의 남은 오답노트 개수 조회
      * Response에 반환용
      */
-    Integer countByUserId(Long userId);
+    @Query("SELECT COUNT(rn) FROM ReviewNote rn WHERE rn.userId = :userId")
+    Integer countByUserId(@Param("userId") Long userId);
 }
