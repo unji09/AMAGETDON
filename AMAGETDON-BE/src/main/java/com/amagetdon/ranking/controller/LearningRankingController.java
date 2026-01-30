@@ -1,11 +1,15 @@
 package com.amagetdon.ranking.controller;
 
+import com.amagetdon.ranking.dto.response.LearningRankingListResponse;
 import com.amagetdon.ranking.dto.response.MyLearningRankingResponse;
 import com.amagetdon.ranking.entity.LearningRanking;
 import com.amagetdon.ranking.service.LearningRankingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,6 +32,16 @@ public class LearningRankingController {
 
         LearningRanking learningRanking = learningRankingService.getMyLearningRanking(userId);
         MyLearningRankingResponse response = MyLearningRankingResponse.from(learningRanking);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "학습 랭킹 목록 조회", description = "전체 학습 랭킹 목록을 페이징하여 조회합니다.")
+    @GetMapping
+    public ResponseEntity<Page<LearningRankingListResponse>> getLearningRankings(
+            @PageableDefault(size = 20, sort = "rank") Pageable pageable
+    ) {
+        Page<LearningRanking> rankings = learningRankingService.getLearningRankings(pageable);
+        Page<LearningRankingListResponse> response = rankings.map(LearningRankingListResponse::from);
         return ResponseEntity.ok(response);
     }
 }
