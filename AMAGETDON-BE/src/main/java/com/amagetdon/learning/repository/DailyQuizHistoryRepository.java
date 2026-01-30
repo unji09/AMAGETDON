@@ -51,4 +51,7 @@ public interface DailyQuizHistoryRepository extends JpaRepository<DailyQuizHisto
             @Param("userId") Long userId,
             @Param("quizDate") LocalDate quizDate
     );
+
+    // 학습 랭킹 계산용, 유저 전체 퀴즈 히스토리 조회
+    List<DailyQuizHistory> findByUserId(Long userId);
 }
