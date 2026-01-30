@@ -1,0 +1,10 @@
+package com.amagetdon.watchlist.repository;
+
+import com.amagetdon.watchlist.entity.Watchlist;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface WatchlistRepository extends JpaRepository<Watchlist, Long> {
+    Page<Watchlist> findByUserUserId(Long userId, Pageable pageable);
+}

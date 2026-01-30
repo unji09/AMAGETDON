@@ -43,3 +43,11 @@ out/
 .DS_Store
 Thumbs.db
 .env
+
+### Docker 영속 데이터 ###
+# 초기 데이터는 init-scripts/의 SQL로 관리하므로 중복
+mysql-data/
+redis-data/
+
+# 백업 디렉토리는 선택적으로 커밋 가능
+mysql-data-backup-*/
