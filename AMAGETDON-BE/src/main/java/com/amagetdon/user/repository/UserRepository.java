@@ -1,5 +1,6 @@
 package com.amagetdon.user.repository;
 
+import com.amagetdon.user.entity.LoginType;
 import com.amagetdon.user.entity.User;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -14,4 +15,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(@Email String email);
 
     boolean existsByNickname(String nickname);
+
+    Optional<User> findBySocialIdAndLoginType(Long socialType, LoginType loginType);
 }
