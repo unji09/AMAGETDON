@@ -1,6 +1,7 @@
 package com.amagetdon.learning.service;
 
 import com.amagetdon.learning.dto.chapter.BaseChaptersResponse;
+import com.amagetdon.learning.dto.chapter.ChapterDetailResponse;
 import com.amagetdon.learning.dto.chapter.SideChaptersResponse;
 import com.amagetdon.learning.entity.Chapter;
 import com.amagetdon.learning.entity.ChapterStatus;
@@ -85,6 +86,61 @@ public class ChapterService{
             progressMap.put(key, p);
         }
         return progressMap;
+    }
+
+    public ChapterDetailResponse getChapterDetail(Long userId, Long chapterId) {
+
+        // 챕터 존재 여부 확인
+        Chapter chapter = chapterRepository.findById(chapterId)
+                .orElseThrow(() -> new IllegalArgumentException("챕터를 찾을 수 없습니다."));
+
+        // LOCKED 여부 판별
+        // TODO (지원) : 에러 통일하는 작업 할 때, 글로벌 익셉션을 사용하여 403으로 변경
+        ChapterStatus status = resolveChapterStatus(userId, chapter);
+        if (status == ChapterStatus.LOCKED) {
+            throw new SecurityException("잠긴 챕터는 조회할 수 없습니다.");
+        }
+
+        return new ChapterDetailResponse(
+                chapter.getChapterId(),
+                chapter.getChapterType(),
+                chapter.getBaseChapterNo(),
+                chapter.getChapterTitle(),
+                chapter.getChapterSummary(),
+                chapter.getChapterContent(),
+                chapter.getCreatedAt(),
+                chapter.getUpdatedAt()
+        );
+    }
+
+    private ChapterStatus resolveChapterStatus(Long userId, Chapter chapter) {
+
+        // 챕터 타입에 따른 리스트 생성
+        List<Chapter> targetChapters = (chapter.getChapterType() == ChapterType.NORMAL)
+                ? chapterRepository.findAllByChapterTypeOrderByBaseChapterNoAsc(ChapterType.NORMAL)
+                : chapterRepository.findAllByChapterTypeOrderByChapterIdAsc(chapter.getChapterType());
+
+        // 진행도 맵 가져오기, 상태 판별 루프
+        Map<Long, UserChapterProgress> progressMap = getProgressMap(userId);
+        return calculateStatusInSequence(targetChapters, progressMap, chapter.getChapterId());
+    }
+
+    // 주어진 리스트를 순차적으로 탐색하며 타겟 챕터의 상태를 계산
+    private ChapterStatus calculateStatusInSequence(List<Chapter> chapters, Map<Long, UserChapterProgress> progressMap, Long targetChapterId) {
+        boolean prevCompleted = true;
+
+        for (Chapter c : chapters) {
+            UserChapterProgress p = progressMap.get(c.getChapterId());
+            ChapterStatus s = calculateStatus(p, prevCompleted);
+
+            // 우리가 찾는 챕터라면 즉시 반환
+            if (c.getChapterId().equals(targetChapterId)) {
+                return s;
+            }
+            // 다음 챕터 판단을 위해 현재 챕터의 완료 여부 저장
+            prevCompleted = (s == ChapterStatus.COMPLETED);
+        }
+        return ChapterStatus.LOCKED;
     }
 
     public SideChaptersResponse getSideChapters(Long userId, ChapterType chapterType) {
