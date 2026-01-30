@@ -33,12 +33,7 @@ public class UserService {
     }
 
     public User signup(UserSignupRequest request) {
-        if(userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("이미 사용중인 이메일입니다.");
-        }
-        if(userRepository.existsByNickname(request.nickname())) {
-            throw new IllegalArgumentException("이미 사용중인 닉네임입니다.");
-        }
+        existsByEmailOrNickname(request.email(), request.nickname());
 
         User user = User.builder()
                 .email(request.email())
@@ -67,6 +62,8 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));
 
+        existsByEmailOrNickname(updatedInfo.getEmail(), updatedInfo.getNickname());
+
         @Email
         String email = choose(user.getEmail(), updatedInfo.getEmail());
         String password = updatedInfo.getPassword() == null ? user.getPassword() : passwordEncoder.encode(updatedInfo.getPassword());
@@ -85,5 +82,14 @@ public class UserService {
 
     private String choose(String original, String updated) {
         return updated != null ? updated : original;
+    }
+
+    private void existsByEmailOrNickname(@Email String email, String nickname) {
+        if(userRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException("이미 사용중인 이메일입니다.");
+        }
+        if(userRepository.existsByNickname(nickname)) {
+            throw new IllegalArgumentException("이미 사용중인 닉네임입니다.");
+        }
     }
 }
