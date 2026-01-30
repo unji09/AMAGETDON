@@ -1,4 +1,3 @@
-// Watchlist 엔티티에 빌더 패턴 추가
 package com.amagetdon.watchlist.entity;
 
 import com.amagetdon.stock.entity.Stock;
