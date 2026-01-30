@@ -49,6 +49,9 @@ dependencies {
 
 	// OpenVidu Java Client 추가
 	implementation 'io.openvidu:openvidu-java-client:2.30.0'
+
+	//Spring boot mail 추가
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
 }
 
 tasks.named('test') {

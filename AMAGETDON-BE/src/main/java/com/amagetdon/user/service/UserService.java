@@ -77,6 +77,12 @@ public class UserService {
         return user;
     }
 
+    public void updatePassword(String email, String newPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));
+        user.updatePassword(passwordEncoder.encode(newPassword));
+    }
+
     private String choose(String original, String updated) {
         return updated != null ? updated : original;
     }
