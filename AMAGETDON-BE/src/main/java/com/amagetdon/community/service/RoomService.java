@@ -36,7 +36,7 @@ public class RoomService {
 
         memberRepository.findByUserIdAndIsActiveTrue(ownerId)
                 .ifPresent(member -> {
-                    throw new IllegalStateException(ErrorCode.ALREADY_JOINED_ROOM.getMessage());
+                    throw new IllegalArgumentException(ErrorCode.ALREADY_JOINED_ROOM.getMessage());
                 });
 
         SessionProperties properties = new SessionProperties.Builder().build();

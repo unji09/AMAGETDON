@@ -21,7 +21,7 @@ public class OpenViduService {
 
     public String createConnection(String sessionId, Map<String,Object> params) throws OpenViduJavaClientException, OpenViduHttpException {
         Session session = openVidu.getActiveSession(sessionId);
-        if(session == null) throw new RuntimeException(ErrorCode.SESSION_NOT_FOUND.getMessage());
+        if(session == null) throw new IllegalArgumentException(ErrorCode.SESSION_NOT_FOUND.getMessage());
 
         ConnectionProperties properties = ConnectionProperties.fromJson(params).build();
         Connection connection = session.createConnection(properties);
