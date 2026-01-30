@@ -36,4 +36,11 @@ public class WatchlistController {
         watchlistService.addToWatchlist(userId, request.stockCode());
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/{watchlistId}")
+    public ResponseEntity<Void> removeFromWatchlist(@PathVariable Long watchlistId) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        watchlistService.removeFromWatchlist(userId, watchlistId);
+        return ResponseEntity.ok().build();
+    }
 }
