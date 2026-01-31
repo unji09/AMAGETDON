@@ -1,9 +1,11 @@
 package com.amagetdon.user.service;
 
 import com.amagetdon.common.ErrorCode;
+import com.amagetdon.common.oauth.dto.response.KakaoUserResponse;
 import com.amagetdon.common.security.SecurityUtil;
 import com.amagetdon.user.dto.request.UserLoginRequest;
 import com.amagetdon.user.dto.request.UserSignupRequest;
+import com.amagetdon.user.entity.LoginType;
 import com.amagetdon.user.entity.User;
 import com.amagetdon.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -81,6 +83,34 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));
         user.updatePassword(passwordEncoder.encode(newPassword));
+    }
+
+    public User oAuthSignup(KakaoUserResponse userInfo, LoginType provider) {
+        String originalNickname = userInfo.properties().nickname();
+        String nickname = originalNickname;
+        int num = 0;
+
+        while (userRepository.existsByNickname(nickname)) {
+            num++;
+            nickname = originalNickname + num;
+        }
+
+        User user = User.builder()
+                .email(null)
+                .password(null)
+                .nickname(nickname)
+                .investmentType(null)
+                .loginType(provider)
+                .socialId(userInfo.providerId())
+                .build();
+
+        return userRepository.save(user);
+    }
+
+    public User findOAuthUser(KakaoUserResponse userInfo, LoginType provider) {
+
+        return userRepository.findBySocialIdAndLoginType(userInfo.providerId(), provider)
+                .orElse(null);
     }
 
     private String choose(String original, String updated) {
