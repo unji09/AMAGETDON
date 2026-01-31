@@ -4,11 +4,13 @@ import com.amagetdon.common.ErrorCode;
 import com.amagetdon.stock.dto.CandleDto;
 import com.amagetdon.stock.dto.response.CandleChartResponse;
 import com.amagetdon.stock.dto.response.StockDetailResponse;
+import com.amagetdon.stock.dto.response.StockSearchResponse;
 import com.amagetdon.stock.dto.response.VolumeRankingResponse;
 import com.amagetdon.stock.entity.ChartCandle;
 import com.amagetdon.stock.entity.IntervalType;
 import com.amagetdon.stock.repository.ChartCandleRepository;
 import com.amagetdon.stock.repository.StockQueryRepository;
+import com.amagetdon.stock.repository.StockRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -23,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 public class StockService {
     private final StockQueryRepository stockQueryRepository;
     private final ChartCandleRepository chartCandleRepository;
+    private final StockRepository stockRepository;
     private final RedisTemplate<String, String> redisTemplate;
 
     private static final String USER_STOCKS_KEY = "kis:user_stocks";
@@ -86,5 +89,16 @@ public class StockService {
         }
 
         return stockQueryRepository.findTopStocks(stockCodes);
+    }
+
+    public List<StockSearchResponse> searchStocks(String keyword) {
+        if (keyword == null || keyword.length() < 2) {
+            throw new IllegalArgumentException(ErrorCode.KEYWORD_TOO_SHORT.getMessage());
+        }
+
+        return stockRepository.findByStockNameContaining(keyword)
+                .stream()
+                .map(s -> new StockSearchResponse(s.getStockCode(), s.getStockName()))
+                .toList();
     }
 }

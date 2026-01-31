@@ -12,16 +12,11 @@ DB_CONFIG = {
     'charset': 'utf8mb4'
 }
 
-API_CONFIG = {
-    'key': os.getenv('API_KEY', ''),
-    'secret': os.getenv('API_SECRET', '')
-}
-
 COLLECTION_CONFIG = {
     'realtime_interval': 5,
 }
 
 REDIS_KEYS = {
-    'top_30_stocks': 'kis:top_30_stocks',
+    'top_10_stocks': 'kis:top_10_stocks',
     'user_stocks': 'kis:user_stocks'
 }

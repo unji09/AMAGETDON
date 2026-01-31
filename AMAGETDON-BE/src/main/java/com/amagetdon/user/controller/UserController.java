@@ -1,6 +1,7 @@
 package com.amagetdon.user.controller;
 
 import com.amagetdon.common.security.SecurityUtil;
+import com.amagetdon.user.controller.swagger.UserControllerSwagger;
 import com.amagetdon.user.dto.request.PasswordResetEmailRequest;
 import com.amagetdon.user.dto.request.UpdateUserTitleRequest;
 import com.amagetdon.user.entity.User;
@@ -13,20 +14,20 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/users")
-public class UserController {
+public class UserController implements UserControllerSwagger {
 
     private final UserService userService;
     private final PasswordResetService passwordResetService;
 
     @GetMapping("/me")
-    public ResponseEntity<?> getUserInfo() {
+    public ResponseEntity<User> getUserInfo() {
         Long userId = SecurityUtil.getCurrentUserId();
         User user = userService.getUserInfo(userId);
         return ResponseEntity.ok(user);
     }
 
     @PutMapping("/me")
-    public ResponseEntity<?> updateUserInfo(@RequestBody User updatedInfo) {
+    public ResponseEntity<User> updateUserInfo(@RequestBody User updatedInfo) {
         Long userId = SecurityUtil.getCurrentUserId();
         User user = userService.updateUserInfo(userId, updatedInfo);
         return ResponseEntity.ok(user);
@@ -40,16 +41,15 @@ public class UserController {
     }
 
     @GetMapping("/me/title")
-    public ResponseEntity<?> getUserTitle() {
+    public ResponseEntity<String> getUserTitle() {
         Long userId = SecurityUtil.getCurrentUserId();
         String title = userService.getUserInfo(userId).getCurrentTitle();
 
         return ResponseEntity.ok(title);
     }
 
-    //TODO(수정) : 타이틀 설정으로 선택된 업적 이름이 들어가도록 변경
     @PutMapping("/me/title")
-    public ResponseEntity<?> updateUserTitle(@RequestBody UpdateUserTitleRequest request) {
+    public ResponseEntity<String> updateUserTitle(@RequestBody UpdateUserTitleRequest request) {
         Long userId = SecurityUtil.getCurrentUserId();
         User user = userService.getUserInfo(userId);
         user.updateCurrentTitle(request.newTitle());

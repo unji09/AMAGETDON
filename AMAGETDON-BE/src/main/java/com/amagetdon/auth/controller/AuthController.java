@@ -9,6 +9,7 @@ import com.amagetdon.auth.service.RefreshTokenService;
 import com.amagetdon.common.jwt.JwtProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
-public class AuthController {
+public class AuthController implements AuthControllerSwagger{
 
     private final AuthService authService;
     private final RefreshTokenService refreshTokenService;
@@ -57,7 +58,9 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@CookieValue(value = "refreshToken", required = false) String refreshToken) {
-        refreshTokenService.deleteRefreshToken(refreshToken);
+        if (refreshToken != null && !refreshToken.isEmpty()) {
+            authService.logout(refreshToken);
+        }
 
         ResponseCookie deleteCookie = refreshTokenService.deleteRefreshTokenCookie();
 
@@ -67,7 +70,11 @@ public class AuthController {
     }
 
     @DeleteMapping("/withdraw")
-    public ResponseEntity<?> withdraw(@CookieValue("refreshToken") String refreshToken) {
+    public ResponseEntity<String> withdraw(@CookieValue("refreshToken") String refreshToken) {
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("인증 정보가 없습니다.");
+        }
+
         authService.withdraw(refreshToken);
 
         ResponseCookie deleteCookie = refreshTokenService.deleteRefreshTokenCookie();

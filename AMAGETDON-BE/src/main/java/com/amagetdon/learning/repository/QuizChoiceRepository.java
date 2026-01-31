@@ -12,14 +12,14 @@ import java.util.List;
 public interface QuizChoiceRepository extends JpaRepository<QuizChoice, Long> {
 
     /**
-     * 퀴즈 ID로 선택지 조회
+     * 특정 퀴즈의 선택지 조회
      */
-    @Query("SELECT qc FROM QuizChoice qc WHERE qc.quiz.quizId = :quizId")
+    @Query("SELECT qc FROM QuizChoice qc WHERE qc.quiz.quizId = :quizId ORDER BY qc.choiceNo")
     List<QuizChoice> findByQuizId(@Param("quizId") Long quizId);
 
     /**
-     * 여러 퀴즈의 선택지 일괄 조회
+     * 여러 퀴즈의 선택지를 한 번에 조회 (N+1 방지)
      */
-    @Query("SELECT qc FROM QuizChoice qc WHERE qc.quiz.quizId IN :quizIds")
-    List<QuizChoice> findByQuizIds(@Param("quizIds") List<Long> quizIds);
+    @Query("SELECT qc FROM QuizChoice qc WHERE qc.quiz.quizId IN :quizIds ORDER BY qc.quiz.quizId, qc.choiceNo")
+    List<QuizChoice> findByQuizIdIn(@Param("quizIds") List<Long> quizIds);
 }
