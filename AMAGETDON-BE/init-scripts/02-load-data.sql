@@ -44,3 +44,15 @@ LOAD DATA INFILE '/var/lib/mysql-files/survey_questions.csv'
     LINES TERMINATED BY '\r\n'
     IGNORE 1 ROWS
     (question_id, question_text);
+
+-- achievements 데이터 로드 (중복 시 자동 스킵)
+LOAD DATA INFILE '/var/lib/mysql-files/achievements.csv'
+    IGNORE
+    INTO TABLE achievements
+    CHARACTER SET utf8mb4
+    FIELDS TERMINATED BY ','
+    ENCLOSED BY '"'
+    LINES TERMINATED BY '\r\n'
+    IGNORE 1 ROWS
+    (achievement_id, achievement_name, achievement_icon, achievement_content,
+     achievement_category, target_value, comparison_type, created_at, updated_at);

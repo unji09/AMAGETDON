@@ -12,4 +12,5 @@ public interface LearningRankingRepository extends JpaRepository<LearningRanking
 
     @Query("SELECT lr.rank FROM LearningRanking lr WHERE lr.userId = :userId")
     Optional<Integer> findRankingByUserId(@Param("userId") Long userId);
+
 }
