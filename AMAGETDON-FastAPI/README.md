@@ -32,12 +32,12 @@ docker compose up -d
 ```
 
 ### 3. API 확인
-```bash
+```cmd
 # 헬스 체크
 curl http://localhost:8000/health
 
 # API 문서
-open http://localhost:8000/docs
+start http://localhost:8000/docs
 ```
 
 ## API 엔드포인트
