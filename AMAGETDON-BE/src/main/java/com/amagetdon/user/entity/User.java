@@ -47,7 +47,7 @@ public class User {
     private LoginType loginType;
 
     @Column
-    private String socialId;
+    private Long socialId;
 
     @Column
     private String currentTitle;
