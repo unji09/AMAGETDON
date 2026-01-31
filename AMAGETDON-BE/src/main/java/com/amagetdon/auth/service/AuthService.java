@@ -40,25 +40,35 @@ public class AuthService {
         return createTokenAndSave(user.getUserId(), true);
     }
 
-    public void withdraw(String refreshToken) {
-        if (!refreshTokenService.isRefreshTokenExisted(refreshToken)) {
-            throw new SecurityException("유효하지 않은 refresh token입니다.");
+    public void logout(String refreshToken) {
+        try {
+            Long userId = jwtTokenProvider.getUserId(refreshToken);
+            refreshTokenService.deleteRefreshTokenByUserId(userId);
+        } catch (Exception e) {
         }
-
-        userService.withdraw();
-
-        refreshTokenService.deleteRefreshToken(refreshToken);
     }
 
-    public TokenResponse refresh(String refreshToken) {
-        if (!refreshTokenService.isRefreshTokenExisted(refreshToken)) {
-            throw new SecurityException("유효하지 않은 refresh token입니다.");
+    public void withdraw(String refreshToken) {
+        Long userId;
+        try {
+            String userIdStr = refreshTokenService.validateAndExtractUserId(refreshToken);
+            userId = Long.parseLong(userIdStr);
+        } catch (Exception e) {
+            throw new SecurityException("인증 정보가 만료되었습니다. 다시 로그인 후 진행해주세요.");
         }
 
-        Long userId = refreshTokenService.getUserIdByRefreshToken(refreshToken);
+        userService.withdraw(userId);
 
-        refreshTokenService.deleteRefreshToken(refreshToken);
+        refreshTokenService.deleteRefreshTokenByUserId(userId);
+    }
 
+    public TokenResponse refresh(String refreshTokenFromCookie) {
+        // 1. Refresh Token 검증 및 유저 ID 추출 (검증 실패 시 여기서 예외 발생)
+        String userIdStr = refreshTokenService.validateAndExtractUserId(refreshTokenFromCookie);
+        Long userId = Long.parseLong(userIdStr);
+
+        // 2. 새로운 토큰 쌍(AT, RT) 생성 및 Redis 업데이트 (RTR 적용)
+        refreshTokenService.deleteRefreshTokenByUserId(userId);
         return createTokenAndSave(userId, false);
     }
 
@@ -66,7 +76,7 @@ public class AuthService {
         String accessToken = jwtTokenProvider.createAccessToken(userId);
         String refreshToken = jwtTokenProvider.createRefreshToken(userId);
 
-        refreshTokenService.saveRefreshToken(refreshToken, userId);
+        refreshTokenService.saveRefreshToken(userId, refreshToken);
 
         return new TokenResponse(accessToken, refreshToken, firstLogin);
     }
