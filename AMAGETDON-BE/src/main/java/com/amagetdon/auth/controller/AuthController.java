@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
-public class AuthController {
+public class AuthController implements AuthControllerSwagger{
 
     private final AuthService authService;
     private final RefreshTokenService refreshTokenService;
@@ -70,7 +70,7 @@ public class AuthController {
     }
 
     @DeleteMapping("/withdraw")
-    public ResponseEntity<?> withdraw(@CookieValue("refreshToken") String refreshToken) {
+    public ResponseEntity<String> withdraw(@CookieValue("refreshToken") String refreshToken) {
         if (refreshToken == null || refreshToken.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("인증 정보가 없습니다.");
         }
