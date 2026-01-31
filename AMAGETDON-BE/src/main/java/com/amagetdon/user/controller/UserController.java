@@ -43,6 +43,7 @@ public class UserController {
     public ResponseEntity<?> getUserTitle() {
         Long userId = SecurityUtil.getCurrentUserId();
         String title = userService.getUserInfo(userId).getCurrentTitle();
+
         return ResponseEntity.ok(title);
     }
 
@@ -52,6 +53,7 @@ public class UserController {
         Long userId = SecurityUtil.getCurrentUserId();
         User user = userService.getUserInfo(userId);
         user.updateCurrentTitle(request.newTitle());
+
         return ResponseEntity.ok(user.getCurrentTitle());
     }
 }
