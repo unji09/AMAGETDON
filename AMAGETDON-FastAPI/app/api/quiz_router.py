@@ -5,7 +5,7 @@ from models.quiz_dto import QuizGenerateRequest, QuizGenerateResponse
 from app.services.quiz_service import QuizService
 
 router = APIRouter(
-    prefix="/quizzes",
+    prefix="/api/quiz",
     tags=["Quiz Generation"]
 )
 
