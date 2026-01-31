@@ -226,14 +226,13 @@ def update_financials():
         
         for i, stock_code in enumerate(stocks, 1):
             try:
-                info = api_client.fetch_stock_price_info(stock_code)
-                
-                if info:
+                stock = api_client.fetch_price(stock_code)
+                if stock:
                     cursor.execute("""
                         UPDATE stock 
                         SET per=%s, pbr=%s, eps=%s, bps=%s, market_cap=%s, updated_at=NOW()
                         WHERE stock_code=%s
-                    """, (info['per'], info['pbr'], info['eps'], info['bps'], info['market_cap'], stock_code))
+                    """, (stock.per, stock.pbr, stock.eps, stock.bps, stock.market_cap, stock_code))
                     success += 1
                 else:
                     fail += 1
