@@ -93,7 +93,7 @@ class RealtimeCollector:
     #rest로 수집할 종목 조회
     def _get_rest_stocks(self) -> Set[str]:
         try:
-            top30 = self.redis_client.smembers(self.top_stocks_key) or set()
+            top30 = set(self.redis_client.lrange(self.top_stocks_key, 0, -1)) or set()
 
             user_keys = self.redis_client.keys(f"{self.user_stocks_key}:*")
             user_stocks = {key.split(":")[-1] for key in user_keys} if user_keys else set()

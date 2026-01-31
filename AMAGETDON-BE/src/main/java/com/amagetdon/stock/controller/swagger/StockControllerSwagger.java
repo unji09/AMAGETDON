@@ -2,6 +2,7 @@ package com.amagetdon.stock.controller.swagger;
 
 import com.amagetdon.stock.dto.response.CandleChartResponse;
 import com.amagetdon.stock.dto.response.StockDetailResponse;
+import com.amagetdon.stock.dto.response.VolumeRankingResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -10,6 +11,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import java.util.List;
 
 @Tag(name = "stock-controller", description = "주식 정보 API")
 public interface StockControllerSwagger {
@@ -91,4 +94,36 @@ public interface StockControllerSwagger {
             @Parameter(description = "종목 코드", example = "005930") String stockCode,
             @Parameter(description = "기간 (1D, 1W, 3M, 1Y)") String period
     );
+
+    @Operation(summary = "거래량 순위 조회", description = "거래량 상위 30개 종목을 조회")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = VolumeRankingResponse.class),
+                            examples = @ExampleObject(value = """
+                                    [
+                                      {
+                                        "rank": 1,
+                                        "stockCode": "005930",
+                                        "stockName": "삼성전자",
+                                        "currentPrice": "75000",
+                                        "changeRate": 1.41,
+                                        "volume": 15234567
+                                      },
+                                      {
+                                        "rank": 2,
+                                        "stockCode": "000660",
+                                        "stockName": "SK하이닉스",
+                                        "currentPrice": "145000",
+                                        "changeRate": -0.52,
+                                        "volume": 8567234
+                                      }
+                                    ]
+                                    """)
+                    )
+            )
+    })
+    List<VolumeRankingResponse> getVolumeRankings();
 }
