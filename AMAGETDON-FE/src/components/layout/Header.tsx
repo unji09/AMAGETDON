@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import './Header.css';
 
 export const Header = () => {
-    // TODO: 실제 로그인 상태 관리는 나중에 추가
     const isLoggedIn = false;
     const userName = '사용자';
 
