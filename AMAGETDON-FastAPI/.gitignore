@@ -6,10 +6,7 @@
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
 # User-specific stuff
-<<<<<<< HEAD
 ../.idea/**
-=======
->>>>>>> 334d1c4 (S14P11A207-102 Chore: 프로젝트 초기 설정)
 .idea/**/workspace.xml
 .idea/**/tasks.xml
 .idea/**/usage.statistics.xml
