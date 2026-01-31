@@ -36,16 +36,6 @@ services:
     volumes:
       - ./redis-data:/data  # 로컬 디렉토리 마운트
 
-  #fast api
-  fastapi:
-    build: ./fastapi
-    container_name: amagetdon-fastapi
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./fastapi:/app
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-
 volumes:
   mysql-data:
   redis-data:
