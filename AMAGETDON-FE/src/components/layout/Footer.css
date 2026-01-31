@@ -1,0 +1,71 @@
+/**
+ * Footer 컴포넌트 스타일
+ */
+
+.footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 72px;
+    background-color: var(--color-white);
+    border-top: 1px solid #e5e5e5;
+    z-index: 100;
+}
+
+.footer-nav {
+    max-width: 1200px;
+    height: 100%;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+/* 네비게이션 아이템 */
+.footer-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-1);
+    padding: var(--spacing-2);
+    min-width: 64px;
+    text-decoration: none;
+    color: var(--color-dark-gray);
+    transition: color 0.2s;
+}
+
+.footer-nav-item:hover {
+    color: var(--color-main-green);
+}
+
+.footer-nav-item.active {
+    color: var(--color-main-green);
+}
+
+/* 아이콘 */
+.footer-nav-icon {
+    font-size: var(--font-size-2xl);
+}
+
+/* 라벨 */
+.footer-nav-label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+/* 모바일 */
+@media (max-width: 768px) {
+    .footer {
+        height: 64px;
+    }
+
+    .footer-nav-icon {
+        font-size: var(--font-size-xl);
+    }
+
+    .footer-nav-label {
+        font-size: 10px;
+    }
+}

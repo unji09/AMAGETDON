@@ -1,0 +1,119 @@
+/**
+ * Header 컴포넌트 스타일
+ */
+
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background-color: var(--color-white);
+    border-bottom: 1px solid #e5e5e5;
+    z-index: 100;
+}
+
+.header-content {
+    max-width: 1200px;
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 var(--spacing-4);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* 로고 */
+.header-logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: var(--color-main-green);
+}
+
+.header-logo h1 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    margin: 0;
+}
+
+/* 네비게이션 */
+.header-nav {
+    display: flex;
+    gap: var(--spacing-8);
+}
+
+.header-nav-link {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-dark-gray);
+    text-decoration: none;
+    padding: var(--spacing-2) var(--spacing-4);
+    border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.header-nav-link:hover {
+    background-color: var(--color-pale-green);
+    color: var(--color-main-green);
+}
+
+.header-nav-link.active {
+    background-color: var(--color-main-green);
+    color: var(--color-white);
+}
+
+/* 사용자 정보 */
+.header-user {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+}
+
+.header-user-name {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-dark-gray);
+}
+
+.header-login-btn,
+.header-logout-btn {
+    padding: var(--spacing-2) var(--spacing-4);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.header-login-btn {
+    background-color: var(--color-main-green);
+    color: var(--color-white);
+    text-decoration: none;
+    display: inline-block;
+}
+
+.header-login-btn:hover {
+    background-color: var(--color-brown);
+}
+
+.header-logout-btn {
+    background-color: transparent;
+    color: var(--color-dark-gray);
+    border: 1px solid var(--color-dark-gray);
+}
+
+.header-logout-btn:hover {
+    background-color: var(--color-background);
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .header-nav {
+        display: none;
+    }
+
+    .header-logo h1 {
+        font-size: var(--font-size-lg);
+    }
+}
