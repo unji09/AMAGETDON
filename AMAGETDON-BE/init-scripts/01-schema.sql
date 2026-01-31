@@ -38,3 +38,15 @@ CREATE TABLE IF NOT EXISTS survey_questions (
     question_id BIGINT PRIMARY KEY,
     question_text TEXT NOT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS achievements (
+    achievement_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    achievement_name VARCHAR(100) NOT NULL,
+    achievement_icon VARCHAR(255) NOT NULL,
+    achievement_content TEXT NOT NULL,
+    achievement_category VARCHAR(50) NOT NULL,
+    target_value BIGINT NOT NULL,
+    comparison_type VARCHAR(10) NOT NULL,
+    created_at DATETIME,
+    updated_at DATETIME
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
