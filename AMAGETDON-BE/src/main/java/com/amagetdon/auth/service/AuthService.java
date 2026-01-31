@@ -19,7 +19,6 @@ public class AuthService {
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
-    private final JwtProperties jwtProperties;
 
     public TokenResponse login(AuthLoginRequest request) {
         UserLoginRequest userLoginRequest = new UserLoginRequest(request.email(), request.password());
