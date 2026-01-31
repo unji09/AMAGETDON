@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "수익 랭킹", description = "수익 랭킹 관련 API")
 @RestController
-@RequestMapping("/ranking/profit")
+@RequestMapping("/rankings/profit")
 @RequiredArgsConstructor
 public class ProfitRankingController {
 
