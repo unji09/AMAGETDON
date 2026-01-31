@@ -4,6 +4,7 @@ import com.amagetdon.auth.dto.response.AuthLoginResponse;
 import com.amagetdon.auth.dto.response.TokenResponse;
 import com.amagetdon.auth.service.RefreshTokenService;
 import com.amagetdon.common.jwt.JwtProperties;
+import com.amagetdon.common.oauth.controller.swagger.OAuthControllerSwagger;
 import com.amagetdon.common.oauth.dto.request.OAuthLoginRequest;
 import com.amagetdon.common.oauth.service.OAuthService;
 import lombok.RequiredArgsConstructor;
@@ -15,14 +16,14 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/oauth")
-public class OAuthController {
+public class OAuthController implements OAuthControllerSwagger {
 
     private final OAuthService oAuthService;
     private final RefreshTokenService refreshTokenService;
     private final JwtProperties jwtProperties;
 
     @PostMapping("/kakao/login")
-    public ResponseEntity<?> kakaoOAuthlogin(@RequestBody OAuthLoginRequest request) {
+    public ResponseEntity<AuthLoginResponse> kakaoOAuthlogin(@RequestBody OAuthLoginRequest request) {
         TokenResponse tokenResponse = oAuthService.login(request.provider(), request.accessToken());
 
         ResponseCookie refreshTokenCookie = refreshTokenService.createRefreshTokenCookie(tokenResponse.refreshToken());
