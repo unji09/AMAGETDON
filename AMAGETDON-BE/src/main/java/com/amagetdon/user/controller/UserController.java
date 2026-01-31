@@ -48,7 +48,6 @@ public class UserController implements UserControllerSwagger {
         return ResponseEntity.ok(title);
     }
 
-    //TODO(수정) : 타이틀 설정으로 선택된 업적 이름이 들어가도록 변경
     @PutMapping("/me/title")
     public ResponseEntity<String> updateUserTitle(@RequestBody UpdateUserTitleRequest request) {
         Long userId = SecurityUtil.getCurrentUserId();
