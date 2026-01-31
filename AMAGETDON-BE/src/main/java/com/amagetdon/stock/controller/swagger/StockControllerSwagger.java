@@ -2,6 +2,7 @@ package com.amagetdon.stock.controller.swagger;
 
 import com.amagetdon.stock.dto.response.CandleChartResponse;
 import com.amagetdon.stock.dto.response.StockDetailResponse;
+import com.amagetdon.stock.dto.response.StockSearchResponse;
 import com.amagetdon.stock.dto.response.VolumeRankingResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -126,4 +127,35 @@ public interface StockControllerSwagger {
             )
     })
     List<VolumeRankingResponse> getVolumeRankings();
+
+    @Operation(summary = "종목 검색", description = "종목명으로 검색(2글자 이상)")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "검색 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = StockSearchResponse.class),
+                            examples = @ExampleObject(value = """
+                                [
+                                  {
+                                    "stockCode": "005930",
+                                    "stockName": "삼성전자"
+                                  },
+                                  {
+                                    "stockCode": "006400",
+                                    "stockName": "삼성SDI"
+                                  },
+                                  {
+                                    "stockCode": "028260",
+                                    "stockName": "삼성물산"
+                                  }
+                                ]
+                                """)
+                    )
+            ),
+            @ApiResponse(responseCode = "400", description = "검색어는 2글자 이상 입력해주세요.")
+    })
+    List<StockSearchResponse> searchStocks(
+            @Parameter(description = "검색어 (2글자 이상)", example = "삼성") String keyword
+    );
 }
