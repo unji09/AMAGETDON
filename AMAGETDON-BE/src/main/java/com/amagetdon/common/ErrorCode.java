@@ -71,7 +71,10 @@ public enum ErrorCode {
     WATCHLIST_ACCESS_DENIED("본인의 관심 종목만 삭제할 수 있습니다."),
 
     //Chart
-    WRONG_PERIOD("잘못된 기간입니다.")
+    WRONG_PERIOD("잘못된 기간입니다."),
+
+    //Stock
+    KEYWORD_TOO_SHORT("검색어는 2글자 이상 입력해주세요.")
     ;
 
     private final String message;

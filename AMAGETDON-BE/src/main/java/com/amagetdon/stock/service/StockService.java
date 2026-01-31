@@ -92,6 +92,10 @@ public class StockService {
     }
 
     public List<StockSearchResponse> searchStocks(String keyword) {
+        if (keyword == null || keyword.length() < 2) {
+            throw new IllegalArgumentException(ErrorCode.KEYWORD_TOO_SHORT.getMessage());
+        }
+
         return stockRepository.findByStockNameContaining(keyword)
                 .stream()
                 .map(s -> new StockSearchResponse(s.getStockCode(), s.getStockName()))
