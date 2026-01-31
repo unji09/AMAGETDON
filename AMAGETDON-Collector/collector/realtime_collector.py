@@ -22,7 +22,7 @@ class RealtimeCollector:
         self.stock_manager = stock_manager
         
         self.running = False
-        self.top_stocks_key = REDIS_KEYS['top_30_stocks']
+        self.top_stocks_key = REDIS_KEYS['top_10_stocks']
         self.user_stocks_key = REDIS_KEYS['user_stocks']
         
         self.last_fill_time: Dict[str, datetime] = {}

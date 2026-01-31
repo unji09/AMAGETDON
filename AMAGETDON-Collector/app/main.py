@@ -78,11 +78,11 @@ def run_websocket_collector():
         if not ws_collector.ws:
             ws_collector.connect()
 
-        top_30_stocks = volume_tracker.get_top_30_volume_stocks()
+        top_10_stocks = volume_tracker.get_top_volume_stocks()
         
-        if top_30_stocks:
+        if top_10_stocks:
             if ws_collector.ws:
-                ws_collector.subscribe_stocks(top_30_stocks)
+                ws_collector.subscribe_stocks(top_10_stocks)
         
         time.sleep(300)
 
@@ -109,7 +109,7 @@ def start_collection():
     rest_collector = RealtimeCollector(token_manager, stock_manager)
     
     ws_collector.connect()
-    top_30_stocks = volume_tracker.get_top_30_volume_stocks()
+    top_30_stocks = volume_tracker.get_top_10_volume_stocks()
     if top_30_stocks:
         ws_collector.subscribe_stocks(top_30_stocks)
         logger.info(f"초기 구독 완료: {len(top_30_stocks)}개 종목")
@@ -226,14 +226,13 @@ def update_financials():
         
         for i, stock_code in enumerate(stocks, 1):
             try:
-                info = api_client.fetch_stock_price_info(stock_code)
-                
-                if info:
+                stock = api_client.fetch_price(stock_code)
+                if stock:
                     cursor.execute("""
                         UPDATE stock 
                         SET per=%s, pbr=%s, eps=%s, bps=%s, market_cap=%s, updated_at=NOW()
                         WHERE stock_code=%s
-                    """, (info['per'], info['pbr'], info['eps'], info['bps'], info['market_cap'], stock_code))
+                    """, (stock.per, stock.pbr, stock.eps, stock.bps, stock.market_cap, stock_code))
                     success += 1
                 else:
                     fail += 1
@@ -260,7 +259,7 @@ def update_financials():
 def main():
     logger.info("실시간 시세 수집 스케줄러 시작")
     
-    check_and_initialize()
+    # check_and_initialize()
 
     now = datetime.now()
     if now.hour > 8 or (now.hour == 8 and now.minute >= 50):

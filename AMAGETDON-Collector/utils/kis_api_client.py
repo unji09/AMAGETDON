@@ -234,11 +234,7 @@ class KISApiClient:
             logger.error(f"종목 정보 조회 실패 ({stock_code}): {e}")
             return None
     
-    #개별 종목의 현재가 조회
     def fetch_price(self, stock_code: str) -> Optional[StockDTO]:
-        if not is_market_open():
-            return None
-
         try:
             url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/inquire-price"
             headers = self._get_headers("FHKST01010100")
@@ -255,71 +251,30 @@ class KISApiClient:
 
             output = data.get("output", {})
 
+            if not output:
+                return None
+            
             current_price = safe_int(output.get("stck_prpr"))
             if current_price is None:
                 return None
-
-            volume = safe_int(output.get("acml_vol")) or 0
-            trading_value = safe_int(output.get("acml_tr_pbmn")) or 0
-            change_amount = safe_int(output.get("prdy_vrss")) or 0
-            change_rate = safe_float(output.get("prdy_ctrt")) or 0.0
 
             return StockDTO(
                 stock_code=stock_code,
                 stock_name=output.get("hts_kor_isnm", ""),
                 current_price=current_price,
-                change_amount=change_amount,
-                change_rate=change_rate,
-                volume=volume,
-                trading_value=trading_value
+                change_amount=safe_int(output.get("prdy_vrss")) or 0,
+                change_rate=safe_float(output.get("prdy_ctrt")) or 0.0,
+                volume=safe_int(output.get("acml_vol")) or 0,
+                trading_value=safe_int(output.get("acml_tr_pbmn")) or 0,
+                per=safe_float(output.get("per")),
+                pbr=safe_float(output.get("pbr")),
+                eps=safe_int(output.get("eps")),
+                bps=safe_int(output.get("bps")),
+                market_cap=safe_int(output.get("hts_avls"))
             )
 
         except Exception as e:
             logger.error(f"{stock_code} 호출 실패: {e}")
-            return None
-
-    #주식현재가 시세
-    def fetch_stock_price_info(self, stock_code: str) -> dict:
-        url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/inquire-price"
-        headers = self._get_headers("FHKST01010100")
-        
-        params = {
-            "FID_COND_MRKT_DIV_CODE": "J",
-            "FID_INPUT_ISCD": stock_code
-        }
-        
-        try:
-            data = self._request_with_retry(url, headers, params, "FHKST01010100")
-            
-            if data.get("rt_cd") != "0":
-                logger.error(f"현재가 시세 API 오류: {data.get('msg1')}")
-                return None
-            
-            output = data.get("output", {})
-            
-            def safe_float(value):
-                try:
-                    return float(value) if value and value.strip() else None
-                except:
-                    return None
-            
-            def safe_int(value):
-                try:
-                    return int(value) if value and value.strip() else None
-                except:
-                    return None
-            
-            return {
-                'stock_code': stock_code,
-                'per': safe_float(output.get('per')),           
-                'pbr': safe_float(output.get('pbr')),           
-                'eps': safe_int(output.get('eps')),             
-                'bps': safe_int(output.get('bps')),            
-                'market_cap': safe_int(output.get('hts_avls')) 
-            }
-            
-        except Exception as e:
-            logger.error(f"현재가 시세 조회 실패 ({stock_code}): {e}")
             return None
         
     #거래량순위
