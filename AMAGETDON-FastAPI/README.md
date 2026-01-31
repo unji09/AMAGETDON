@@ -28,7 +28,7 @@ cp .env.template .env
 
 ### 2. Docker Compose 실행
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ### 3. API 확인
