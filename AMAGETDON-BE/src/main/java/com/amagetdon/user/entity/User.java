@@ -47,7 +47,7 @@ public class User {
     private LoginType loginType;
 
     @Column
-    private String socialId;
+    private Long socialId;
 
     @Column
     private String currentTitle;
@@ -74,6 +74,10 @@ public class User {
 
     public void updatePassword(String password) {
         this.password = password;
+    }
+
+    public void updateCurrentTitle(String newTitle) {
+        this.currentTitle = newTitle;
     }
 
     public void updateUser(@Email String email, String password, String nickname) {

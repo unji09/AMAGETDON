@@ -4,6 +4,7 @@ import com.amagetdon.ranking.entity.ProfitRanking;
 import com.amagetdon.ranking.repository.ProfitRankingRepository;
 import com.amagetdon.user.entity.User;
 import com.amagetdon.user.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -94,5 +95,13 @@ public class ProfitRankingService {
         }
 
         return rankings;
+    }
+
+    @Transactional(readOnly = true)
+    public ProfitRanking getMyProfitRanking(Long userId) {
+        return profitRankingRepository.findByUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "수익 랭킹 정보를 찾을 수 없습니다."
+                ));
     }
 }

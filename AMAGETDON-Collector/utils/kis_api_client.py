@@ -76,8 +76,7 @@ class KISApiClient:
             }
             
             try:
-                response = requests.get(url, headers=headers, params=params, timeout=10)
-                data = response.json()
+                data = self._request_with_retry(url, headers, params, "FHKST03010230", use_candle_api=True)
                 
                 if data.get("rt_cd") != "0":
                     logger.error(f"일별분봉 API 오류: {data.get('msg1')}")
@@ -122,7 +121,6 @@ class KISApiClient:
                         'volume': int(item.get('cntg_vol', 0))
                     }
                 
-                # 페이징: start_time에 도달했으면 종료
                 if oldest_time:
                     if oldest_time <= start_time:
                         break
@@ -169,8 +167,7 @@ class KISApiClient:
                 headers["tr_cont"] = tr_cont
             
             try:
-                response = requests.get(url, headers=headers, params=params, timeout=10)
-                data = response.json()
+                data = self._request_with_retry(url, headers, params, "FHKST03010100", use_candle_api=True)
                 
                 if data.get("rt_cd") != "0":
                     logger.error(f"일봉/주봉 API 오류: {data.get('msg1')}")
@@ -221,8 +218,7 @@ class KISApiClient:
         }
         
         try:
-            response = requests.get(url, headers=headers, params=params, timeout=10)
-            data = response.json()
+            data = self._request_with_retry(url, headers, params, "CTPF1002R")
             
             if data.get("rt_cd") != "0":
                 return None
@@ -252,8 +248,7 @@ class KISApiClient:
                 "FID_INPUT_ISCD": stock_code
             }
 
-            response = requests.get(url, headers=headers, params=params, timeout=10)
-            data = response.json()
+            data = self._request_with_retry(url, headers, params, "FHKST01010100")
 
             if data.get("rt_cd") != "0":
                 return None
@@ -294,8 +289,7 @@ class KISApiClient:
         }
         
         try:
-            response = requests.get(url, headers=headers, params=params, timeout=10)
-            data = response.json()
+            data = self._request_with_retry(url, headers, params, "FHKST01010100")
             
             if data.get("rt_cd") != "0":
                 logger.error(f"현재가 시세 API 오류: {data.get('msg1')}")
@@ -349,8 +343,7 @@ class KISApiClient:
         }
 
         try:
-            response = requests.get(url, headers=headers, params=params, timeout=10)
-            data = response.json()
+            data = self._request_with_retry(url, headers, params, "FHPST01710000", use_candle_api=True)
             
             if data.get("rt_cd") == "0":
                 outputs = data.get("output", [])
@@ -364,3 +357,17 @@ class KISApiClient:
         except Exception as e:
             logger.error(f"API 호출 실패: {e}")
             return []
+        
+    #토큰 갱신
+    def _request_with_retry(self, url, headers, params, tr_id, use_candle_api=False):
+        response = requests.get(url, headers=headers, params=params, timeout=10)
+        data = response.json()
+        
+        if data.get("rt_cd") != "0" and "token" in data.get("msg1", "").lower():
+            logger.info("토큰 만료 - 갱신 후 재시도")
+            self.token_manager.refresh_token()
+            headers = self._get_headers(tr_id, use_candle_api)
+            response = requests.get(url, headers=headers, params=params, timeout=10)
+            data = response.json()
+        
+        return data
