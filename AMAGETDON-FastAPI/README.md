@@ -32,12 +32,6 @@ docker compose up -d
 ```
 
 ### 3. API 확인
-```cmd
-=======
-docker-compose up -d
-```
-
-### 3. API 확인
 ```bash
 # 헬스 체크
 curl http://localhost:8000/health
