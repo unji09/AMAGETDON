@@ -22,7 +22,7 @@ public class OAuthController {
     private final JwtProperties jwtProperties;
 
     @PostMapping("/kakao/login")
-    public ResponseEntity<?> oauthlogin(@RequestBody OAuthLoginRequest request) {
+    public ResponseEntity<?> kakaoOAuthlogin(@RequestBody OAuthLoginRequest request) {
         TokenResponse tokenResponse = oAuthService.login(request.provider(), request.accessToken());
 
         ResponseCookie refreshTokenCookie = refreshTokenService.createCookie(tokenResponse.refreshToken());
