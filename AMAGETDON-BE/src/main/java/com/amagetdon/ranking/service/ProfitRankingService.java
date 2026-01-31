@@ -7,6 +7,8 @@ import com.amagetdon.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -103,5 +105,11 @@ public class ProfitRankingService {
                 .orElseThrow(() -> new EntityNotFoundException(
                         "수익 랭킹 정보를 찾을 수 없습니다."
                 ));
+    }
+
+    // 수익 랭킹 목록을 페이징하여 조회
+    @Transactional(readOnly = true)
+    public Page<ProfitRanking> getProfitRankings(Pageable pageable) {
+        return profitRankingRepository.findAll(pageable);
     }
 }
