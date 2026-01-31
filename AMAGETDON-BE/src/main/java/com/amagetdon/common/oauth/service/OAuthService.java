@@ -39,12 +39,10 @@ public class OAuthService {
     }
 
     public TokenResponse createTokenAndSave(Long userId, boolean firstLogin) {
-        //TODO(수정) : refresh token 발급시 현재 refreshtoken 존재 유뮤 검사 후 갱신 로직 추가 고려
-        //로그인에 들어가는 모든 createTokenAndSave 메서드에 적용 필요
         String accessToken = jwtTokenProvider.createAccessToken(userId);
         String refreshToken = jwtTokenProvider.createRefreshToken(userId);
 
-        refreshTokenService.save(refreshToken, userId);
+        refreshTokenService.saveRefreshToken(refreshToken, userId);
 
         return new TokenResponse(accessToken, refreshToken, firstLogin);
     }

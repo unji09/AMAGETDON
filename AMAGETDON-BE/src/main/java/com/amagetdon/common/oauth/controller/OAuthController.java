@@ -25,7 +25,7 @@ public class OAuthController {
     public ResponseEntity<?> kakaoOAuthlogin(@RequestBody OAuthLoginRequest request) {
         TokenResponse tokenResponse = oAuthService.login(request.provider(), request.accessToken());
 
-        ResponseCookie refreshTokenCookie = refreshTokenService.createCookie(tokenResponse.refreshToken());
+        ResponseCookie refreshTokenCookie = refreshTokenService.createRefreshTokenCookie(tokenResponse.refreshToken());
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
