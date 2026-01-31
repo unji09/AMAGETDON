@@ -188,6 +188,10 @@ class WebSocketCollector:
         self.connected = False  
         logger.info(f"WebSocket 연결 종료: {close_msg}")
         self.subscribed_stocks.clear()
+
+        logger.info("WebSocket 재연결 시도")
+        self.token_manager.redis_client.delete(self.token_manager.ws_approval_key)
+        self.connect()
     
     #웹소켓 체결 데이터 처리
     def on_tick(self, stock_code: str, tick_data: dict):

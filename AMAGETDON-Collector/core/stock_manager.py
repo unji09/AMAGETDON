@@ -13,7 +13,7 @@ class StockManager:
         try:
             stock_set: Set[str] = set()
             
-            top_cached = self.redis_client.smembers(self.top_stocks_key)
+            top_cached = self.redis_client.lrange(self.top_stocks_key, 0, -1)  # 변
             if top_cached:
                 stock_set.update(top_cached)
             
