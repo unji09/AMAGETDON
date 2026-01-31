@@ -76,6 +76,10 @@ public class User {
         this.password = password;
     }
 
+    public void updateCurrentTitle(String newTitle) {
+        this.currentTitle = newTitle;
+    }
+
     public void updateUser(@Email String email, String password, String nickname) {
         this.email = email;
         this.password = password;

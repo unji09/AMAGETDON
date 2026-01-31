@@ -2,6 +2,7 @@ package com.amagetdon.user.controller;
 
 import com.amagetdon.common.security.SecurityUtil;
 import com.amagetdon.user.dto.request.PasswordResetEmailRequest;
+import com.amagetdon.user.dto.request.UpdateUserTitleRequest;
 import com.amagetdon.user.entity.User;
 import com.amagetdon.user.service.PasswordResetService;
 import com.amagetdon.user.service.UserService;
@@ -38,7 +39,19 @@ public class UserController {
         return ResponseEntity.ok("비밀번호 재설정 이메일이 전송되었습니다.");
     }
 
-    //TODO(수정) : update user title
+    @GetMapping("/me/title")
+    public ResponseEntity<?> getUserTitle() {
+        Long userId = SecurityUtil.getCurrentUserId();
+        String title = userService.getUserInfo(userId).getCurrentTitle();
+        return ResponseEntity.ok(title);
+    }
 
-    //TODO(수정) : get user title
+    //TODO(수정) : 타이틀 설정으로 선택된 업적 이름이 들어가도록 변경
+    @PutMapping("/me/title")
+    public ResponseEntity<?> updateUserTitle(@RequestBody UpdateUserTitleRequest request) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        User user = userService.getUserInfo(userId);
+        user.updateCurrentTitle(request.newTitle());
+        return ResponseEntity.ok(user.getCurrentTitle());
+    }
 }
