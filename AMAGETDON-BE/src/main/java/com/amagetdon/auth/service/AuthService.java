@@ -42,23 +42,23 @@ public class AuthService {
     }
 
     public void withdraw(String refreshToken) {
-        if (!refreshTokenService.exists(refreshToken)) {
+        if (!refreshTokenService.isRefreshTokenExisted(refreshToken)) {
             throw new SecurityException("유효하지 않은 refresh token입니다.");
         }
 
         userService.withdraw();
 
-        refreshTokenService.delete(refreshToken);
+        refreshTokenService.deleteRefreshToken(refreshToken);
     }
 
     public TokenResponse refresh(String refreshToken) {
-        if (!refreshTokenService.exists(refreshToken)) {
+        if (!refreshTokenService.isRefreshTokenExisted(refreshToken)) {
             throw new SecurityException("유효하지 않은 refresh token입니다.");
         }
 
-        Long userId = refreshTokenService.getUserId(refreshToken);
+        Long userId = refreshTokenService.getUserIdByRefreshToken(refreshToken);
 
-        refreshTokenService.delete(refreshToken);
+        refreshTokenService.deleteRefreshToken(refreshToken);
 
         return createTokenAndSave(userId, false);
     }
@@ -67,7 +67,7 @@ public class AuthService {
         String accessToken = jwtTokenProvider.createAccessToken(userId);
         String refreshToken = jwtTokenProvider.createRefreshToken(userId);
 
-        refreshTokenService.save(refreshToken, userId);
+        refreshTokenService.saveRefreshToken(refreshToken, userId);
 
         return new TokenResponse(accessToken, refreshToken, firstLogin);
     }

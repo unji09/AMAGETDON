@@ -15,25 +15,24 @@ public class RefreshTokenService {
     private final RedisTemplate<Object, Object> redisTemplate;
     private final JwtProperties jwtProperties;
 
-    public void save(String refreshToken, Long userId) {
+    public void saveRefreshToken(String refreshToken, Long userId) {
         redisTemplate.opsForValue()
                 .set(refreshToken, userId, jwtProperties.getRefreshTokenExpirationMs()/1000, TimeUnit.SECONDS);
     }
 
-    public boolean exists(String refreshToken) {
+    public boolean isRefreshTokenExisted(String refreshToken) {
         return redisTemplate.hasKey(refreshToken);
     }
 
-    public Long getUserId(String refreshToken) {
+    public Long getUserIdByRefreshToken(String refreshToken) {
         return (Long) redisTemplate.opsForValue().get(refreshToken);
     }
 
-    public void delete(String refreshToken) {
+    public void deleteRefreshToken(String refreshToken) {
         redisTemplate.delete(refreshToken);
     }
 
-    //TODO(수정) : 쿠키 관련 공통 부분 private 메서드로 분리해서 작업하기
-    public ResponseCookie createCookie(String refreshToken) {
+    public ResponseCookie createRefreshTokenCookie(String refreshToken) {
         return ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
                 .secure(true)
@@ -43,7 +42,7 @@ public class RefreshTokenService {
                 .build();
     }
 
-    public ResponseCookie deleteCookie() {
+    public ResponseCookie deleteRefreshTokenCookie() {
         return ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
                 .secure(true)

@@ -27,7 +27,7 @@ public class AuthController {
     public ResponseEntity<AuthLoginResponse> login(@RequestBody AuthLoginRequest request) {
         TokenResponse tokenResponse = authService.login(request);
 
-        ResponseCookie refreshTokenCookie = refreshTokenService.createCookie(tokenResponse.refreshToken());
+        ResponseCookie refreshTokenCookie = refreshTokenService.createRefreshTokenCookie(tokenResponse.refreshToken());
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
@@ -43,7 +43,7 @@ public class AuthController {
     public ResponseEntity<AuthLoginResponse> signup(@RequestBody AuthSignupRequest request) {
         TokenResponse tokenResponse = authService.signup(request);
 
-        ResponseCookie refreshTokenCookie = refreshTokenService.createCookie(tokenResponse.refreshToken());
+        ResponseCookie refreshTokenCookie = refreshTokenService.createRefreshTokenCookie(tokenResponse.refreshToken());
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
@@ -55,14 +55,11 @@ public class AuthController {
                         .build());
     }
 
-    //TODO(추가) : @CookieValue(value = "refreshToken", required = false)으로의 변경 고려해보기
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@CookieValue("refreshToken") String refreshToken) {
-        refreshTokenService.delete(refreshToken);
+    public ResponseEntity<String> logout(@CookieValue(value = "refreshToken", required = false) String refreshToken) {
+        refreshTokenService.deleteRefreshToken(refreshToken);
 
-        ResponseCookie deleteCookie = refreshTokenService.deleteCookie();
-
-        //TODO(수정) : 추가적인 로그아웃 처리 (예: 기발급된 accesstoken 무효화 등)
+        ResponseCookie deleteCookie = refreshTokenService.deleteRefreshTokenCookie();
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
@@ -73,7 +70,7 @@ public class AuthController {
     public ResponseEntity<?> withdraw(@CookieValue("refreshToken") String refreshToken) {
         authService.withdraw(refreshToken);
 
-        ResponseCookie deleteCookie = refreshTokenService.deleteCookie();
+        ResponseCookie deleteCookie = refreshTokenService.deleteRefreshTokenCookie();
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
@@ -84,7 +81,7 @@ public class AuthController {
     public ResponseEntity<AuthLoginResponse> refresh(@CookieValue("refreshToken") String refreshToken) {
         TokenResponse tokenResponse = authService.refresh(refreshToken);
 
-        ResponseCookie newRefreshTokenCookie = refreshTokenService.createCookie(tokenResponse.refreshToken());
+        ResponseCookie newRefreshTokenCookie = refreshTokenService.createRefreshTokenCookie(tokenResponse.refreshToken());
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, newRefreshTokenCookie.toString())
