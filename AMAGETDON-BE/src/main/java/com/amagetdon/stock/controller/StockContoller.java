@@ -3,10 +3,10 @@ package com.amagetdon.stock.controller;
 import com.amagetdon.stock.controller.swagger.StockControllerSwagger;
 import com.amagetdon.stock.dto.response.CandleChartResponse;
 import com.amagetdon.stock.dto.response.StockDetailResponse;
+import com.amagetdon.stock.dto.response.StockSearchResponse;
 import com.amagetdon.stock.dto.response.VolumeRankingResponse;
 import com.amagetdon.stock.service.StockService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,5 +32,10 @@ public class StockContoller implements StockControllerSwagger {
     @GetMapping("/rankings/volume")
     public List<VolumeRankingResponse> getVolumeRankings() {
         return stockService.getVolumeRanking();
+    }
+
+    @GetMapping("/search")
+    public List<StockSearchResponse> searchStocks(@RequestParam String keyword) {
+        return stockService.searchStocks(keyword);
     }
 }
