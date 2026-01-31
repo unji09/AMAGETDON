@@ -4,9 +4,9 @@ import com.amagetdon.common.ErrorCode;
 import com.amagetdon.stock.dto.CandleDto;
 import com.amagetdon.stock.dto.response.CandleChartResponse;
 import com.amagetdon.stock.dto.response.StockDetailResponse;
+import com.amagetdon.stock.dto.response.VolumeRankingResponse;
 import com.amagetdon.stock.entity.ChartCandle;
 import com.amagetdon.stock.entity.IntervalType;
-import com.amagetdon.stock.entity.Stock;
 import com.amagetdon.stock.repository.ChartCandleRepository;
 import com.amagetdon.stock.repository.StockQueryRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -26,6 +26,7 @@ public class StockService {
     private final RedisTemplate<String, String> redisTemplate;
 
     private static final String USER_STOCKS_KEY = "kis:user_stocks";
+    private static final String TOP_STOCKS_KEY = "kis:top_30_stocks";
 
     public StockDetailResponse getStockDetail(String stockCode) {
 
@@ -75,5 +76,15 @@ public class StockService {
                 .toList();
 
         return new CandleChartResponse(stockCode, period, interval, candleDtos);
+    }
+
+    public List<VolumeRankingResponse> getVolumeRanking() {
+        List<String> stockCodes = redisTemplate.opsForList().range(TOP_STOCKS_KEY, 0, -1);
+
+        if (stockCodes == null || stockCodes.isEmpty()) {
+            return List.of();
+        }
+
+        return stockQueryRepository.findTopStocks(stockCodes);
     }
 }
