@@ -78,11 +78,11 @@ def run_websocket_collector():
         if not ws_collector.ws:
             ws_collector.connect()
 
-        top_30_stocks = volume_tracker.get_top_30_volume_stocks()
+        top_10_stocks = volume_tracker.get_top_volume_stocks()
         
-        if top_30_stocks:
+        if top_10_stocks:
             if ws_collector.ws:
-                ws_collector.subscribe_stocks(top_30_stocks)
+                ws_collector.subscribe_stocks(top_10_stocks)
         
         time.sleep(300)
 
@@ -109,7 +109,7 @@ def start_collection():
     rest_collector = RealtimeCollector(token_manager, stock_manager)
     
     ws_collector.connect()
-    top_30_stocks = volume_tracker.get_top_30_volume_stocks()
+    top_30_stocks = volume_tracker.get_top_10_volume_stocks()
     if top_30_stocks:
         ws_collector.subscribe_stocks(top_30_stocks)
         logger.info(f"초기 구독 완료: {len(top_30_stocks)}개 종목")
@@ -260,7 +260,7 @@ def update_financials():
 def main():
     logger.info("실시간 시세 수집 스케줄러 시작")
     
-    check_and_initialize()
+    # check_and_initialize()
 
     now = datetime.now()
     if now.hour > 8 or (now.hour == 8 and now.minute >= 50):

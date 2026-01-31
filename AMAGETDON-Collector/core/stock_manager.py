@@ -6,14 +6,14 @@ class StockManager:
     
     def __init__(self, redis_client):
         self.redis_client = redis_client
-        self.top_stocks_key = REDIS_KEYS['top_30_stocks']
+        self.top_stocks_key = REDIS_KEYS['top_10_stocks']
         self.user_stocks_key = REDIS_KEYS['user_stocks']
     
     def get_all_target_stocks(self) -> List[str]:
         try:
             stock_set: Set[str] = set()
             
-            top_cached = self.redis_client.lrange(self.top_stocks_key, 0, -1)  # 변
+            top_cached = self.redis_client.lrange(self.top_stocks_key, 0, -1) 
             if top_cached:
                 stock_set.update(top_cached)
             

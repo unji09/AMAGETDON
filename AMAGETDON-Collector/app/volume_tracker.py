@@ -10,7 +10,7 @@ class VolumeTracker:
     def __init__(self, token_manager: TokenManager):
         self.token_manager = token_manager
         self.redis_client = token_manager.redis_client
-        self.top_stocks_key = REDIS_KEYS['top_30_stocks']
+        self.top_stocks_key = REDIS_KEYS['top_10_stocks']
         self.conn = None
         self.api_client = KISApiClient(token_manager)
     
@@ -18,15 +18,15 @@ class VolumeTracker:
         self.conn = get_db_connection(self.conn)
 
     #거래량 top 조회
-    def get_top_30_volume_stocks(self) -> List[str]:
+    def get_top_volume_stocks(self) -> List[str]:
         try:
             cached = self.redis_client.lrange(self.top_stocks_key, 0, -1)
             if cached:
                 stock_codes = list(cached)
-                logger.debug(f"Redis에서 TOP 30 가져오기: {len(stock_codes)}개")
+                logger.debug(f"Redis에서 TOP 10 가져오기: {len(stock_codes)}개")
                 return stock_codes
                 
-            logger.info("거래량 TOP 30 조회 시작")
+            logger.info("거래량 TOP 10 조회 시작")
             stock_codes = self.api_client.fetch_from_api()
             
             filtered = self._filter_existing_stocks(stock_codes)
@@ -34,14 +34,14 @@ class VolumeTracker:
             if filtered:
                 self.redis_client.delete(self.top_stocks_key)
                 self.redis_client.rpush(self.top_stocks_key, *filtered)
-                logger.info(f"TOP 30 조회 완료: {len(filtered)}개")
+                logger.info(f"TOP 10 조회 완료: {len(filtered)}개")
                 return filtered  
             else:
                 logger.warning("DB에 등록된 종목 아님")
                 return []
 
         except Exception as e:
-            logger.error(f"TOP 30 조회 오류: {e}")
+            logger.error(f"TOP 10 조회 오류: {e}")
             return []
     
     #테이블에 있는 종목으로 필터링
@@ -66,7 +66,7 @@ class VolumeTracker:
             for code in stock_codes:
                 if code in existing_codes:
                     filtered.append(code)
-                    if len(filtered) == 30:
+                    if len(filtered) == 10:
                         break
             
             logger.info(f"필터링 결과: {len(stock_codes)}개 → {len(filtered)}개")
