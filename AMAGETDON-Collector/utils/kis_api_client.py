@@ -45,6 +45,137 @@ class KISApiClient:
             "custtype": "P"
         }
     
+    async def fetch_minute_candles_by_date_async(
+        self,
+        session: aiohttp.ClientSession,
+        stock_code: str,
+        target_date: str,
+        start_time: str = "090000",
+        end_time: str = "153000",
+        needed_minutes: Optional[Set[datetime]] = None
+    ) -> dict:
+        
+        url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/inquire-time-dailychartprice"
+        
+        candles = {}
+        current_time = end_time
+        max_pages = 50
+
+        for page in range(max_pages):
+            await CANDLE_API_LIMITER.acquire()  # rate limiter 적용
+            
+            headers = self._get_headers("FHKST03010230", use_candle_api=True)
+            params = {
+                "FID_COND_MRKT_DIV_CODE": "J",
+                "FID_INPUT_ISCD": stock_code,
+                "FID_INPUT_HOUR_1": current_time,
+                "FID_INPUT_DATE_1": target_date,
+                "FID_PW_DATA_INCU_YN": "Y",  
+                "FID_FAKE_TICK_INCU_YN": " "
+            }
+            
+            try:
+                async with session.get(
+                    url, 
+                    headers=headers, 
+                    params=params, 
+                    timeout=aiohttp.ClientTimeout(total=10)
+                ) as response:
+                    data = await response.json()
+                
+                # 토큰 만료 시 갱신 후 재시도
+                if data.get("rt_cd") != "0" and "token" in data.get("msg1", "").lower():
+                    self.token_manager.refresh_token()
+                    headers = self._get_headers("FHKST03010230", use_candle_api=True)
+                    async with session.get(
+                        url, 
+                        headers=headers, 
+                        params=params,
+                        timeout=aiohttp.ClientTimeout(total=10)
+                    ) as retry_response:
+                        data = await retry_response.json()
+                
+                if data.get("rt_cd") != "0":
+                    logger.error(f"일별분봉 API 오류: {data.get('msg1')}")
+                    break
+                
+                outputs = data.get("output2", [])
+                if not outputs:
+                    break
+                
+                # 기존 로직과 동일하게 candle 데이터 처리
+                oldest_time = None
+                for item in outputs:
+                    date_str = item.get('stck_bsop_date', '')
+                    time_str = item.get('stck_cntg_hour', '')
+                    
+                    if not date_str or not time_str:
+                        continue
+                    
+                    if date_str != target_date:
+                        continue
+                    
+                    oldest_time = time_str
+                    
+                    candle_time = datetime.strptime(
+                        date_str + time_str[:4] + "00",
+                        '%Y%m%d%H%M%S'
+                    )
+                    
+                    if candle_time in candles:
+                        continue
+                    
+                    open_price = int(item.get('stck_oprc', 0))
+                    close_price = int(item.get('stck_prpr', 0))
+                    
+                    if open_price <= 0 or close_price <= 0:
+                        continue
+                    
+                    candles[candle_time] = {
+                        'open': open_price,
+                        'high': int(item.get('stck_hgpr', 0)),
+                        'low': int(item.get('stck_lwpr', 0)),
+                        'close': close_price,
+                        'volume': int(item.get('cntg_vol', 0))
+                    }
+                
+                if oldest_time:
+                    if oldest_time <= start_time:
+                        break
+                    oldest_dt = datetime.strptime(oldest_time, '%H%M%S')
+                    next_time = (oldest_dt - timedelta(minutes=1)).strftime('%H%M%S')
+                    current_time = next_time
+                    await asyncio.sleep(0.1)  # time.sleep 대신 asyncio.sleep
+                else:
+                    break
+                    
+            except Exception as e:
+                logger.error(f"일별분봉 API 호출 실패: {e}")
+                break
+
+        return candles
+
+    async def fetch_minute_candles_batch(
+        self, 
+        requests: List[tuple],  # [(stock_code, target_date), ...]
+        batch_size: int = 5
+    ) -> dict:
+        results = {}
+        
+        async with aiohttp.ClientSession() as session:
+            tasks = [
+                self.fetch_minute_candles_by_date_async(session, code, date)
+                for code, date in requests
+            ]
+            all_results = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            for (code, date), result in zip(requests, all_results):
+                if isinstance(result, dict) and result:
+                    results[(code, date)] = result
+        
+        return results
+
+
     #일별분봉조회 api
     def fetch_minute_candles_by_date(
         self,

@@ -1,3 +1,5 @@
+import asyncio
+import aiohttp
 from datetime import datetime, timedelta, date
 from typing import List, Set, Optional
 from core.token_manager import TokenManager
@@ -47,7 +49,7 @@ class CandleFiller:
                 logger.info(f"{stock_code} 30분봉 {filled_30m}개 보정")
     
     #1분봉 누락 보정
-    def _fill_1min_candles(self, stock_code: str, target_date: date, target_date_str: str) -> int:
+    async def _fill_1min_candles(self, stock_code: str, target_date: date, target_date_str: str) -> int:
         last_candle_time = self._get_last_1min_candle_time(stock_code, target_date)
         
         today = datetime.now().date()
@@ -71,12 +73,14 @@ class CandleFiller:
         if start_time >= end_time:
             return 0
         
-        candles_dict = self.api_client.fetch_minute_candles_by_date(
-            stock_code=stock_code,
-            target_date=target_date_str,
-            start_time=start_time,
-            end_time=end_time
-        )
+        async with aiohttp.ClientSession() as session:
+            candles_dict = await self.api_client.fetch_minute_candles_by_date_async(
+                session=session,
+                stock_code=stock_code,
+                target_date=target_date_str,
+                start_time=start_time,
+                end_time=end_time
+            )
         
         logger.info(f"{stock_code} 1분봉 {len(candles_dict)}개 수집")
         

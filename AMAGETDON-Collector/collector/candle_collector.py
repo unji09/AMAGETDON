@@ -1,4 +1,6 @@
 import time
+import asyncio
+import aiohttp
 from typing import List, Optional
 from datetime import datetime, timedelta
 from core.token_manager import TokenManager
@@ -90,7 +92,7 @@ class CandleCollector:
             return None
     
     #분봉 기반 캔들 수집
-    def _collect_minute_based_candles(
+    async def _collect_minute_based_candles(
         self, 
         stock_code: str, 
         interval_type: str, 
@@ -98,24 +100,21 @@ class CandleCollector:
     ) -> List[CandleDTO]:
         minute_unit = 30 if interval_type == '30m' else 5
         all_candles = {}
-        today = datetime.now().date()
-        now = datetime.now()
         
+        # 날짜별 요청 준비
+        requests = []
         for i in range(days):
             target_date = (datetime.now() - timedelta(days=i)).date()
             target_date_str = target_date.strftime('%Y%m%d')
-
-            candles_dict = self.api_client.fetch_minute_candles_by_date(
-                stock_code=stock_code,
-                target_date=target_date_str
-            )
-            logger.info(f"{stock_code} ({target_date_str}) 분봉 조회")
-
+            requests.append((stock_code, target_date_str))
+        
+        # 배치 처리로 병렬 호출
+        results = await self.api_client.fetch_minute_candles_batch(requests)
+        
+        for (code, date_str), candles_dict in results.items():
             if candles_dict:
                 all_candles.update(candles_dict)
-                logger.debug(f"{target_date_str} {len(candles_dict)}개 수집")
-            
-            time.sleep(0.05)
+                logger.debug(f"{date_str} {len(candles_dict)}개 수집")
         
         if not all_candles:
             return []
