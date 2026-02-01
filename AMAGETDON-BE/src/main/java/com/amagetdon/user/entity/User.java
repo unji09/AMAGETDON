@@ -32,14 +32,13 @@ public class User {
     private String password;
 
     @Email
-    @Column(nullable = false, length = 50)
+    @Column(length = 50)
     private String email;
 
     @Column(nullable = false, length = 50)
     private String nickname;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private InvestmentType investmentType;
 
     @Enumerated(EnumType.STRING)

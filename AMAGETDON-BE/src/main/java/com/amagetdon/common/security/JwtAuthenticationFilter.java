@@ -21,7 +21,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
         // 로그인, 회원가입 API는 필터링하지 않음
-        return path.startsWith("/api/user/login") || path.startsWith("/api/user/signup") || path.startsWith("/oauth/");
+        return path.startsWith("/oauth")
+                || path.startsWith("/auth")
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/api-docs");
     }
 
     @Override
@@ -32,7 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                            userId,                     // principal
+                            userId,
                             null,                       // credentials - 보안상 비밀번호 넣지 않음
                             Collections.emptyList()     // authorities - 자격 구분 없음
                     );
