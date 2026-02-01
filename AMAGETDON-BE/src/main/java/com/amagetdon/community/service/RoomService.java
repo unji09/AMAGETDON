@@ -1,5 +1,7 @@
 package com.amagetdon.community.service;
 
+import com.amagetdon.achievement.repository.AchievementRedisRepository;
+import com.amagetdon.achievement.service.AchievementService;
 import com.amagetdon.common.ErrorCode;
 import com.amagetdon.community.dto.response.MemberResponseDto;
 import com.amagetdon.community.dto.request.RoomCreateRequestDto;
@@ -16,11 +18,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+
+import static com.amagetdon.achievement.entity.AchievementIdCode.I_AM_GROOVE;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +33,10 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final MemberRepository memberRepository;
     private final ChatMessageService chatMessageService;
+
+    // 업적 관련
+    private final AchievementService achievementService;
+    private final AchievementRedisRepository achievementRedisRepository;
 
     @Transactional
     public RoomResponseDto createGroup(Long ownerId, RoomCreateRequestDto request)
@@ -60,6 +67,9 @@ public class RoomService {
                 .userId(ownerId)
                 .build();
         memberRepository.save(ownerMember);
+
+        Long createCount = achievementRedisRepository.increment(ownerId, "create_room_count");
+        achievementService.checkAndAwardAchievements(ownerId, createCount, I_AM_GROOVE);
 
         return RoomResponseDto.builder()
                 .roomId(savedRoom.getId())
