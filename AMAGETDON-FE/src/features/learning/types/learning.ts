@@ -51,3 +51,15 @@ export interface ProgressResponse {
     summary: ProgressSummary;
     progresses: ProgressItem[];
 }
+
+/** GET /chapters/{chapterId} 응답 */
+export interface ChapterDetailResponse {
+    chapterId: number;
+    chapterType: ChapterType;
+    baseChapterNo: number;
+    chapterTitle: string;
+    chapterSummary: string;
+    chapterContent: string;
+    createdAt: string;
+    updatedAt: string;
+}
