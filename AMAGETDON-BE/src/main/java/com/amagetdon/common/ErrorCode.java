@@ -41,6 +41,13 @@ public enum ErrorCode {
     MESSAGE_SENT_TO_DLQ("메시지가 Dead Letter Queue로 전송되었습니다. reason: %s"),
     MESSAGE_RETRY_EXHAUSTED("재시도 횟수를 초과했습니다. maxAttempts: %d"),
 
+    // Chapter
+    CHAPTER_NOT_FOUND("챕터를 찾을 수 없습니다."),
+    CHAPTER_LOCKED("잠긴 챕터는 조회할 수 없습니다."),
+
+    // Achievement
+    ACHIEVEMENT_NOT_FOUND("업적을 찾을 수 없습니다."),
+
     //Community
     ALREADY_JOINED_ROOM("이미 가입된 그룹이 존재합니다."),
     ROOM_FULL("정원이 가득 찼습니다."),
