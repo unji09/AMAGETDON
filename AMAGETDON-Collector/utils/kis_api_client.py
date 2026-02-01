@@ -10,6 +10,10 @@ from core.token_manager import TokenManager
 from utils.logger import logger
 from models.dto import StockDTO
 from utils.helpers import safe_int, safe_float
+from utils.rate_limiter import (
+    STOCK_API_LIMITER, CANDLE_API_LIMITER,
+    STOCK_API_SYNC_LIMITER, CANDLE_API_SYNC_LIMITER
+)
 
 class KISApiClient:
 
@@ -235,6 +239,62 @@ class KISApiClient:
         except Exception as e:
             logger.error(f"종목 정보 조회 실패 ({stock_code}): {e}")
             return None
+        
+    async def fetch_stock_basic_info_async(self, session: aiohttp.ClientSession, stock_code: str) -> dict:
+        url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/search-stock-info"
+        headers = self._get_headers("CTPF1002R")
+        params = {
+            "PRDT_TYPE_CD": "300",
+            "PDNO": stock_code
+        }
+        
+        try:
+            async with session.get(url, headers=headers, params=params, timeout=aiohttp.ClientTimeout(total=10)) as response:
+                data = await response.json()
+                
+                if data.get("rt_cd") != "0" and "token" in data.get("msg1", "").lower():
+                    self.token_manager.refresh_token()
+                    headers = self._get_headers("CTPF1002R")
+                    async with session.get(url, headers=headers, params=params, timeout=aiohttp.ClientTimeout(total=10)) as retry_response:
+                        data = await retry_response.json()
+                
+                if data.get("rt_cd") != "0":
+                    return None
+                
+                output = data.get("output", {})
+                return {
+                    'stock_code': stock_code,
+                    'sector_small_code': output.get('std_idst_clsf_cd')
+                }
+        except Exception as e:
+            logger.error(f"종목 정보 조회 실패 ({stock_code}): {e}")
+            return None
+
+
+    async def fetch_stock_basic_info_batch(self, stock_codes: list, batch_size: int = 20) -> dict:
+        """종목 기본정보 배치 조회 (20개씩)"""
+        results = {}
+        
+        async with aiohttp.ClientSession() as session:
+            for i in range(0, len(stock_codes), batch_size):
+                batch = stock_codes[i:i + batch_size]
+                start_time = asyncio.get_event_loop().time()
+                
+                # 배치 내 동시 호출
+                tasks = [self.fetch_stock_basic_info_async(session, code) for code in batch]
+                batch_results = await asyncio.gather(*tasks, return_exceptions=True)
+                
+                for code, result in zip(batch, batch_results):
+                    if isinstance(result, dict) and result:
+                        results[code] = result
+                
+                # 1초당 20건 제한 준수
+                elapsed = asyncio.get_event_loop().time() - start_time
+                if elapsed < 1.0 and i + batch_size < len(stock_codes):
+                    await asyncio.sleep(1.0 - elapsed)
+        
+        return results
+    
     
     def fetch_price(self, stock_code: str) -> Optional[StockDTO]:
         try:

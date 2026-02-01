@@ -1,10 +1,12 @@
 import os
 import redis
 import requests
+import threading
 from utils.logger import logger
 
 class TokenManager:
     _instance = None
+    _refresh_lock = threading.Lock()
 
     def __new__(cls, redis_host='host.docker.internal', redis_port=6379):
         if cls._instance is None:
@@ -111,9 +113,15 @@ class TokenManager:
     
     #토큰 갱신
     def refresh_token(self):
-        self.redis_client.delete(self.stock_token_key)
-        self.redis_client.delete(self.candle_token_key)
-        return self.get_stock_token()
+        with self._refresh_lock:
+            token = self.redis_client.get(self.stock_token_key)
+            if token:
+                logger.debug("토큰이 이미 갱신됨 - 스킵")
+                return token
+            
+            self.redis_client.delete(self.stock_token_key)
+            self.redis_client.delete(self.candle_token_key)
+            return self.get_stock_token()
 
     
     #웹소켓 접속키 발급
