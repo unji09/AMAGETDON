@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -73,9 +74,16 @@ public class RoomService {
 
     }
 
-    public Page<RoomResponseDto> getPublicRooms(int page, int size) {
+    // 그룹 검색 기능 추가
+    public Page<RoomResponseDto> getPublicRooms(String search, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<Room> rooms = roomRepository.findByIsPublicTrue(pageable);
+        Page<Room> rooms;
+
+        if(search != null && !search.trim().isEmpty()) {
+            rooms = roomRepository.findByNameContainingIgnoreCaseAndIsPublicTrue(search.trim(), pageable);
+        } else {
+            rooms = roomRepository.findByIsPublicTrue(pageable);
+        }
 
         return rooms.map(room -> RoomResponseDto.builder()
                 .roomId(room.getId())
