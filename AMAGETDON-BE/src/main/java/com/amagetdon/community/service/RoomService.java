@@ -1,5 +1,7 @@
 package com.amagetdon.community.service;
 
+import com.amagetdon.achievement.repository.AchievementRedisRepository;
+import com.amagetdon.achievement.service.AchievementService;
 import com.amagetdon.common.ErrorCode;
 import com.amagetdon.community.dto.response.MemberResponseDto;
 import com.amagetdon.community.dto.request.RoomCreateRequestDto;
@@ -21,6 +23,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import static com.amagetdon.achievement.entity.AchievementIdCode.I_AM_GROOVE;
+
 @Service
 @RequiredArgsConstructor
 public class RoomService {
@@ -29,6 +33,10 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final MemberRepository memberRepository;
     private final ChatMessageService chatMessageService;
+
+    // 업적 관련
+    private final AchievementService achievementService;
+    private final AchievementRedisRepository achievementRedisRepository;
 
     @Transactional
     public RoomResponseDto createGroup(Long ownerId, RoomCreateRequestDto request)
@@ -60,6 +68,9 @@ public class RoomService {
                 .build();
         memberRepository.save(ownerMember);
 
+        Long createCount = achievementRedisRepository.increment(ownerId, "create_room_count");
+        achievementService.checkAndAwardAchievements(ownerId, createCount, I_AM_GROOVE);
+
         return RoomResponseDto.builder()
                 .roomId(savedRoom.getId())
                 .name(savedRoom.getName())
@@ -73,9 +84,16 @@ public class RoomService {
 
     }
 
-    public Page<RoomResponseDto> getPublicRooms(int page, int size) {
+    // 그룹 검색 기능 추가
+    public Page<RoomResponseDto> getPublicRooms(String search, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<Room> rooms = roomRepository.findByIsPublicTrue(pageable);
+        Page<Room> rooms;
+
+        if(search != null && !search.trim().isEmpty()) {
+            rooms = roomRepository.findByNameContainingIgnoreCaseAndIsPublicTrue(search.trim(), pageable);
+        } else {
+            rooms = roomRepository.findByIsPublicTrue(pageable);
+        }
 
         return rooms.map(room -> RoomResponseDto.builder()
                 .roomId(room.getId())

@@ -44,9 +44,16 @@ public class RoomController {
     //조회
     @GetMapping
     public ResponseEntity<Map<String, Object>> getPublicRooms(
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<RoomResponseDto> roomsPage = roomService.getPublicRooms(page, size);
+
+        Long userId = SecurityUtil.getCurrentUserId();
+        if(userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        Page<RoomResponseDto> roomsPage = roomService.getPublicRooms(search, page, size);
 
         Map<String, Object> response = new HashMap<>();
         Map<String, Object> data = new HashMap<>();

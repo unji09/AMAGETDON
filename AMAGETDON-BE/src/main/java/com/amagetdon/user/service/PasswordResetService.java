@@ -36,7 +36,6 @@ public class PasswordResetService {
         for (int i = 0; i < 8; i++) {
             sb.append(LETTERS.charAt(RANDOM.nextInt(LETTERS.length())));
         }
-        System.out.println(sb.toString());
         return sb.toString();
     }
 }

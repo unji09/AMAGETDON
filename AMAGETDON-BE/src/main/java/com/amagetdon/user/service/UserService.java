@@ -2,7 +2,6 @@ package com.amagetdon.user.service;
 
 import com.amagetdon.common.ErrorCode;
 import com.amagetdon.common.oauth.dto.response.KakaoUserResponse;
-import com.amagetdon.common.security.SecurityUtil;
 import com.amagetdon.user.dto.request.UserLoginRequest;
 import com.amagetdon.user.dto.request.UserSignupRequest;
 import com.amagetdon.user.entity.LoginType;
