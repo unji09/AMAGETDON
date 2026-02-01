@@ -8,6 +8,7 @@ import LoginPage from "@/pages/LoginPage.tsx";
 import OAuthKakaoCallback from "./pages/OAuthKakaoCallback";
 import SignupPage from "@/pages/SignupPage.tsx";
 import PasswordResetPage from "@/pages/PasswordResetPage.tsx";
+import '@/api/interceptor'
 
 function App() {
     return (
