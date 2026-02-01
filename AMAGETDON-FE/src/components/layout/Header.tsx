@@ -31,8 +31,8 @@ export const Header = () => {
                         커뮤니티
                     </Link>
                     <Link
-                        to="/courses"
-                        className={`header-nav-link ${location.pathname === '/courses' ? 'active' : ''}`}
+                        to="/learning"
+                        className={`header-nav-link ${location.pathname === '/learning' ? 'active' : ''}`}
                     >
                         투자 강의
                     </Link>
