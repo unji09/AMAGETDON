@@ -1,40 +1,54 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import './Header.css';
 
+/**
+ * Header 컴포넌트
+ */
 export const Header = () => {
-    const isLoggedIn = false;
-    const userName = '사용자';
+    const location = useLocation();
 
     return (
         <header className="header">
             <div className="header-content">
                 {/* 로고 */}
                 <Link to="/" className="header-logo">
-                    <h1>AMAGETDON</h1>
+                    <img src="/logo.png" alt="아마Get돈" className="header-logo-img" />
+                    <span className="header-logo-text">AMAGETDON</span>
                 </Link>
 
                 {/* 네비게이션 */}
                 <nav className="header-nav">
-                    <Link to="/community" className="header-nav-link">
+                    <Link
+                        to="/"
+                        className={`header-nav-link ${location.pathname === '/' ? 'active' : ''}`}
+                    >
+                        홈
+                    </Link>
+                    <Link
+                        to="/community"
+                        className={`header-nav-link ${location.pathname === '/community' ? 'active' : ''}`}
+                    >
                         커뮤니티
                     </Link>
-                    <Link to="/ranking" className="header-nav-link">
-                        랭킹
+                    <Link
+                        to="/courses"
+                        className={`header-nav-link ${location.pathname === '/courses' ? 'active' : ''}`}
+                    >
+                        투자 강의
+                    </Link>
+                    <Link
+                        to="/mypage"
+                        className={`header-nav-link ${location.pathname === '/mypage' ? 'active' : ''}`}
+                    >
+                        마이페이지
                     </Link>
                 </nav>
 
-                {/* 사용자 정보 */}
-                <div className="header-user">
-                    {isLoggedIn ? (
-                        <>
-                            <span className="header-user-name">{userName}님</span>
-                            <button className="header-logout-btn">로그아웃</button>
-                        </>
-                    ) : (
-                        <Link to="/login" className="header-login-btn">
-                            로그인
-                        </Link>
-                    )}
+                {/* 프로필 */}
+                <div className="header-profile">
+                    <div className="header-profile-circle">
+                        <span>김</span>
+                    </div>
                 </div>
             </div>
         </header>
