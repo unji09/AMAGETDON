@@ -6,17 +6,20 @@ import com.amagetdon.learning.dto.quiz.QuizSubmitResponse;
 import com.amagetdon.learning.entity.*;
 import com.amagetdon.learning.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class QuizService {
 
     private final QuizRepository quizRepository;
@@ -25,12 +28,38 @@ public class QuizService {
     private final ReviewNoteRepository reviewNoteRepository;
     private final DailyLearningRewardRepository rewardRepository;
 
+    // 새로 추가
+    private final CachedQuizRepository cachedQuizRepository;
+    private final CachedQuizChoiceRepository cachedQuizChoiceRepository;
+    private final FastApiService fastApiService;
+
+    private static final Integer DAILY_QUIZ_LIMIT = 100;
+    private static final Integer CACHED_QUIZ_BUFFER_SIZE = 100;  // TODO(민규): 배포시 1000으로 증가
+
     /**
      * 오늘의 퀴즈 1개 조회
      */
     public QuizResponse getDailyQuiz(Long userId) {
         LocalDate today = LocalDate.now();
 
+        // 1. 현재 sequence 계산
+        Integer currentSequence = historyRepository
+                .findMaxSequenceByUserIdAndQuizDate(userId, today);
+        Integer nextSequence = (currentSequence == null) ? 1 : currentSequence + 1;
+
+        // 2. 100개 이하: 기존 로직
+        if (nextSequence <= DAILY_QUIZ_LIMIT) {
+            return getDailyQuizUnder100(userId, today, nextSequence);
+        }
+
+        // 3. 100개 초과: 캐싱 퀴즈 로직
+        return getDailyQuizOver100(userId, today, nextSequence);
+    }
+
+    /**
+     * 1~100번 퀴즈 조회 (기존 로직)
+     */
+    private QuizResponse getDailyQuizUnder100(Long userId, LocalDate today, Integer nextSequence) {
         // 1. 전체 퀴즈 ID 조회
         List<Long> allQuizIds = quizRepository.findAllQuizIds();
 
@@ -52,17 +81,71 @@ public class QuizService {
         Quiz quiz = quizRepository.findById(nextQuizId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 퀴즈입니다"));
 
-        // 6. 현재 sequence 계산
-        Integer currentSequence = historyRepository
-                .findMaxSequenceByUserIdAndQuizDate(userId, today);
-        Integer nextSequence = (currentSequence == null) ? 1 : currentSequence + 1;
-
-        // 7. 오늘 퀴즈 보상 받았는지 확인
+        // 6. 오늘 퀴즈 보상 받았는지 확인
         Boolean isQuizRewardReceived = rewardRepository
                 .existsByUserIdAndQuizRewardDate(userId, today);
 
-        // 8. DTO 변환
+        // 7. DTO 변환
         return convertToQuizResponse(quiz, nextSequence, isQuizRewardReceived);
+    }
+
+    /**
+     * 101번~ 무한 퀴즈 조회 (캐싱 퀴즈)
+     */
+    private QuizResponse getDailyQuizOver100(Long userId, LocalDate today, Integer nextSequence) {
+        // 1. 미사용 캐싱 퀴즈 조회
+        Optional<CachedQuiz> cachedQuizOpt = cachedQuizRepository.findRandomUnusedQuiz();
+
+        if (cachedQuizOpt.isPresent()) {
+            // 미사용 퀴즈 있음 -> 즉시 반환
+            CachedQuiz cachedQuiz = cachedQuizOpt.get();
+            cachedQuiz.markAsUsed();  // 사용 처리
+            cachedQuizRepository.save(cachedQuiz);
+
+            log.info("캐싱 퀴즈 사용: cachedQuizId={}, userId={}, sequence={}",
+                    cachedQuiz.getCachedQuizId(), userId, nextSequence);
+
+            return convertCachedQuizToResponse(cachedQuiz, nextSequence);
+        }
+
+        // 2. 미사용 퀴즈 없음 -> 미사용 개수 확인
+        Integer unusedCount = cachedQuizRepository.countByIsUsed(false);
+
+        if (unusedCount >= CACHED_QUIZ_BUFFER_SIZE) {
+            // 100개 이상 -> 대기 안내
+            throw new IllegalStateException("퀴즈 생성 중입니다. 잠시 후 다시 시도해주세요");
+        }
+
+        // 3. 100개 미만 -> FastAPI 호출하여 생성
+        log.info("FastAPI 퀴즈 생성 요청: unusedCount={}", unusedCount);
+        fastApiService.requestQuizGeneration(1, "RANDOM", "RANDOM");
+
+        // 4. 생성 요청 후 재조회 (polling 방식)
+        int maxRetries = 5;
+        int retryCount = 0;
+
+        while (retryCount < maxRetries) {
+            try {
+                Thread.sleep(1000);  // 1초 대기
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("퀴즈 생성 중 오류가 발생했습니다");
+            }
+
+            Optional<CachedQuiz> newQuizOpt = cachedQuizRepository.findRandomUnusedQuiz();
+            if (newQuizOpt.isPresent()) {
+                CachedQuiz newQuiz = newQuizOpt.get();
+                newQuiz.markAsUsed();
+                cachedQuizRepository.save(newQuiz);
+
+                log.info("생성된 캐싱 퀴즈 사용: cachedQuizId={}", newQuiz.getCachedQuizId());
+                return convertCachedQuizToResponse(newQuiz, nextSequence);
+            }
+
+            retryCount++;
+        }
+
+        throw new RuntimeException("퀴즈 생성에 실패했습니다. 다시 시도해주세요");
     }
 
     /**
@@ -76,9 +159,9 @@ public class QuizService {
                 .findMaxSequenceByUserIdAndQuizDate(userId, today);
         Integer nextSequence = (currentSequence == null) ? 1 : currentSequence + 1;
 
-        // 2. 100개 초과 체크
-        if (nextSequence > 100) {
-            throw new IllegalArgumentException("오늘의 퀴즈를 모두 완료했습니다");
+        // 2. 100개 이하만 처리 (100개 초과는 제출 불가)
+        if (nextSequence > DAILY_QUIZ_LIMIT) {
+            throw new IllegalArgumentException("100개 초과 퀴즈는 제출할 수 없습니다");
         }
 
         // 3. 퀴즈 존재 여부
@@ -99,7 +182,7 @@ public class QuizService {
         DailyQuizHistory history = new DailyQuizHistory(
                 userId,
                 request.quizId(),
-                nextSequence,  // ← 서버에서 계산한 값 사용
+                nextSequence,
                 isCorrect
         );
         historyRepository.save(history);
@@ -118,10 +201,9 @@ public class QuizService {
         }
 
         // 8. 보상 지급
-        Integer rewardAmount = calculateRewardAmount(nextSequence);  // ← 서버 계산 값
+        Integer rewardAmount = calculateRewardAmount(nextSequence);
 
         // TODO(민규): User balance 업데이트
-        // 보상 정책 테이블 생성 이후 진행
         Long currentBalance = 3000000L + rewardAmount;
 
         // 9. 정답 문자열 생성
@@ -158,7 +240,7 @@ public class QuizService {
     }
 
     private Integer calculateRewardAmount(Integer quizSequence) {
-        if (quizSequence < 1 || quizSequence > 100) {
+        if (quizSequence < 1 || quizSequence > DAILY_QUIZ_LIMIT) {
             return 0;
         }
 
@@ -173,8 +255,7 @@ public class QuizService {
         if (quiz.getQuizType() == QuizType.OX) {
             return quiz.getAnswerOx() ? "O" : "X";
         } else {
-            List<QuizChoice> choices = quizChoiceRepository
-                    .findByQuizId(quiz.getQuizId());
+            List<QuizChoice> choices = quizChoiceRepository.findByQuizId(quiz.getQuizId());
 
             return choices.stream()
                     .filter(QuizChoice::getIsAnswer)
@@ -191,8 +272,7 @@ public class QuizService {
     ) {
         List<QuizResponse.ChoiceInfo> choices = null;
         if (quiz.getQuizType() == QuizType.MCQ) {
-            List<QuizChoice> quizChoices = quizChoiceRepository
-                    .findByQuizId(quiz.getQuizId());
+            List<QuizChoice> quizChoices = quizChoiceRepository.findByQuizId(quiz.getQuizId());
 
             choices = quizChoices.stream()
                     .map(choice -> new QuizResponse.ChoiceInfo(
@@ -213,6 +293,42 @@ public class QuizService {
         return new QuizResponse(
                 quizSequence,
                 isQuizRewardReceived,
+                quizDetail
+        );
+    }
+
+    /**
+     * CachedQuiz를 QuizResponse로 변환
+     */
+    private QuizResponse convertCachedQuizToResponse(
+            CachedQuiz cachedQuiz,
+            Integer quizSequence
+    ) {
+        List<QuizResponse.ChoiceInfo> choices = null;
+        if (cachedQuiz.getQuizType() == QuizType.MCQ) {
+            List<CachedQuizChoice> cachedChoices = cachedQuizChoiceRepository
+                    .findByCachedQuizId(cachedQuiz.getCachedQuizId());
+
+            choices = cachedChoices.stream()
+                    .map(choice -> new QuizResponse.ChoiceInfo(
+                            choice.getCachedChoiceId(),
+                            choice.getChoiceText(),
+                            choice.getChoiceNo()
+                    ))
+                    .collect(Collectors.toList());
+        }
+
+        QuizResponse.QuizDetail quizDetail = new QuizResponse.QuizDetail(
+                cachedQuiz.getCachedQuizId(),
+                cachedQuiz.getQuizType(),
+                cachedQuiz.getQuizContent(),
+                choices
+        );
+
+        // 100개 초과는 보상 없음
+        return new QuizResponse(
+                quizSequence,
+                false,  // 보상 받지 않음
                 quizDetail
         );
     }
