@@ -11,6 +11,7 @@ import com.amagetdon.user.entity.User;
 import com.amagetdon.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,7 @@ public class AchievementService {
     private final AchievementRepository achievementRepository;
     private final UserAchievementRepository userAchievementRepository;
     private final UserRepository userRepository;
+    private final StringRedisTemplate redisTemplate;
 
     public AchievementResponse getMyAchievements(Long userId, AchievementFilter filter) {
         List<Achievement> allAchievements = achievementRepository.findAllByOrderByAchievementIdAsc();
@@ -104,6 +106,8 @@ public class AchievementService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND_SIMPLE.getMessage()));
         user.addBalance(REWARD_AMOUNT);
+
+        redisTemplate.convertAndSend("achievement:granted", userId.toString());
     }
 
     private Map<Long, UserAchievement> getUserAchievementMap(Long userId) {
