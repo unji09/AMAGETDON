@@ -74,7 +74,10 @@ public enum ErrorCode {
     WRONG_PERIOD("잘못된 기간입니다."),
 
     //Stock
-    KEYWORD_TOO_SHORT("검색어는 2글자 이상 입력해주세요.")
+    KEYWORD_TOO_SHORT("검색어는 2글자 이상 입력해주세요."),
+
+    // Chapter
+    CHAPTER_NOT_FOUND("챕터를 찾을 수 없습니다."),
     ;
 
     private final String message;
