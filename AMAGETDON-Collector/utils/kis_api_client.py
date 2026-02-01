@@ -1,11 +1,13 @@
 import os
 import time
 import requests
+import asyncio
+import aiohttp
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Optional, Set
 from datetime import datetime, timedelta
 from core.token_manager import TokenManager
 from utils.logger import logger
-from utils.market_hours import is_market_open
 from models.dto import StockDTO
 from utils.helpers import safe_int, safe_float
 
@@ -276,6 +278,78 @@ class KISApiClient:
         except Exception as e:
             logger.error(f"{stock_code} 호출 실패: {e}")
             return None
+        
+    #비동기 현재가 조회
+    async def fetch_price_async(self, session: aiohttp.ClientSession, stock_code: str) -> Optional[StockDTO]:
+        try:
+            url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/inquire-price"
+            headers = self._get_headers("FHKST01010100")
+            params = {
+                "FID_COND_MRKT_DIV_CODE": "J",
+                "FID_INPUT_ISCD": stock_code
+            }
+            
+            async with session.get(url, headers=headers, params=params, timeout=aiohttp.ClientTimeout(total=10)) as response:
+                data = await response.json()
+
+                if data.get("rt_cd") != "0" and "token" in data.get("msg1", "").lower():
+                    logger.info("토큰 만료 - 갱신 후 재시도")
+                    self.token_manager.refresh_token()
+                    headers = self._get_headers("FHKST01010100")
+                    
+                    async with session.get(url, headers=headers, params=params, timeout=aiohttp.ClientTimeout(total=10)) as retry_response:
+                        data = await retry_response.json()
+                
+                if data.get("rt_cd") != "0":
+                    return None
+                
+                output = data.get("output", {})
+                if not output:
+                    return None
+                
+                current_price = safe_int(output.get("stck_prpr"))
+                if current_price is None:
+                    return None
+                
+                return StockDTO(
+                    stock_code=stock_code,
+                    stock_name=output.get("hts_kor_isnm", ""),
+                    current_price=current_price,
+                    change_amount=safe_int(output.get("prdy_vrss")) or 0,
+                    change_rate=safe_float(output.get("prdy_ctrt")) or 0.0,
+                    volume=safe_int(output.get("acml_vol")) or 0,
+                    trading_value=safe_int(output.get("acml_tr_pbmn")) or 0,
+                    per=safe_float(output.get("per")),
+                    pbr=safe_float(output.get("pbr")),
+                    eps=safe_int(output.get("eps")),
+                    bps=safe_int(output.get("bps")),
+                    market_cap=safe_int(output.get("hts_avls"))
+                )
+        except Exception as e:
+            logger.error(f"{stock_code} 비동기 호출 실패: {e}")
+            return None
+
+    #초당 20건씩 병렬 호출
+    async def fetch_prices_batch(self, stock_codes: list, batch_size: int = 20) -> dict:
+        results = {}
+        
+        async with aiohttp.ClientSession() as session:
+            for i in range(0, len(stock_codes), batch_size):
+                batch = stock_codes[i:i + batch_size]
+                start_time = asyncio.get_event_loop().time()
+                
+                tasks = [self.fetch_price_async(session, code) for code in batch]
+                batch_results = await asyncio.gather(*tasks, return_exceptions=True)
+                
+                for code, result in zip(batch, batch_results):
+                    if isinstance(result, StockDTO):
+                        results[code] = result
+                
+                elapsed = asyncio.get_event_loop().time() - start_time
+                if elapsed < 1.0 and i + batch_size < len(stock_codes):
+                    await asyncio.sleep(1.0 - elapsed)
+        
+        return results
         
     #거래량순위
     def fetch_from_api(self) -> List[str]:

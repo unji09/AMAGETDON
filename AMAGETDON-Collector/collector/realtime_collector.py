@@ -1,5 +1,6 @@
 import time
 import threading
+import asyncio
 from datetime import datetime, timedelta
 from typing import Dict, Set
 from collections import defaultdict
@@ -29,11 +30,35 @@ class RealtimeCollector:
         
         self.current_minute_data: Dict[str, list] = defaultdict(list)
         self.last_candle_created: Dict[str, datetime] = {}
+
+        self.rate_limiter = threading.Semaphore(20)
+        self.last_reset = time.time()
+        self.call_count = 0
+        self.lock = threading.Lock()
         
         self.conn = None
 
     def connect_db(self):
         self.conn = get_db_connection(self.conn)
+
+    # 초당 20건 제한
+    def fetch_with_rate_limit(self, stock_code): 
+        with self.lock:
+            now = time.time()
+            if now - self.last_reset >= 1.0:
+                self.call_count = 0
+                self.last_reset = now
+            
+            if self.call_count >= 20:
+                sleep_time = 1.0 - (now - self.last_reset)
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
+                self.call_count = 0
+                self.last_reset = time.time()
+            
+            self.call_count += 1
+        
+        return self.fetch_price(stock_code)
 
     def collect(self):
         self.running = True 
@@ -64,24 +89,22 @@ class RealtimeCollector:
                     time.sleep(5)
                     continue
                 
-                processed = 0
-                logger.info(f"REST 수집 시작: {len(rest_stocks)}개")
+                stock_list = list(rest_stocks)
+                logger.info(f"REST 수집 시작: {len(stock_list)}개 (병렬 처리)")
                 
-                for stock_code in rest_stocks:
-                    try:
-                        stock = self.api_client.fetch_price(stock_code)
-                        
-                        if stock:
-                            self._save_price_and_aggregate(stock_code, stock.current_price, stock.volume)
-                            processed += 1
-                        
-                        time.sleep(0.05)
-                        
-                    except Exception as e:
-                        logger.error(f"{stock_code} REST 수집 실패: {e}")
+                # 비동기 배치 호출 실행
+                results = asyncio.run(
+                    self.api_client.fetch_prices_batch(stock_list, batch_size=20)
+                )
+                
+                processed = 0
+                for stock_code, stock in results.items():
+                    if stock:
+                        self._save_price_and_aggregate(stock_code, stock.current_price, stock.volume)
+                        processed += 1
                 
                 elapsed = time.time() - start_time
-                logger.info(f"REST 수집 완료: {processed}/{len(rest_stocks)}개 (소요: {elapsed:.2f}초)")
+                logger.info(f"REST 수집 완료: {processed}/{len(stock_list)}개 (소요: {elapsed:.2f}초)")
                 
                 if elapsed < 5:
                     time.sleep(5 - elapsed)

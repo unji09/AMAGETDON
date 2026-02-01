@@ -109,10 +109,10 @@ def start_collection():
     rest_collector = RealtimeCollector(token_manager, stock_manager)
     
     ws_collector.connect()
-    top_30_stocks = volume_tracker.get_top_10_volume_stocks()
-    if top_30_stocks:
-        ws_collector.subscribe_stocks(top_30_stocks)
-        logger.info(f"초기 구독 완료: {len(top_30_stocks)}개 종목")
+    top_10_stocks = volume_tracker.get_top_10_volume_stocks()
+    if top_10_stocks:
+        ws_collector.subscribe_stocks(top_10_stocks)
+        logger.info(f"초기 구독 완료: {len(top_10_stocks)}개 종목")
     
     collection_active = True
     
@@ -262,7 +262,7 @@ def main():
     # check_and_initialize()
 
     now = datetime.now()
-    if now.hour > 8 or (now.hour == 8 and now.minute >= 50):
+    if now.hour > 8 or (now.hour == 8 and now.minute >= 40):
         logger.info("8시 50분 이후 - 즉시 재무 데이터 업데이트")
         update_financials()
     
