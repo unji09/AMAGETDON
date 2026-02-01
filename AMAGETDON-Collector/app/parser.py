@@ -1,6 +1,7 @@
 import pymysql
 import csv
 import time
+import asyncio 
 from config.config import DB_CONFIG
 from utils.logger import logger
 from utils.kis_api_client import KISApiClient
@@ -171,7 +172,7 @@ class StockParser:
         cursor.execute("SELECT stock_code FROM stock WHERE sector_code = '000000'")
         stock_codes = [row[0] for row in cursor.fetchall()]
         
-        logger.info(f"총 {len(stock_codes)}개 종목 업종 코드 수집 시작")
+        logger.info(f"총 {len(stock_codes)}개 종목 업종 코드 수집 시작 (병렬 처리)")
         
         token_manager = TokenManager.get_instance()
         api_client = KISApiClient(token_manager)
@@ -183,16 +184,17 @@ class StockParser:
         cursor.execute("SELECT sector_code FROM sector WHERE sector_level = 'SMALL'")
         db_sector_codes = set(row[0] for row in cursor.fetchall())
         
-        cursor.execute("SELECT sector_name, sector_code FROM sector WHERE sector_level = 'SMALL'")
-        db_sector_name_to_code = {row[0]: row[1] for row in cursor.fetchall()}
-        
         logger.info(f"DB 소분류 업종 코드: {len(db_sector_codes)}개")
-        logger.info(f"DB 소분류 업종 이름: {len(db_sector_name_to_code)}개")
         
-        for i, stock_code in enumerate(stock_codes, 1):
-            try:
-                stock_info = api_client.fetch_stock_basic_info(stock_code)
-                
+        # 배치 처리 (100개씩)
+        batch_size = 100
+        for i in range(0, len(stock_codes), batch_size):
+            batch = stock_codes[i:i + batch_size]
+            
+            # 비동기 배치 호출
+            results = asyncio.run(api_client.fetch_stock_basic_info_batch(batch))
+            
+            for stock_code, stock_info in results.items():
                 if stock_info:
                     sector_value = stock_info.get('sector_small_code')
                     
@@ -200,33 +202,24 @@ class StockParser:
                         fail_count += 1
                         continue
                     
-                    sector_code = None
-                    
                     if sector_value in db_sector_codes:
-                        sector_code = sector_value
-                    
-                    if sector_code:
                         sql = """
                             UPDATE stock 
                             SET sector_code = %s, updated_at = NOW()
                             WHERE stock_code = %s
                         """
-                        cursor.execute(sql, (sector_code, stock_code))
+                        cursor.execute(sql, (sector_value, stock_code))
                         success_count += 1
-                        valid_sector_codes.add(sector_code)
+                        valid_sector_codes.add(sector_value)
                     else:
                         fail_count += 1
                         logger.debug(f"{stock_code}: 업종 '{sector_value}' DB에 없음")
-                
-                if i % 100 == 0:
-                    self.conn.commit()
-                    logger.info(f"진행: {i}/{len(stock_codes)} (성공: {success_count}, 실패: {fail_count})")
-                
-                time.sleep(0.05)
-                
-            except Exception as e:
-                fail_count += 1
-                logger.error(f"{stock_code} 업종 코드 수집 실패: {e}")
+            
+            # 배치에서 실패한 종목 카운트
+            fail_count += len(batch) - len(results)
+            
+            self.conn.commit()
+            logger.info(f"진행: {min(i + batch_size, len(stock_codes))}/{len(stock_codes)} (성공: {success_count}, 실패: {fail_count})")
         
         self.conn.commit()
         
