@@ -47,6 +47,12 @@ public class RoomController {
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
+
+        Long userId = SecurityUtil.getCurrentUserId();
+        if(userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
         Page<RoomResponseDto> roomsPage = roomService.getPublicRooms(search, page, size);
 
         Map<String, Object> response = new HashMap<>();
