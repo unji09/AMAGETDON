@@ -1,5 +1,4 @@
 import os
-import time
 import requests
 import asyncio
 import aiohttp
@@ -9,10 +8,7 @@ from core.token_manager import TokenManager
 from utils.logger import logger
 from models.dto import StockDTO
 from utils.helpers import safe_int, safe_float
-from utils.rate_limiter import (
-    STOCK_API_LIMITER, CANDLE_API_LIMITER,
-    STOCK_API_SYNC_LIMITER, CANDLE_API_SYNC_LIMITER
-)
+from utils.rate_limiter import STOCK_API_LIMITER, CANDLE_API_LIMITER
 
 class KISApiClient:
 
@@ -143,7 +139,7 @@ class KISApiClient:
                     oldest_dt = datetime.strptime(oldest_time, '%H%M%S')
                     next_time = (oldest_dt - timedelta(minutes=1)).strftime('%H%M%S')
                     current_time = next_time
-                    await asyncio.sleep(0.1)  # time.sleep 대신 asyncio.sleep
+                    await asyncio.sleep(0.15)
                 else:
                     break
                     
@@ -155,23 +151,17 @@ class KISApiClient:
 
     #일별분봉조회 배치 처리
     async def fetch_minute_candles_batch(
-        self, 
-        requests: List[tuple],  # [(stock_code, target_date), ...]
-        batch_size: int = 5
+        self,
+        requests: List[tuple],
     ) -> dict:
         results = {}
-        
+
         async with aiohttp.ClientSession() as session:
-            tasks = [
-                self.fetch_minute_candles_by_date_async(session, code, date)
-                for code, date in requests
-            ]
-            all_results = await asyncio.gather(*tasks, return_exceptions=True)
-            
-            for (code, date), result in zip(requests, all_results):
-                if isinstance(result, dict) and result:
+            for code, date in requests:
+                result = await self.fetch_minute_candles_by_date_async(session, code, date)
+                if result:
                     results[(code, date)] = result
-        
+
         return results
 
     #일봉/주봉 조회 api
@@ -266,34 +256,6 @@ class KISApiClient:
         
         return candles
 
-    #일봉/주봉 배치 조회
-    async def fetch_daily_candles_batch(
-        self, 
-        requests: List[tuple],
-        max_concurrent: int = 5
-    ) -> dict:
-        results = {}
-        semaphore = asyncio.Semaphore(max_concurrent)
-        
-        async def fetch_with_limit(session, stock_code, start_date, end_date, period_code):
-            async with semaphore:
-                return await self.fetch_daily_candles_async(
-                    session, stock_code, start_date, end_date, period_code
-                )
-        
-        async with aiohttp.ClientSession() as session:
-            tasks = [
-                fetch_with_limit(session, code, start, end, period)
-                for code, start, end, period in requests
-            ]
-            all_results = await asyncio.gather(*tasks, return_exceptions=True)
-            
-            for (code, start, end, period), result in zip(requests, all_results):
-                if isinstance(result, list) and result:
-                    results[code] = result
-        
-        return results
-        
     #종목기본정보조회 api
     async def fetch_stock_basic_info_async(self, session: aiohttp.ClientSession, stock_code: str) -> dict:
         await STOCK_API_LIMITER.acquire()
@@ -366,8 +328,9 @@ class KISApiClient:
                         data = await retry_response.json()
                 
                 if data.get("rt_cd") != "0":
+                    logger.warning(f"{stock_code} API 실패: {data.get('msg1')}")
                     return None
-                
+
                 output = data.get("output", {})
                 if not output:
                     return None
@@ -395,22 +358,27 @@ class KISApiClient:
             return None
 
     #현재가시세 배치 처리
-    async def fetch_prices_batch(self, stock_codes: list, batch_size: int = 20) -> dict:
+    async def fetch_prices_batch(self, stock_codes: list, max_concurrent: int = 3) -> dict:
         results = {}
-    
+        semaphore = asyncio.Semaphore(max_concurrent)
+
+        async def fetch_with_limit(session, code):
+            async with semaphore:
+                return await self.fetch_price_async(session, code)
+
         async with aiohttp.ClientSession() as session:
-            tasks = [self.fetch_price_async(session, code) for code in stock_codes]
+            tasks = [fetch_with_limit(session, code) for code in stock_codes]
             all_results = await asyncio.gather(*tasks, return_exceptions=True)
-            
+
             for code, result in zip(stock_codes, all_results):
                 if isinstance(result, StockDTO):
                     results[code] = result
-        
+
         return results
         
     #거래량순위
     def fetch_from_api(self) -> List[str]:
-        CANDLE_API_SYNC_LIMITER.acquire()
+        CANDLE_API_LIMITER.acquire_sync()
 
         url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/volume-rank"
         

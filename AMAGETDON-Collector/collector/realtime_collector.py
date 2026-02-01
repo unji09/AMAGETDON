@@ -11,7 +11,7 @@ from config.config import REDIS_KEYS
 from collector.candle_filler import CandleFiller
 from utils.kis_api_client import KISApiClient
 from models.dto import CandleDTO
-from utils.db import get_db_connection, save_candle
+from utils.db import get_db_connection, save_candle, save_stock_price
 
 class RealtimeCollector:
 
@@ -31,34 +31,10 @@ class RealtimeCollector:
         self.current_minute_data: Dict[str, list] = defaultdict(list)
         self.last_candle_created: Dict[str, datetime] = {}
 
-        self.rate_limiter = threading.Semaphore(20)
-        self.last_reset = time.time()
-        self.call_count = 0
-        self.lock = threading.Lock()
-        
         self.conn = None
 
     def connect_db(self):
         self.conn = get_db_connection(self.conn)
-
-    # 초당 20건 제한
-    def fetch_with_rate_limit(self, stock_code): 
-        with self.lock:
-            now = time.time()
-            if now - self.last_reset >= 1.0:
-                self.call_count = 0
-                self.last_reset = now
-            
-            if self.call_count >= 20:
-                sleep_time = 1.0 - (now - self.last_reset)
-                if sleep_time > 0:
-                    time.sleep(sleep_time)
-                self.call_count = 0
-                self.last_reset = time.time()
-            
-            self.call_count += 1
-        
-        return self.fetch_price(stock_code)
 
     def collect(self):
         self.running = True 
@@ -94,12 +70,13 @@ class RealtimeCollector:
                 
                 # 비동기 배치 호출 실행
                 results = asyncio.run(
-                    self.api_client.fetch_prices_batch(stock_list, batch_size=20)
+                    self.api_client.fetch_prices_batch(stock_list, max_concurrent=10)
                 )
                 
                 processed = 0
                 for stock_code, stock in results.items():
                     if stock:
+                        self._save_stock_price_to_db(stock)
                         self._save_price_and_aggregate(stock_code, stock.current_price, stock.volume)
                         processed += 1
                 
@@ -127,7 +104,16 @@ class RealtimeCollector:
         except Exception as e:
             logger.error(f"REST 종목 조회 실패: {e}")
             return set()
-    
+
+    #stock_prices 테이블에 저장
+    def _save_stock_price_to_db(self, stock):
+        try:
+            conn = get_db_connection(None)
+            save_stock_price(conn, stock)
+            conn.close()
+        except Exception as e:
+            logger.error(f"stock_prices 저장 실패 ({stock.stock_code}): {e}")
+
     #1분봉 생성
     def _save_price_and_aggregate(self, stock_code: str, price: int, volume: int):
         """현재가 버퍼링 → 1분봉 생성"""
@@ -299,13 +285,13 @@ class RealtimeCollector:
                     
                     if last_time is None or (now - last_time) >= timedelta(minutes=5):
                         try:
-                            self.candle_filler.fill_missing_candles(
+                            asyncio.run(self.candle_filler.fill_missing_candles(
                                 stock_code=stock_code,
                                 target_date=now.date(),
                                 fill_1m=True,
                                 fill_5m=True,
                                 fill_30m=True
-                            )
+                            ))
                             self.last_fill_time[stock_code] = now
                             logger.debug(f"{stock_code} 누락 보정 완료")
                             

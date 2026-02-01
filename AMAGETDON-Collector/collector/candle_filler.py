@@ -1,7 +1,6 @@
-import asyncio
 import aiohttp
 from datetime import datetime, timedelta, date
-from typing import List, Set, Optional
+from typing import List, Optional
 from core.token_manager import TokenManager
 from models.dto import CandleDTO
 from utils.logger import logger
@@ -19,30 +18,30 @@ class CandleFiller:
         self.conn = get_db_connection(self.conn)
     
     #누락 보정
-    def fill_missing_candles(
-        self, 
-        stock_code: str, 
+    async def fill_missing_candles(
+        self,
+        stock_code: str,
         target_date: date = None,
         fill_1m: bool = True,
         fill_5m: bool = True,
         fill_30m: bool = True
     ):
-        
+
         if target_date is None:
             target_date = datetime.now().date()
-        
+
         target_date_str = target_date.strftime('%Y%m%d')
-        
+
         if fill_1m:
-            filled_1m = self._fill_1min_candles(stock_code, target_date, target_date_str)
+            filled_1m = await self._fill_1min_candles(stock_code, target_date, target_date_str)
             if filled_1m > 0:
                 logger.info(f"{stock_code} 1분봉 {filled_1m}개 보정")
-        
+
         if fill_5m:
             filled_5m = self._fill_5min_candles(stock_code, target_date, target_date_str)
             if filled_5m > 0:
                 logger.info(f"{stock_code} 5분봉 {filled_5m}개 보정")
-        
+
         if fill_30m:
             filled_30m = self._fill_30min_candles(stock_code, target_date, target_date_str)
             if filled_30m > 0:
@@ -170,113 +169,8 @@ class CandleFiller:
         
         if candles_to_save:
             save_candles(self.conn, candles_to_save)
-        
-        return len(candles_to_save)    
+        return len(candles_to_save)
 
-    
-    # #5분봉 누락 보정
-    # def _find_missing_5min_slots(self, stock_code: str, target_date: date) -> List[datetime]:
-    #     self.connect_db()
-    #     cursor = self.conn.cursor()
-        
-    #     query = """
-    #     SELECT candle_time
-    #     FROM chart_candles
-    #     WHERE stock_code = %s
-    #     AND interval_type = '5m'
-    #     AND DATE(candle_time) = %s
-    #     """
-    #     cursor.execute(query, (stock_code, target_date))
-    #     existing_5m = {row[0] for row in cursor.fetchall()}
-        
-    #     expected_5m = []
-    #     start = datetime(target_date.year, target_date.month, target_date.day, 9, 0)
-    #     end = datetime(target_date.year, target_date.month, target_date.day, 15, 30)
-        
-    #     # ✅ 오늘이면 현재 시간까지만
-    #     today = datetime.now().date()
-    #     if target_date == today:
-    #         now = datetime.now()
-    #         if now < end:
-    #             end = now
-        
-    #     current = start
-    #     while current < end:
-    #         expected_5m.append(current)
-    #         current += timedelta(minutes=5)
-        
-    #     missing = [slot for slot in expected_5m if slot not in existing_5m]
-    #     return missing
-    
-    # #30분봉 누락 보정
-    # def _find_missing_30min_slots(self, stock_code: str, target_date: date) -> List[datetime]:
-    #     self.connect_db()
-    #     cursor = self.conn.cursor()
-        
-    #     query = """
-    #     SELECT candle_time
-    #     FROM chart_candles
-    #     WHERE stock_code = %s
-    #     AND interval_type = '30m'
-    #     AND DATE(candle_time) = %s
-    #     """
-    #     cursor.execute(query, (stock_code, target_date))
-    #     existing_30m = {row[0] for row in cursor.fetchall()}
-        
-    #     expected_30m = []
-    #     start = datetime(target_date.year, target_date.month, target_date.day, 9, 0)
-    #     end = datetime(target_date.year, target_date.month, target_date.day, 15, 30)
-        
-    #     # ✅ 오늘이면 현재 시간까지만
-    #     today = datetime.now().date()
-    #     if target_date == today:
-    #         now = datetime.now()
-    #         if now < end:
-    #             end = now
-        
-    #     current = start
-    #     while current < end:
-    #         expected_30m.append(current)
-    #         current += timedelta(minutes=30)
-        
-    #     missing = [slot for slot in expected_30m if slot not in existing_30m]
-    #     return missing
-    
-    # #기존 1분봉 조회
-    # def _get_existing_1min_candles(self, stock_code: str, target_date: date) -> Set[datetime]:
-    #     self.connect_db()
-    #     cursor = self.conn.cursor()
-        
-    #     query = """
-    #     SELECT candle_time
-    #     FROM chart_candles
-    #     WHERE stock_code = %s
-    #       AND interval_type = '1m'
-    #       AND DATE(candle_time) = %s
-    #     """
-        
-    #     cursor.execute(query, (stock_code, target_date))
-    #     return {row[0] for row in cursor.fetchall()}
-    
-    # #모든 1분 시간 생성 (09:00 ~ 15:30)
-    # def _get_expected_minutes(self, target_date: date) -> Set[datetime]:
-    #     expected = set()
-    #     start = datetime(target_date.year, target_date.month, target_date.day, 9, 0)
-    #     end = datetime(target_date.year, target_date.month, target_date.day, 15, 30)
-        
-    #     today = datetime.now().date()
-    #     if target_date == today:
-    #         now = datetime.now()
-    #         if now < end:
-    #             end = now
-        
-    #     current = start
-    #     while current <= end:
-    #         expected.add(current)
-    #         current += timedelta(minutes=1)
-        
-    #     return expected
-    
     def _get_last_1min_candle_time(self, stock_code: str, target_date: date) -> Optional[datetime]:
         self.connect_db()
         cursor = self.conn.cursor()

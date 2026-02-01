@@ -1,5 +1,3 @@
-import time
-import asyncio
 import aiohttp
 from typing import List, Optional
 from datetime import datetime, timedelta
@@ -27,35 +25,34 @@ class CandleCollector:
     def connect_db(self):
         self.conn = get_db_connection(self.conn)
     
-    #캔들 데이터 수집/업데이트
-    def collect_or_update(self, stock_code: str, interval_type: str):
+    #비동기 수집/업데이트
+    async def collect_or_update_async(self, stock_code: str, interval_type: str):
         try:
             last_time = self._get_last_candle_time(stock_code, interval_type)
             
             if last_time is None:
                 days = self.RETENTION_DAYS[interval_type]
                 logger.info(f"{stock_code} {interval_type} 초기 수집: {days}일")
-                self._collect_candles(stock_code, interval_type, days)
+                await self._collect_candles_async(stock_code, interval_type, days)
             else:
                 now = datetime.now()
                 days_diff = (now - last_time).days + 1
                 days_diff = max(days_diff, 1)
                 
-                logger.info(f"{stock_code} {interval_type} 수집하지 않았던 시간의 1분봉 수집: {days_diff}일")
-                self._collect_candles(stock_code, interval_type, days_diff)
+                logger.info(f"{stock_code} {interval_type} 업데이트 수집: {days_diff}일")
+                await self._collect_candles_async(stock_code, interval_type, days_diff)
                 
         except Exception as e:
             logger.error(f"{stock_code} {interval_type} 수집 실패: {e}")
-    
-    #interval_type에 따라 적절한 함수 호출
-    def _collect_candles(self, stock_code: str, interval_type: str, days: int):
+
+    async def _collect_candles_async(self, stock_code: str, interval_type: str, days: int):
         try:
             if interval_type in ['5m', '30m']:
-                candles = self._collect_minute_based_candles(stock_code, interval_type, days)
+                candles = await self._collect_minute_based_candles(stock_code, interval_type, days)
             elif interval_type == '1d':
-                candles = self._collect_daily_candles(stock_code, days)
+                candles = await self._collect_daily_candles(stock_code, days)
             elif interval_type == '1w':
-                candles = self._collect_weekly_candles(stock_code, days)
+                candles = await self._collect_weekly_candles(stock_code, days)
             else:
                 logger.error(f"지원하지 않는 interval_type: {interval_type}")
                 return
@@ -69,7 +66,7 @@ class CandleCollector:
 
         except Exception as e:
             logger.error(f"{stock_code} {interval_type} 수집 실패: {e}")
-    
+
     #해당 종목의 마지막 시간 조회
     def _get_last_candle_time(self, stock_code: str, interval_type: str) -> Optional[datetime]:
         try:
@@ -101,14 +98,12 @@ class CandleCollector:
         minute_unit = 30 if interval_type == '30m' else 5
         all_candles = {}
         
-        # 날짜별 요청 준비
         requests = []
         for i in range(days):
             target_date = (datetime.now() - timedelta(days=i)).date()
             target_date_str = target_date.strftime('%Y%m%d')
             requests.append((stock_code, target_date_str))
         
-        # 배치 처리로 병렬 호출
         results = await self.api_client.fetch_minute_candles_batch(requests)
         
         for (code, date_str), candles_dict in results.items():
@@ -121,7 +116,10 @@ class CandleCollector:
         
         return self._aggregate_candles(stock_code, interval_type, all_candles, minute_unit)
     
-    
+    async def collect_batch_async(self, stock_codes: List[str], interval_type: str):
+        for code in stock_codes:
+            await self.collect_or_update_async(code, interval_type)
+
     #1분봉 -> 5분봉/30분봉 집계
     def _aggregate_candles(
         self, 

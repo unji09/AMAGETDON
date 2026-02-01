@@ -20,12 +20,6 @@ class VolumeTracker:
     #거래량 top 조회
     def get_top_volume_stocks(self) -> List[str]:
         try:
-            cached = self.redis_client.lrange(self.top_stocks_key, 0, -1)
-            if cached:
-                stock_codes = list(cached)
-                logger.debug(f"Redis에서 TOP 10 가져오기: {len(stock_codes)}개")
-                return stock_codes
-                
             logger.info("거래량 TOP 10 조회 시작")
             stock_codes = self.api_client.fetch_from_api()
             

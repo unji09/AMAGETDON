@@ -2,75 +2,92 @@ import asyncio
 import threading
 import time
 
-class AsyncRateLimiter:
+class RateLimiter:
 
     def __init__(self, calls_per_second: int = 15):
         self.calls_per_second = calls_per_second
-        self.tokens = 0
+        self.tokens = calls_per_second
         self.last_update = time.time()
-        self._lock = None
         self._thread_lock = threading.Lock()
-    
-    def _get_lock(self):
-        if self._lock is None:
-            self._lock = asyncio.Lock()
-        return self._lock
-    
-    #api 여러개 호출할 때 처리
-    async def acquire(self):
-        while True:
-            lock = self._get_lock()
-            async with lock:
-                now = time.time()
-                elapsed = now - self.last_update
-                
-                self.tokens = min(
-                    self.calls_per_second,
-                    self.tokens + elapsed * self.calls_per_second
-                )
-                self.last_update = now
-                
-                if self.tokens >= 1:
-                    self.tokens -= 1
-                    return
-                
-                wait_time = (1 - self.tokens) / self.calls_per_second
-            
-            await asyncio.sleep(wait_time)
+        self._async_lock = None
+        self._loop = None
 
+    def _get_async_lock(self):
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
 
-class SyncRateLimiter:
-    
-    def __init__(self, calls_per_second: int = 15):
-        self.calls_per_second = calls_per_second
-        self.tokens = 0
-        self.last_update = time.time()
-        self._lock = threading.Lock()
-    
-    #api 하나 호출할 때 처리
-    def acquire(self):
-        with self._lock:
+        if self._async_lock is None or self._loop != loop:
+            self._async_lock = asyncio.Lock()
+            self._loop = loop
+
+        return self._async_lock
+
+    def _consume_token(self):
+        with self._thread_lock:
             now = time.time()
             elapsed = now - self.last_update
-            
+
             self.tokens = min(
                 self.calls_per_second,
                 self.tokens + elapsed * self.calls_per_second
             )
             self.last_update = now
-            
+
+            if self.tokens < 1:
+                wait_time = (1 - self.tokens) / self.calls_per_second
+                return wait_time
+            else:
+                self.tokens -= 1
+                return 0
+
+    def _after_wait(self):
+        with self._thread_lock:
+            self.tokens = 0
+            self.last_update = time.time()
+
+    # 동기 호출용
+    def acquire_sync(self):
+        with self._thread_lock:
+            now = time.time()
+            elapsed = now - self.last_update
+
+            self.tokens = min(
+                self.calls_per_second,
+                self.tokens + elapsed * self.calls_per_second
+            )
+            self.last_update = now
+
             if self.tokens < 1:
                 wait_time = (1 - self.tokens) / self.calls_per_second
                 time.sleep(wait_time)
                 self.tokens = 0
                 self.last_update = time.time()
-            
-            self.tokens -= 1
+            else:
+                self.tokens -= 1
+
+    # 비동기 호출용
+    async def acquire(self):
+        with self._thread_lock:
+            now = time.time()
+            elapsed = now - self.last_update
+
+            self.tokens = min(
+                self.calls_per_second,
+                self.tokens + elapsed * self.calls_per_second
+            )
+            self.last_update = now
+
+            if self.tokens < 1:
+                wait_time = (1 - self.tokens) / self.calls_per_second
+                time.sleep(wait_time)
+                self.tokens = 0
+                self.last_update = time.time()
+            else:
+                self.tokens -= 1
 
 
-
-# 글로벌 인스턴스 (API 키별)
-STOCK_API_LIMITER = AsyncRateLimiter(15)
-CANDLE_API_LIMITER = AsyncRateLimiter(15)
-STOCK_API_SYNC_LIMITER = SyncRateLimiter(15)
-CANDLE_API_SYNC_LIMITER = SyncRateLimiter(15)
+# API 키별 인스턴스
+STOCK_API_LIMITER = RateLimiter(12)
+CANDLE_API_LIMITER = RateLimiter(8)
