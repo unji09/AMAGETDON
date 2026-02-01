@@ -3,24 +3,25 @@ import redis
 import requests
 import threading
 from utils.logger import logger
+from config.config import REDIS_CONFIG
 
 class TokenManager:
     _instance = None
     _refresh_lock = threading.Lock()
 
-    def __new__(cls, redis_host='host.docker.internal', redis_port=6379):
+    def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._initialized = False
         return cls._instance
-    
-    def __init__(self, redis_host='host.docker.internal', redis_port=6379):
+
+    def __init__(self):
         if self._initialized:
             return
-        
+
         self.redis_client = redis.Redis(
-            host=redis_host, 
-            port=redis_port, 
+            host=REDIS_CONFIG['host'],
+            port=REDIS_CONFIG['port'],
             decode_responses=True
         )
 
@@ -28,12 +29,6 @@ class TokenManager:
         self.stock_api_secret = os.getenv("STOCK_API_SECRET")
         self.candle_api_key = os.getenv("CANDLE_API_KEY")
         self.candle_api_secret = os.getenv("CANDLE_API_SECRET")
-        
-        self.redis_client = redis.Redis(
-            host=redis_host,
-            port=redis_port,
-            decode_responses=True
-        )
         
         self.stock_token_key = "kis:stock_access_token"
         self.candle_token_key = "kis:candle_access_token"
