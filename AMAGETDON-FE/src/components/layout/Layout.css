@@ -10,15 +10,15 @@
 
 .layout-main {
     flex: 1;
-    margin-top: 64px;  /* Header 높이 */
-    margin-bottom: 72px;  /* Footer 높이 */
-    min-height: calc(100vh - 64px - 72px);
+    margin-top: 60px;  /* Header 높이 (64px → 60px) */
+    margin-bottom: 40px;  /* Footer 높이 (72px → 40px) */
+    min-height: calc(100vh - 60px - 40px);
 }
 
 /* 모바일 */
 @media (max-width: 768px) {
     .layout-main {
-        margin-bottom: 64px;  /* Footer 높이 (모바일) */
-        min-height: calc(100vh - 64px - 64px);
+        margin-bottom: 40px;  /* Footer 높이 (모바일도 40px) */
+        min-height: calc(100vh - 60px - 40px);
     }
 }
