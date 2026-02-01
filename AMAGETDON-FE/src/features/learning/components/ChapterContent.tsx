@@ -40,6 +40,18 @@ const splitIntoSections = (html: string): { intro: string; sections: { heading: 
 };
 
 /**
+ * 섹션 본문을 <p> 기준으로 청크 단위로 분할
+ * - 모바일에서 한 카드에 텍스트가 과하게 몰리는 문제 해결용
+ * - <p> 앞에서 잘라서 각 청크가 하나의 문단 블록이 되도록 함
+ * - 비-p 요소(blockquote, ul 등)는 앞 문단에 붙음
+ */
+const splitBodyIntoChunks = (bodyHtml: string): string[] => {
+    const chunks = bodyHtml.split(/(?=<p[\s>])/).filter((s) => s.trim());
+    if (chunks.length <= 1) return [bodyHtml];
+    return chunks;
+};
+
+/**
  * 챕터 본문 조회 컴포넌트
  * - 상단 읽기 진행률 바
  * - 뒤로가기 버튼
@@ -104,7 +116,7 @@ export const ChapterContent = ({ chapter, siblings }: ChapterContentProps) => {
         );
 
         // 섹션 카드 + 인트로 관찰
-        const targets = container.querySelectorAll('.chapter-section, .chapter-intro');
+        const targets = container.querySelectorAll('.chapter-section, .chapter-intro, .chapter-section__chunk');
         targets.forEach((el) => observer.observe(el));
 
         return () => observer.disconnect();
@@ -164,7 +176,7 @@ export const ChapterContent = ({ chapter, siblings }: ChapterContentProps) => {
                     />
                 )}
 
-                {/* 각 섹션 카드 */}
+                {/* 각 섹션 카드 — 모바일에서는 <p> 기준으로 청크 분할 */}
                 {sections.map((section, idx) => (
                     <div className="chapter-section" key={idx}>
                         <div className="chapter-section__number">{idx + 1}</div>
@@ -172,10 +184,15 @@ export const ChapterContent = ({ chapter, siblings }: ChapterContentProps) => {
                             className="chapter-section__heading"
                             dangerouslySetInnerHTML={{ __html: section.heading }}
                         />
-                        <div
-                            className="chapter-section__body"
-                            dangerouslySetInnerHTML={{ __html: section.body }}
-                        />
+                        <div className="chapter-section__body">
+                            {splitBodyIntoChunks(section.body).map((chunk, pIdx) => (
+                                <div
+                                    key={pIdx}
+                                    className="chapter-section__chunk"
+                                    dangerouslySetInnerHTML={{ __html: chunk }}
+                                />
+                            ))}
+                        </div>
                     </div>
                 ))}
             </div>

@@ -295,9 +295,61 @@
         grid-template-columns: 1fr;
     }
 
+    /* 모바일: 섹션 카드 외곽 제거, 청크가 개별 카드가 됨 */
     .chapter-section {
-        padding: var(--spacing-6) var(--spacing-4);
-        padding-top: var(--spacing-8);
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        padding-top: var(--spacing-6);
+        margin-bottom: var(--spacing-4);
+    }
+
+    .chapter-section:hover {
+        box-shadow: none;
+    }
+
+    /* 모바일: 섹션 번호 뱃지 위치 조정 */
+    .chapter-section__number {
+        position: static;
+        margin-bottom: var(--spacing-2);
+    }
+
+    /* 모바일: 섹션 제목 */
+    .chapter-section__heading {
+        margin-bottom: var(--spacing-3);
+    }
+
+    /* 모바일: 각 <p> 청크를 개별 카드로 표시 */
+    .chapter-section__chunk {
+        background: var(--color-white);
+        border: 1px solid #eee;
         border-radius: 12px;
+        padding: var(--spacing-4) var(--spacing-5);
+        margin-bottom: var(--spacing-3);
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.03);
+    }
+
+    /* 청크 내부 p 마진 제거 (카드 자체가 구분 역할) */
+    .chapter-section__chunk p {
+        margin-bottom: 0;
+    }
+
+    /* 모바일: 청크별 스크롤 fade-in */
+    .chapter-section__chunk {
+        opacity: 0;
+        transform: translateY(16px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .chapter-section__chunk.section-visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* 모바일: 섹션 자체는 즉시 보이도록 (청크가 개별 애니메이션) */
+    .chapter-section {
+        opacity: 1;
+        transform: none;
     }
 }
