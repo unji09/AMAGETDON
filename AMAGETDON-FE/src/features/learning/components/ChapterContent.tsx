@@ -1,5 +1,7 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/common';
+import { Toast } from '@/components/common';
 import type { ChapterDetailResponse, ChapterItem } from '../types/learning';
 import './ChapterContent.css';
 
@@ -13,21 +15,46 @@ const TYPE_LABELS: Record<string, string> = {
 
 interface ChapterContentProps {
     chapter: ChapterDetailResponse;
-    /** 이전/다음 이동 가능한 챕터 목록 (NORMAL 기준) */
+    /** 이전/다음 이동 가능한 챕터 목록 */
     siblings: ChapterItem[];
 }
 
 /**
+ * HTML 본문을 h3 기준으로 섹션 카드로 분할
+ * - 각 h3 ~ 다음 h3 사이의 내용을 하나의 섹션으로 묶음
+ * - h3 이전의 도입부는 별도의 인트로 섹션으로 처리
+ */
+const splitIntoSections = (html: string): { intro: string; sections: { heading: string; body: string }[] } => {
+    const parts = html.split(/<h3>(.*?)<\/h3>/);
+    // parts: [intro, heading1, body1, heading2, body2, ...]
+    const intro = parts[0] || '';
+    const sections: { heading: string; body: string }[] = [];
+
+    for (let i = 1; i < parts.length; i += 2) {
+        sections.push({
+            heading: parts[i],
+            body: parts[i + 1] || '',
+        });
+    }
+    return { intro, sections };
+};
+
+/**
  * 챕터 본문 조회 컴포넌트
+ * - 상단 읽기 진행률 바
  * - 뒤로가기 버튼
  * - 챕터 헤더 (태그, 제목, 요약)
- * - HTML 본문 렌더링
+ * - HTML 본문을 섹션 카드 단위로 렌더링 (스크롤 애니메이션)
  * - 퀴즈 풀기 버튼
- * - 읽기 완료 버튼
+ * - 스크롤 85% 이상 시 읽기 완료 토스트 알림
  * - 이전/다음 챕터 네비게이션
  */
 export const ChapterContent = ({ chapter, siblings }: ChapterContentProps) => {
     const navigate = useNavigate();
+    const [readProgress, setReadProgress] = useState(0);
+    const [showCompleteToast, setShowCompleteToast] = useState(false);
+    const hasShownToast = useRef(false);
+    const bodyRef = useRef<HTMLDivElement>(null);
 
     // 현재 챕터의 이전/다음 챕터 찾기
     const currentIndex = siblings.findIndex((c) => c.chapterId === chapter.chapterId);
@@ -38,8 +65,69 @@ export const ChapterContent = ({ chapter, siblings }: ChapterContentProps) => {
     const canGoPrev = prevChapter && prevChapter.status !== 'LOCKED';
     const canGoNext = nextChapter && nextChapter.status !== 'LOCKED';
 
+    // HTML을 섹션 단위로 분할
+    const { intro, sections } = splitIntoSections(chapter.chapterContent);
+
+    // 스크롤 진행률 추적 + 읽기 완료 감지
+    const handleScroll = useCallback(() => {
+        const scrollTop = window.scrollY;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = docHeight > 0 ? Math.min((scrollTop / docHeight) * 100, 100) : 0;
+        setReadProgress(progress);
+
+        // 85% 이상 스크롤 시 읽기 완료 토스트 (1회만)
+        if (progress >= 85 && !hasShownToast.current) {
+            hasShownToast.current = true;
+            setShowCompleteToast(true);
+        }
+    }, []);
+
+    useEffect(() => {
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [handleScroll]);
+
+    // 스크롤 시 섹션 카드 fade-in 애니메이션 (IntersectionObserver)
+    useEffect(() => {
+        const container = bodyRef.current;
+        if (!container) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('section-visible');
+                    }
+                });
+            },
+            { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
+        );
+
+        // 섹션 카드 + 인트로 관찰
+        const targets = container.querySelectorAll('.chapter-section, .chapter-intro');
+        targets.forEach((el) => observer.observe(el));
+
+        return () => observer.disconnect();
+    }, [chapter.chapterId]);
+
+    // 챕터 변경 시 토스트 상태 초기화
+    useEffect(() => {
+        hasShownToast.current = false;
+        setShowCompleteToast(false);
+        setReadProgress(0);
+        window.scrollTo(0, 0);
+    }, [chapter.chapterId]);
+
     return (
         <div className="chapter-content">
+            {/* 상단 읽기 진행률 바 */}
+            <div className="chapter-content__progress-bar">
+                <div
+                    className="chapter-content__progress-fill"
+                    style={{ width: `${readProgress}%` }}
+                />
+            </div>
+
             {/* 뒤로가기 */}
             <button
                 type="button"
@@ -63,11 +151,34 @@ export const ChapterContent = ({ chapter, siblings }: ChapterContentProps) => {
                 <p className="chapter-content__summary">{chapter.chapterSummary}</p>
             </header>
 
-            {/* HTML 본문 */}
-            <article
-                className="chapter-content__body"
-                dangerouslySetInnerHTML={{ __html: chapter.chapterContent }}
-            />
+            {/* 구분선 */}
+            <div className="chapter-content__divider" />
+
+            {/* 본문: 섹션 카드 단위 렌더링 */}
+            <div className="chapter-content__body" ref={bodyRef}>
+                {/* 인트로 (h3 이전 내용) */}
+                {intro.trim() && (
+                    <div
+                        className="chapter-intro"
+                        dangerouslySetInnerHTML={{ __html: intro }}
+                    />
+                )}
+
+                {/* 각 섹션 카드 */}
+                {sections.map((section, idx) => (
+                    <div className="chapter-section" key={idx}>
+                        <div className="chapter-section__number">{idx + 1}</div>
+                        <h3
+                            className="chapter-section__heading"
+                            dangerouslySetInnerHTML={{ __html: section.heading }}
+                        />
+                        <div
+                            className="chapter-section__body"
+                            dangerouslySetInnerHTML={{ __html: section.body }}
+                        />
+                    </div>
+                ))}
+            </div>
 
             {/* 퀴즈 풀기 버튼 */}
             <div className="chapter-content__quiz-action">
@@ -78,17 +189,6 @@ export const ChapterContent = ({ chapter, siblings }: ChapterContentProps) => {
                 >
                     &#128221; 퀴즈 풀기
                 </Button>
-            </div>
-
-            {/* 읽기 완료 버튼 */}
-            <div className="chapter-content__complete-action">
-                <button
-                    type="button"
-                    className="chapter-content__complete-btn"
-                    onClick={() => navigate('/learning')}
-                >
-                    &#128578; 읽기 완료!
-                </button>
             </div>
 
             {/* 이전/다음 챕터 네비게이션 */}
@@ -126,6 +226,16 @@ export const ChapterContent = ({ chapter, siblings }: ChapterContentProps) => {
                     )}
                 </div>
             </nav>
+
+            {/* 읽기 완료 토스트 알림 */}
+            {showCompleteToast && (
+                <Toast
+                    message="읽기 완료! 퀴즈를 풀어 챕터를 마무리하세요."
+                    type="success"
+                    duration={4000}
+                    onClose={() => setShowCompleteToast(false)}
+                />
+            )}
         </div>
     );
 };
