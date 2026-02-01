@@ -1,7 +1,9 @@
 package com.amagetdon.common.oauth.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public record KakaoUserResponse(
-        Long providerId,
+        @JsonProperty("id") Long providerId,
         KakaoProperties properties
 ) {
 
