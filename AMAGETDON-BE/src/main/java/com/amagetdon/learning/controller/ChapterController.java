@@ -2,9 +2,7 @@ package com.amagetdon.learning.controller;
 
 import com.amagetdon.common.ErrorResponse;
 import com.amagetdon.common.security.SecurityUtil;
-import com.amagetdon.learning.dto.chapter.BaseChaptersResponse;
-import com.amagetdon.learning.dto.chapter.ChapterDetailResponse;
-import com.amagetdon.learning.dto.chapter.SideChaptersResponse;
+import com.amagetdon.learning.dto.chapter.*;
 import com.amagetdon.learning.dto.quiz.ChapterQuizzesResponse;
 import com.amagetdon.learning.entity.ChapterType;
 import com.amagetdon.learning.service.ChapterService;
@@ -143,5 +141,18 @@ public class ChapterController {
     ) {
         Long userId = SecurityUtil.getCurrentUserId();
         return chapterService.getChapterQuizzes(userId, chapterId);
+    }
+
+    @Operation(
+            summary = "챕터 퀴즈 답안 제출",
+            description = "10문제의 답안을 제출하여 채점하고 보상을 지급합니다. 60% 이상 달성 시 통과입니다."
+    )
+    @PostMapping("/{chapterId}/quizzes")
+    public QuizSubmissionResponse submitQuizzes(
+            @PathVariable Long chapterId,
+            @RequestBody QuizSubmissionRequest request
+    ) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        return chapterService.submitQuizAnswers(userId, chapterId, request);
     }
 }
