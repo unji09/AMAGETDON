@@ -1,5 +1,9 @@
 package com.amagetdon.learning.service;
 
+import com.amagetdon.common.ErrorCode;
+import com.amagetdon.learning.dto.chapter.BaseChaptersResponse;
+import com.amagetdon.learning.dto.chapter.ChapterDetailResponse;
+import com.amagetdon.learning.dto.chapter.SideChaptersResponse;
 import com.amagetdon.learning.dto.chapter.*;
 import com.amagetdon.learning.dto.quiz.ChapterQuizzesResponse;
 import com.amagetdon.learning.entity.*;
@@ -10,6 +14,7 @@ import com.amagetdon.learning.repository.UserChapterProgressRepository;
 import com.amagetdon.user.entity.InvestmentType;
 import com.amagetdon.user.entity.User;
 import com.amagetdon.user.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -102,13 +107,12 @@ public class ChapterService {
 
         // 챕터 존재 여부 확인
         Chapter chapter = chapterRepository.findById(chapterId)
-                .orElseThrow(() -> new IllegalArgumentException("챕터를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.CHAPTER_NOT_FOUND.getMessage()));
 
         // LOCKED 여부 판별
-        // TODO (지원) : 에러 통일하는 작업 할 때, 글로벌 익셉션을 사용하여 403으로 변경
         ChapterStatus status = resolveChapterStatus(userId, chapter);
         if (status == ChapterStatus.LOCKED) {
-            throw new SecurityException("잠긴 챕터는 조회할 수 없습니다.");
+            throw new org.springframework.security.access.AccessDeniedException(ErrorCode.CHAPTER_LOCKED.getMessage());
         }
 
         return new ChapterDetailResponse(
@@ -157,7 +161,7 @@ public class ChapterService {
 
         // 유저 조회, 사용자 투자 성향 조회
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND_SIMPLE.getMessage()));
         InvestmentType userInvestmentType = user.getInvestmentType();
 
         // requestedType이 없으면 유저 성향 기준

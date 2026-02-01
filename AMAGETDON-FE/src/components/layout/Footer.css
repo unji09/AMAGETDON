@@ -1,0 +1,73 @@
+/**
+ * Footer 컴포넌트 스타일
+ */
+
+.footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background-color: #FAFAFA;
+    border-top: 1px solid #F0F0F0;
+    z-index: 100;
+}
+
+.footer-content {
+    max-width: 1200px;
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 var(--spacing-4);
+    display: flex;
+    align-items: center;
+    gap: 100px;
+}
+
+/* 저작권 텍스트 */
+.footer-copyright {
+    font-size: 12px;
+    font-weight: 400;
+    color: #9CA3AF;
+}
+
+/* 링크 그룹 */
+.footer-links {
+    display: flex;
+    gap: 55px;
+}
+
+.footer-link {
+    font-size: 12px;
+    font-weight: 400;
+    color: #9CA3AF;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.footer-link:hover {
+    color: #6B7280;
+}
+
+.footer-link.privacy {
+    color: #6B7280;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .footer {
+        height: 40px;
+    }
+
+    .footer-content {
+        gap: 20px;
+    }
+
+    .footer-links {
+        gap: 20px;
+    }
+
+    .footer-copyright,
+    .footer-link {
+        font-size: 10px;
+    }
+}

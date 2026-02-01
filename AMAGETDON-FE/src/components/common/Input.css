@@ -1,0 +1,100 @@
+/**
+ * Input 컴포넌트 스타일
+ */
+
+.input-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+}
+
+.input-full-width {
+    width: 100%;
+}
+
+/* Label */
+.input-label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-dark-gray);
+}
+
+/* Input */
+.input {
+    width: 100%;
+    padding: var(--spacing-2) var(--spacing-3);
+    font-family: inherit;
+    font-size: var(--font-size-base);
+    color: var(--color-dark-gray);
+    background-color: var(--color-white);
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.input::placeholder {
+    color: #9ca3af;
+}
+
+.input:hover:not(:disabled) {
+    border-color: var(--color-main-green);
+}
+
+.input:focus {
+    outline: none;
+    border-color: var(--color-main-green);
+    box-shadow: 0 0 0 3px rgba(32, 60, 46, 0.1);
+}
+
+.input:disabled {
+    background-color: var(--color-background);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Error State */
+.input-error {
+    border-color: var(--color-chart-up);
+}
+
+.input-error:focus {
+    border-color: var(--color-chart-up);
+    box-shadow: 0 0 0 3px rgba(220, 0, 0, 0.1);
+}
+
+.input-error-message {
+    font-size: var(--font-size-sm);
+    color: var(--color-chart-up);
+}
+
+/* Input Types */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type='number'] {
+    -moz-appearance: textfield;
+}
+
+/* Password Toggle (optional 확장 기능) */
+.input-password-wrapper {
+    position: relative;
+}
+
+.input-password-toggle {
+    position: absolute;
+    right: var(--spacing-2);
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--spacing-1);
+    color: var(--color-dark-gray);
+}
+
+.input-password-toggle:hover {
+    color: var(--color-main-green);
+}
