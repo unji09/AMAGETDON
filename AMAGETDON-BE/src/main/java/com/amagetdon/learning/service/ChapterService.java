@@ -128,15 +128,32 @@ public class ChapterService {
     }
 
     private ChapterStatus resolveChapterStatus(Long userId, Chapter chapter) {
-
-        // 챕터 타입에 따른 리스트 생성
-        List<Chapter> targetChapters = (chapter.getChapterType() == ChapterType.NORMAL)
-                ? chapterRepository.findAllByChapterTypeOrderByBaseChapterNoAsc(ChapterType.NORMAL)
-                : chapterRepository.findAllByChapterTypeOrderByChapterIdAsc(chapter.getChapterType());
-
-        // 진행도 맵 가져오기, 상태 판별 루프
         Map<Long, UserChapterProgress> progressMap = getProgressMap(userId);
-        return calculateStatusInSequence(targetChapters, progressMap, chapter.getChapterId());
+
+        if (chapter.getChapterType() == ChapterType.NORMAL) {
+            List<Chapter> normalChapters = chapterRepository.findAllByChapterTypeOrderByBaseChapterNoAsc(ChapterType.NORMAL);
+            return calculateStatusInSequence(normalChapters, progressMap, chapter.getChapterId());
+        }
+
+        // 사이드 챕터: NORMAL 챕터의 baseChapterNo 상태 기반
+        List<Chapter> normalChapters = chapterRepository.findAllByChapterTypeOrderByBaseChapterNoAsc(ChapterType.NORMAL);
+        Map<Integer, ChapterStatus> normalStatusByBaseNo = new HashMap<>();
+        boolean prevNormalCompleted = true;
+        for (Chapter nc : normalChapters) {
+            UserChapterProgress np = progressMap.get(nc.getChapterId());
+            ChapterStatus ns = calculateStatus(np, prevNormalCompleted);
+            normalStatusByBaseNo.put(nc.getBaseChapterNo(), ns);
+            prevNormalCompleted = (ns == ChapterStatus.COMPLETED);
+        }
+
+        ChapterStatus normalStatus = normalStatusByBaseNo.getOrDefault(
+                chapter.getBaseChapterNo(), ChapterStatus.LOCKED);
+        boolean baseUnlocked = (normalStatus == ChapterStatus.AVAILABLE || normalStatus == ChapterStatus.COMPLETED);
+
+        UserChapterProgress p = progressMap.get(chapter.getChapterId());
+        if (p != null && p.isCompleted()) return ChapterStatus.COMPLETED;
+        if (baseUnlocked) return ChapterStatus.AVAILABLE;
+        return ChapterStatus.LOCKED;
     }
 
     // 주어진 리스트를 순차적으로 탐색하며 타겟 챕터의 상태를 계산
@@ -147,11 +164,9 @@ public class ChapterService {
             UserChapterProgress p = progressMap.get(c.getChapterId());
             ChapterStatus s = calculateStatus(p, prevCompleted);
 
-            // 우리가 찾는 챕터라면 즉시 반환
             if (c.getChapterId().equals(targetChapterId)) {
                 return s;
             }
-            // 다음 챕터 판단을 위해 현재 챕터의 완료 여부 저장
             prevCompleted = (s == ChapterStatus.COMPLETED);
         }
         return ChapterStatus.LOCKED;
@@ -169,17 +184,39 @@ public class ChapterService {
                 ? chapterType
                 : ChapterType.valueOf(userInvestmentType.name());
 
-        // 해당 타입의 사이드 챕터 조회 (기본 챕터와 동일 로직)
-        List<Chapter> chapterList = chapterRepository.findAllByChapterTypeOrderByChapterIdAsc(requestedType);
+        // NORMAL 챕터 상태 맵 구성 (baseChapterNo → status)
+        List<Chapter> normalChapters = chapterRepository.findAllByChapterTypeOrderByBaseChapterNoAsc(ChapterType.NORMAL);
         Map<Long, UserChapterProgress> progressMap = getProgressMap(userId);
+        Map<Integer, ChapterStatus> normalStatusByBaseNo = new HashMap<>();
+        boolean prevNormalCompleted = true;
+        for (Chapter nc : normalChapters) {
+            UserChapterProgress np = progressMap.get(nc.getChapterId());
+            ChapterStatus ns = calculateStatus(np, prevNormalCompleted);
+            normalStatusByBaseNo.put(nc.getBaseChapterNo(), ns);
+            prevNormalCompleted = (ns == ChapterStatus.COMPLETED);
+        }
 
-        boolean prevCompleted = true;
+        // 해당 타입의 사이드 챕터 조회
+        List<Chapter> chapterList = chapterRepository.findAllByChapterTypeOrderByChapterIdAsc(requestedType);
+
         List<SideChaptersResponse.ChapterItem> chapterItemList = new ArrayList<>();
 
         for (Chapter c : chapterList) {
             UserChapterProgress p = progressMap.get(c.getChapterId());
 
-            ChapterStatus status = calculateStatus(p, prevCompleted);
+            // 사이드 챕터는 대응하는 NORMAL 챕터가 AVAILABLE 이상일 때만 열림
+            ChapterStatus normalStatus = normalStatusByBaseNo.getOrDefault(
+                    c.getBaseChapterNo(), ChapterStatus.LOCKED);
+            boolean baseUnlocked = (normalStatus == ChapterStatus.AVAILABLE || normalStatus == ChapterStatus.COMPLETED);
+
+            ChapterStatus status;
+            if (p != null && p.isCompleted()) {
+                status = ChapterStatus.COMPLETED;
+            } else if (baseUnlocked) {
+                status = ChapterStatus.AVAILABLE;
+            } else {
+                status = ChapterStatus.LOCKED;
+            }
 
             SideChaptersResponse.Progress progressDto = null;
             if (p != null && status != ChapterStatus.LOCKED) {
@@ -199,8 +236,6 @@ public class ChapterService {
                     status,
                     progressDto
             ));
-
-            prevCompleted = (status == ChapterStatus.COMPLETED);
         }
 
         return new SideChaptersResponse(userInvestmentType, requestedType, chapterItemList);
