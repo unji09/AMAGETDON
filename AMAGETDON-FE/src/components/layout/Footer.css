@@ -8,7 +8,7 @@
     left: 0;
     right: 0;
     height: 72px;
-    background-color: var(--color-white);
+    background-color: #FAFAFA;
     border-top: 1px solid #e5e5e5;
     z-index: 100;
 }
