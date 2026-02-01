@@ -6,8 +6,10 @@ import com.amagetdon.achievement.entity.Achievement;
 import com.amagetdon.achievement.entity.UserAchievement;
 import com.amagetdon.achievement.repository.AchievementRepository;
 import com.amagetdon.achievement.repository.UserAchievementRepository;
+import com.amagetdon.common.ErrorCode;
 import com.amagetdon.user.entity.User;
 import com.amagetdon.user.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -82,7 +84,7 @@ public class AchievementService {
     @Transactional
     public void checkAndAwardAchievements(Long userId, Long currentValue, Long achievementId) {
         Achievement achievement = achievementRepository.findById(achievementId)
-                .orElseThrow(() -> new IllegalArgumentException("업적을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.ACHIEVEMENT_NOT_FOUND.getMessage()));
 
         UserAchievement.UserAchievementId uaId =
                 new UserAchievement.UserAchievementId(userId, achievementId);
@@ -100,7 +102,7 @@ public class AchievementService {
         userAchievementRepository.save(userAchievement);
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND_SIMPLE.getMessage()));
         user.addBalance(REWARD_AMOUNT);
     }
 

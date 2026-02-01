@@ -35,8 +35,7 @@ public class ProgressController {
                     - 기본적으로 사용자의 모든 챕터 진행도를 반환합니다.
                     - chapterType이 전달되면 해당 성향의 챕터만 조회합니다.
                     - onlyCompleted=true 인 경우 완료된 챕터만 반환합니다.
-                    (현재는 인증/인가 미도입 상태로 userId를 임시로 RequestParam으로 받습니다.)
-                    
+
                     ### 응답 구성
                     - summary : 전체/완료 챕터 수 및 성향별 요약 정보
                     - progresses : 챕터별 상세 진행도 목록
