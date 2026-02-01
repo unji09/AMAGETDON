@@ -1,0 +1,68 @@
+.chapter-detail {
+    padding: var(--spacing-2) 0;
+}
+
+.chapter-detail__badge {
+    display: inline-block;
+    background: var(--color-main-green);
+    color: var(--color-white);
+    font-size: 11px;
+    font-weight: var(--font-weight-bold);
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--spacing-3);
+}
+
+.chapter-detail__title {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+    margin-bottom: var(--spacing-4);
+}
+
+.chapter-detail__summary {
+    font-size: var(--font-size-sm);
+    color: #666;
+    line-height: var(--line-height-relaxed);
+    margin-bottom: var(--spacing-8);
+}
+
+.chapter-detail__meta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-5);
+    padding: var(--spacing-4) 0;
+    margin-bottom: var(--spacing-6);
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+}
+
+.chapter-detail__meta-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-1);
+}
+
+.chapter-detail__meta-label {
+    font-size: var(--font-size-xs);
+    color: #999;
+}
+
+.chapter-detail__meta-value {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+}
+
+.chapter-detail__meta-icon {
+    margin-right: 4px;
+}
+
+.chapter-detail__meta-divider {
+    width: 1px;
+    height: 32px;
+    background: #e0e0e0;
+}
