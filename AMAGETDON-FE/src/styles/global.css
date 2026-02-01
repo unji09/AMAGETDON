@@ -1,0 +1,134 @@
+/**
+ * 전역 스타일
+ */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    font-family: system-ui, -apple-system, 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+
+    /* 메인 색상 */
+    --color-main-green: #203C2E;
+    --color-dark-gray: #282828;
+    --color-brown: #96773D;
+    --color-pale-green: #C7D8B7;
+    --color-beige: #E3D9BD;
+    --color-pale-yellow: #FBF7BE;
+
+    /* 차트 색상 */
+    --color-chart-up: #DC0000;
+    --color-chart-down: #0046B4;
+
+    /* 퀴즈 색상 */
+    --color-quiz-yellow: #FADB13;
+
+    /* 기본 색상 */
+    --color-white: #FFFFFF;
+    --color-black: #000000;
+    --color-background: #F5F5F5;
+
+    /* 스페이싱 (4px 기준) */
+    --spacing-0: 0px;
+    --spacing-1: 4px;
+    --spacing-2: 8px;
+    --spacing-3: 12px;
+    --spacing-4: 16px;
+    --spacing-5: 20px;
+    --spacing-6: 24px;
+    --spacing-7: 28px;
+    --spacing-8: 32px;
+    --spacing-10: 40px;
+    --spacing-12: 48px;
+    --spacing-16: 64px;
+    --spacing-20: 80px;
+
+    /* 타이포그래피 */
+    --font-size-xs: 12px;
+    --font-size-sm: 14px;
+    --font-size-base: 16px;
+    --font-size-lg: 18px;
+    --font-size-xl: 20px;
+    --font-size-2xl: 24px;
+    --font-size-3xl: 28px;
+    --font-size-4xl: 32px;
+
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+
+    --line-height-tight: 1.2;
+    --line-height-normal: 1.5;
+    --line-height-relaxed: 1.75;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    background-color: var(--color-background);
+    color: var(--color-dark-gray);
+}
+
+#root {
+    width: 100%;
+    min-height: 100vh;
+}
+
+/* 컨테이너 (1920px 전체, 1200px 콘텐츠) */
+.container {
+    width: 100%;
+    max-width: 1920px;
+    margin: 0 auto;
+}
+
+.container-content {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-4);
+}
+
+/* 스크롤바 스타일 */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-brown);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-dark-gray);
+}
+
+/* 링크 스타일 초기화 */
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* 버튼 스타일 초기화 */
+button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    background: none;
+}
+
+/* 이미지 기본 스타일 */
+img {
+    max-width: 100%;
+    height: auto;
+}

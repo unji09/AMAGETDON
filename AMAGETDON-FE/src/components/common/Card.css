@@ -1,0 +1,63 @@
+/**
+ * Card 컴포넌트 스타일
+ */
+
+.card {
+    background-color: var(--color-white);
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+/* Padding Variants */
+.card-padding-small {
+    padding: var(--spacing-3);
+}
+
+.card-padding-medium {
+    padding: var(--spacing-4);
+}
+
+.card-padding-large {
+    padding: var(--spacing-6);
+}
+
+/* Hoverable */
+.card-hoverable {
+    cursor: default;
+}
+
+.card-hoverable:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Clickable */
+.card-clickable {
+    cursor: pointer;
+}
+
+.card-clickable:hover {
+    border-color: var(--color-main-green);
+}
+
+.card-clickable:active {
+    transform: scale(0.98);
+}
+
+/* Hoverable + Clickable 조합 */
+.card-hoverable.card-clickable:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    border-color: var(--color-main-green);
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .card-padding-medium {
+        padding: var(--spacing-3);
+    }
+
+    .card-padding-large {
+        padding: var(--spacing-4);
+    }
+}

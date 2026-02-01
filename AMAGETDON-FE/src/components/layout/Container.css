@@ -1,0 +1,23 @@
+/**
+ * Container 컴포넌트 스타일
+ */
+
+.container {
+    width: 100%;
+    max-width: 1920px;
+    margin: 0 auto;
+}
+
+.container-content {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-4);
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .container-content {
+        padding: 0 var(--spacing-3);
+    }
+}
