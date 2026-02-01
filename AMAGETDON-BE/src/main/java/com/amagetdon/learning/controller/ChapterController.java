@@ -87,11 +87,25 @@ public class ChapterController {
         return chapterService.getChapterDetail(userId, chapterId);
     }
 
+    @Operation(
+            summary = "샛길 챕터 조회",
+            description = """
+                    사용자의 투자 성향에 맞는 샛길 챕터 리스트를 조회합니다.
+
+                    - chapterType 미입력 시 사용자의 투자 성향 기준으로 조회합니다.
+                    - 샛길 챕터도 순차적으로 오픈됩니다.
+                    """
+    )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
                     description = "샛길 조회 성공",
                     content = @Content(schema = @Schema(implementation = SideChaptersResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "사용자를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             ),
     })
     @GetMapping("/side")
