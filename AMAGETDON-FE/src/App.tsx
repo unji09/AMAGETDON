@@ -7,6 +7,7 @@ import { NotFoundPage } from '@/pages/NotFoundPage';
 import LoginPage from "@/pages/LoginPage.tsx";
 import OAuthKakaoCallback from "./pages/OAuthKakaoCallback";
 import SignupPage from "@/pages/SignupPage.tsx";
+import PasswordResetPage from "@/pages/PasswordResetPage.tsx";
 
 function App() {
     return (
@@ -19,6 +20,7 @@ function App() {
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/signup" element={<SignupPage />} />
                     <Route path="/oauth/kakao" element={<OAuthKakaoCallback />} />
+                    <Route path="/password-reset" element={<PasswordResetPage />} />
                     <Route path="*" element={<NotFoundPage />} />
                 </Routes>
             </BrowserRouter>
