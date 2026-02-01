@@ -274,6 +274,128 @@ class KISApiClient:
 
         return candles
     
+    #비동기 일봉/주봉 조회
+    async def fetch_daily_candles_async(
+        self,
+        session: aiohttp.ClientSession,
+        stock_code: str, 
+        start_date: str, 
+        end_date: str,
+        period_code: str = 'D'
+    ) -> List[dict]:
+        await CANDLE_API_LIMITER.acquire()
+        
+        url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice"
+        headers = self._get_headers("FHKST03010100", use_candle_api=True)
+        
+        candles = []
+        tr_cont = ""
+        max_pages = 10 if period_code == 'D' else 5
+        
+        for page in range(max_pages):
+            if page > 0:
+                await CANDLE_API_LIMITER.acquire()
+            
+            params = {
+                "FID_COND_MRKT_DIV_CODE": "J",
+                "FID_INPUT_ISCD": stock_code,
+                "FID_INPUT_DATE_1": start_date,
+                "FID_INPUT_DATE_2": end_date,
+                "FID_PERIOD_DIV_CODE": period_code,
+                "FID_ORG_ADJ_PRC": "0"
+            }
+            
+            if tr_cont:
+                headers["tr_cont"] = tr_cont
+            
+            try:
+                async with session.get(
+                    url, 
+                    headers=headers, 
+                    params=params, 
+                    timeout=aiohttp.ClientTimeout(total=10)
+                ) as response:
+                    data = await response.json()
+                
+                # 토큰 만료 시 갱신 후 재시도
+                if data.get("rt_cd") != "0" and "token" in data.get("msg1", "").lower():
+                    self.token_manager.refresh_token()
+                    headers = self._get_headers("FHKST03010100", use_candle_api=True)
+                    async with session.get(
+                        url, 
+                        headers=headers, 
+                        params=params,
+                        timeout=aiohttp.ClientTimeout(total=10)
+                    ) as retry_response:
+                        data = await retry_response.json()
+                
+                if data.get("rt_cd") != "0":
+                    logger.error(f"일봉/주봉 API 오류: {data.get('msg1')}")
+                    break
+                
+                outputs = data.get("output2", [])
+                if not outputs:
+                    break
+                
+                for item in outputs:
+                    date_str = item.get('stck_bsop_date', '')
+                    if not date_str:
+                        continue
+                    
+                    open_price = int(item.get('stck_oprc', 0))
+                    close_price = int(item.get('stck_clpr', 0))
+                    
+                    if open_price == 0 or close_price == 0:
+                        continue
+                    
+                    candles.append({
+                        'date': datetime.strptime(date_str, '%Y%m%d'),
+                        'open': open_price,
+                        'high': int(item.get('stck_hgpr', 0)),
+                        'low': int(item.get('stck_lwpr', 0)),
+                        'close': close_price,
+                        'volume': int(item.get('acml_vol', 0))
+                    })
+                
+                tr_cont = data.get("tr_cont", "")
+                if tr_cont not in ("D", "M"):
+                    break
+                    
+            except Exception as e:
+                logger.error(f"일봉/주봉 API 호출 실패: {e}")
+                break
+        
+        return candles
+
+    #일봉/주봉 배치 조회
+    async def fetch_daily_candles_batch(
+        self, 
+        requests: List[tuple],  # [(stock_code, start_date, end_date, period_code), ...]
+        max_concurrent: int = 5
+    ) -> dict:
+        results = {}
+        semaphore = asyncio.Semaphore(max_concurrent)
+        
+        async def fetch_with_limit(session, stock_code, start_date, end_date, period_code):
+            async with semaphore:
+                return await self.fetch_daily_candles_async(
+                    session, stock_code, start_date, end_date, period_code
+                )
+        
+        async with aiohttp.ClientSession() as session:
+            tasks = [
+                fetch_with_limit(session, code, start, end, period)
+                for code, start, end, period in requests
+            ]
+            all_results = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            for (code, start, end, period), result in zip(requests, all_results):
+                if isinstance(result, list) and result:
+                    results[code] = result
+        
+        return results
+
+
     #일봉/주봉 조회
     def fetch_daily_candles(
         self, 
@@ -531,6 +653,8 @@ class KISApiClient:
         
     #거래량순위
     def fetch_from_api(self) -> List[str]:
+        CANDLE_API_SYNC_LIMITER.acquire()
+        
         url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/volume-rank"
         
         headers = self._get_headers("FHPST01710000", use_candle_api=True)

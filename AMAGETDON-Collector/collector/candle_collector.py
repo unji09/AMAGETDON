@@ -204,16 +204,18 @@ class CandleCollector:
             return None
     
     #일봉 수집
-    def _collect_daily_candles(self, stock_code: str, days: int) -> List[CandleDTO]:
+    async def _collect_daily_candles(self, stock_code: str, days: int) -> List[CandleDTO]:
         start_date = (datetime.now() - timedelta(days=days)).strftime('%Y%m%d')
         end_date = datetime.now().strftime('%Y%m%d')
         
-        candles_list = self.api_client.fetch_daily_candles(
-            stock_code=stock_code,
-            start_date=start_date,
-            end_date=end_date,
-            period_code='D'
-        )
+        async with aiohttp.ClientSession() as session:
+            candles_list = await self.api_client.fetch_daily_candles_async(
+                session=session,
+                stock_code=stock_code,
+                start_date=start_date,
+                end_date=end_date,
+                period_code='D'
+            )
         
         return [
             CandleDTO(
@@ -230,16 +232,18 @@ class CandleCollector:
         ]
     
     #주봉 수집
-    def _collect_weekly_candles(self, stock_code: str, days: int) -> List[CandleDTO]:
+    async def _collect_weekly_candles(self, stock_code: str, days: int) -> List[CandleDTO]:
         start_date = (datetime.now() - timedelta(days=days)).strftime('%Y%m%d')
         end_date = datetime.now().strftime('%Y%m%d')
         
-        candles_list = self.api_client.fetch_daily_candles(
-            stock_code=stock_code,
-            start_date=start_date,
-            end_date=end_date,
-            period_code='W'
-        )
+        async with aiohttp.ClientSession() as session:
+            candles_list = await self.api_client.fetch_daily_candles_async(
+                session=session,
+                stock_code=stock_code,
+                start_date=start_date,
+                end_date=end_date,
+                period_code='W'  # 주봉
+            )
         
         return [
             CandleDTO(
