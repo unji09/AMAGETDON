@@ -112,16 +112,20 @@ class TokenManager:
         return self.get_stock_token()
     
     #토큰 갱신
-    def refresh_token(self):
+    def refresh_token(self, token_type: str = "both"):
         with self._refresh_lock:
-            token = self.redis_client.get(self.stock_token_key)
-            if token:
-                logger.debug("토큰이 이미 갱신됨 - 스킵")
-                return token
+            if token_type in ("stock", "both"):
+                self.redis_client.delete(self.stock_token_key)
+                logger.info("STOCK 토큰 만료 - 재발급 예정")
             
-            self.redis_client.delete(self.stock_token_key)
-            self.redis_client.delete(self.candle_token_key)
-            return self.get_stock_token()
+            if token_type in ("candle", "both"):
+                self.redis_client.delete(self.candle_token_key)
+                logger.info("CANDLE 토큰 만료 - 재발급 예정")
+            
+            if token_type in ("stock", "both"):
+                self.get_stock_token()
+            if token_type in ("candle", "both"):
+                self.get_candle_token()
 
     
     #웹소켓 접속키 발급

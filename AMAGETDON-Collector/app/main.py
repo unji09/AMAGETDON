@@ -1,6 +1,7 @@
 import time
 import pymysql
 import threading
+import asyncio
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -220,32 +221,35 @@ def update_financials():
         stocks = [row[0] for row in cursor.fetchall()]
         
         logger.info(f"총 {len(stocks)}개 종목 재무 데이터 수집 시작")
-        
+
         success = 0
         fail = 0
-        
-        for i, stock_code in enumerate(stocks, 1):
+        batch_size = 100
+
+        for i in range(0, len(stocks), batch_size):
+            batch = stocks[i:i + batch_size]
+
             try:
-                stock = api_client.fetch_price(stock_code)
-                if stock:
-                    cursor.execute("""
-                        UPDATE stock 
-                        SET per=%s, pbr=%s, eps=%s, bps=%s, market_cap=%s, updated_at=NOW()
-                        WHERE stock_code=%s
-                    """, (stock.per, stock.pbr, stock.eps, stock.bps, stock.market_cap, stock_code))
-                    success += 1
-                else:
-                    fail += 1
-                
-                if i % 100 == 0:
-                    conn.commit()
-                    logger.info(f"진행: {i}/{len(stocks)} (성공: {success}, 실패: {fail})")
-                
-                time.sleep(0.05)
-                
+                results = asyncio.run(api_client.fetch_prices_batch(batch))
+
+                for stock_code in batch:
+                    stock = results.get(stock_code)
+                    if stock:
+                        cursor.execute("""
+                            UPDATE stock
+                            SET per=%s, pbr=%s, eps=%s, bps=%s, market_cap=%s, updated_at=NOW()
+                            WHERE stock_code=%s
+                        """, (stock.per, stock.pbr, stock.eps, stock.bps, stock.market_cap, stock_code))
+                        success += 1
+                    else:
+                        fail += 1
+
+                conn.commit()
+                logger.info(f"진행: {min(i + batch_size, len(stocks))}/{len(stocks)} (성공: {success}, 실패: {fail})")
+
             except Exception as e:
-                fail += 1
-                logger.error(f"{stock_code} 실패: {e}")
+                fail += len(batch)
+                logger.error(f"배치 처리 실패: {e}")
         
         conn.commit()
         conn.close()
