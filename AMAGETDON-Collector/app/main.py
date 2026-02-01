@@ -33,40 +33,39 @@ def check_and_initialize():
 
         cursor.execute("SELECT stock_code FROM stock")
         rows = cursor.fetchall()
-        
         stocks = [row[0] for row in rows]
 
         if not stocks:
             logger.info("종목 데이터 없음")
-            
             parser = StockParser()
             parser.parse_and_save()
-            
+
             cursor.execute("SELECT stock_code FROM stock")
             stocks = [row[0] for row in cursor.fetchall()]
             logger.info("종목 데이터 로딩 완료")
         else:
             logger.info(f"종목 데이터 이미 존재")
-        
+
         conn.close()
 
         logger.info("과거 캔들 데이터 체크 시작")
-        
-        token_manager = TokenManager.get_instance()
-        candle_collector = CandleCollector(token_manager)
-        
-        for stock_code in stocks:
-            try:
-                candle_collector.collect_or_update(stock_code, '30m')
-                candle_collector.collect_or_update(stock_code, '1d')
-                candle_collector.collect_or_update(stock_code, '1w')
-            except Exception as e:
-                logger.error(f"{stock_code} 초기 캔들 수집 실패: {e}")
-        
+
+        tm = TokenManager.get_instance()
+        candle_collector = CandleCollector(tm)
+
+        async def collect_all():
+            for interval in ['30m', '1d', '1w']:
+                logger.info(f"{interval} 수집 시작")
+                await candle_collector.collect_batch_async(stocks, interval)
+                logger.info(f"{interval} 수집 완료")
+
+        asyncio.run(collect_all())
+
         candle_collector.close()
-        token_manager.close()
+        tm.close()
+
         logger.info("과거 캔들 데이터 체크 완료")
-            
+
     except Exception as e:
         logger.error(f"초기화 체크 실패: {e}")
         raise
@@ -110,7 +109,7 @@ def start_collection():
     rest_collector = RealtimeCollector(token_manager, stock_manager)
     
     ws_collector.connect()
-    top_10_stocks = volume_tracker.get_top_10_volume_stocks()
+    top_10_stocks = volume_tracker.get_top_volume_stocks()
     if top_10_stocks:
         ws_collector.subscribe_stocks(top_10_stocks)
         logger.info(f"초기 구독 완료: {len(top_10_stocks)}개 종목")
@@ -128,18 +127,16 @@ def start_collection():
 #주식 시장 마감 호출(전체 종목 누락 업데이트)
 def stop_collection():
     global collection_active, ws_collector, rest_collector, token_manager
-    
+
     if not collection_active:
         logger.warning("수집 실행 중 아님")
         return
-    
+
     logger.info("장 마감")
-    
+
     collection_active = False
     time.sleep(1)
-    
-    if ws_collector:
-        ws_collector.close()
+
     if rest_collector:
         rest_collector.close()
 
@@ -149,52 +146,59 @@ def stop_collection():
 
     logger.info("장 마감 후 데이터 업데이트 시작")
     stock_manager = StockManager(token_manager.redis_client)
-    candle_collector = CandleCollector(token_manager)
-
-    filler = CandleFiller(token_manager)
-
     stocks = stock_manager.get_all_target_stocks()
-    
-    for stock_code in stocks:
-        try:
-            filler.fill_missing_candles(
-                stock_code=stock_code,
-                fill_1m=True,
-                fill_5m=True,
-                fill_30m=True
-            )
 
-            candle_collector.collect_or_update(stock_code, '5m')
-            candle_collector.collect_or_update(stock_code, '30m')
-            candle_collector.collect_or_update(stock_code, '1d')
-        except Exception as e:
-            logger.error(f"{stock_code} 캔들 업데이트 실패: {e}")
-    
-    filler.close()
-    candle_collector.close()
+    async def process_all_stocks():
+        candle_collector = CandleCollector(token_manager)
+
+        # 누락 캔들 보정
+        logger.info(f"누락 캔들 보정 시작 ({len(stocks)}개 종목)")
+        for stock_code in stocks:
+            try:
+                filler = CandleFiller(token_manager)
+                await filler.fill_missing_candles(
+                    stock_code=stock_code,
+                    fill_1m=True,
+                    fill_5m=True,
+                    fill_30m=True
+                )
+                filler.close()
+            except Exception as e:
+                logger.error(f"{stock_code} 캔들 보정 실패: {e}")
+        logger.info("누락 캔들 보정 완료")
+
+        # 캔들 수집은 배치로 처리
+        for interval in ['5m', '30m', '1d']:
+            logger.info(f"{interval} 업데이트 시작")
+            await candle_collector.collect_batch_async(stocks, interval)
+            logger.info(f"{interval} 업데이트 완료")
+
+        candle_collector.close()
+
+    asyncio.run(process_all_stocks())
+
     logger.info("캔들 업데이트 완료")
-    
+
     if token_manager:
         token_manager.close()
 
 #주봉 업데이트
 def weekly_update():
     logger.info("주봉 업데이트 시작")
-    
-    token_manager = TokenManager.get_instance()
-    stock_manager = StockManager(token_manager.redis_client)
-    candle_collector = CandleCollector(token_manager)
-    
+
+    tm = TokenManager.get_instance()
+    stock_manager = StockManager(tm.redis_client)
     stocks = stock_manager.get_all_target_stocks()
-    
-    for stock_code in stocks:
-        try:
-            candle_collector.collect_or_update(stock_code, '1w')
-        except Exception as e:
-            logger.error(f"{stock_code} 주봉 업데이트 실패: {e}")
-    
-    candle_collector.close()
-    token_manager.close()
+
+    async def update_all_weekly():
+        candle_collector = CandleCollector(tm)
+        logger.info(f"총 {len(stocks)}개 종목 주봉 업데이트")
+        await candle_collector.collect_batch_async(stocks, '1w')
+        candle_collector.close()
+
+    asyncio.run(update_all_weekly())
+
+    tm.close()
     logger.info("주봉 업데이트 완료")
 
 #재무 데이터 업데이트
@@ -263,11 +267,11 @@ def update_financials():
 def main():
     logger.info("실시간 시세 수집 스케줄러 시작")
     
-    # check_and_initialize()
+    check_and_initialize()
 
     now = datetime.now()
     if now.hour > 8 or (now.hour == 8 and now.minute >= 40):
-        logger.info("8시 50분 이후 - 즉시 재무 데이터 업데이트")
+        logger.info("8시 40분 이후 - 즉시 재무 데이터 업데이트")
         update_financials()
     
     scheduler = BackgroundScheduler(timezone='Asia/Seoul')
