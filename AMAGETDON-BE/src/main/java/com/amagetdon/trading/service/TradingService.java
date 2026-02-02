@@ -75,6 +75,14 @@ public class TradingService {
                 long totalBoughtCount = achievementRedisRepository.increment(userId, "total_bought_count");
                 achievementService.checkAndAwardAchievements(userId, totalBoughtCount, I_PICK_YOU);
 
+                if (achievementRedisRepository.setFlagIfAbsent(userId, "is_early_bought")) {
+                    achievementService.checkAndAwardAchievements(userId, 1L, OPEN_RUN);
+                }
+
+                if (achievementRedisRepository.setFlagIfAbsent(userId, "is_late_bought")) {
+                    achievementService.checkAndAwardAchievements(userId, 1L, BUZZER_BEATER);
+                }
+
                 String sectorCode = stock.getSector().getSectorCode();
 
                 // 바이오/의료 (MEDIUM: 0321)
