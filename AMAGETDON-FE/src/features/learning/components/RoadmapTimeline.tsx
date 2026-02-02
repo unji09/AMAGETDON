@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { ChapterNode } from './ChapterNode';
 import { SideQuestNode } from './SideQuestNode';
 import type { ChapterItem } from '../types/learning';
@@ -15,7 +16,8 @@ interface RoadmapTimelineProps {
  * - 각 메인 챕터 뒤에 관련된 사이드 챕터들을 배치
  */
 export const RoadmapTimeline = ({ chapters, sideChapters, onChapterClick }: RoadmapTimelineProps) => {
-    // 타임라인 아이템 배열을 구성하는 함수 : 메인 챕터 순서대로 배치, 각 메인 챕터 뒤에 해당 baseChapterNo와 연결된 사이드 챕터들 삽입
+    const containerRef = useRef<HTMLDivElement>(null);
+
     const buildTimeline = () => {
         const items: { type: 'main' | 'side'; chapter: ChapterItem }[] = [];
         
@@ -39,8 +41,32 @@ export const RoadmapTimeline = ({ chapters, sideChapters, onChapterClick }: Road
 
     const timeline = buildTimeline();
 
+    // 스크롤 해서 fade 처리
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        // Add class to the actual node button inside
+                        const node = entry.target.querySelector('.chapter-node, .side-quest');
+                        if (node) node.classList.add('node-visible');
+                    }
+                });
+            },
+            { threshold: 0.1, rootMargin: '0px 0px -20px 0px' }
+        );
+
+        const items = container.querySelectorAll('.roadmap-timeline__item');
+        items.forEach((el) => observer.observe(el));
+
+        return () => observer.disconnect();
+    }, [chapters, sideChapters]);
+
     return (
-        <div className="roadmap-timeline">
+        <div className="roadmap-timeline" ref={containerRef}>
             <div className="roadmap-timeline__line" />
             <div className="roadmap-timeline__items">
                 {timeline.map((item) => (
