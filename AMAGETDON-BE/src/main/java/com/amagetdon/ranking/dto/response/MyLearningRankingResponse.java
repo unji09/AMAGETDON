@@ -11,7 +11,11 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 public class MyLearningRankingResponse {
+
+    private Long rankingId;
     private Long userId;
+    private String nickname;
+    private String currentTitle;
     private Integer rank;
     private Integer totalCorrect;
     private LocalDateTime updatedAt;

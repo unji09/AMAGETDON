@@ -15,7 +15,10 @@ public class ProfitRankingListResponse {
 
     private Long userId;
     private Integer rank;
+    private String nickname;
+    private String currentTitle;
     private BigDecimal totalProfit;
+    private Boolean isCurrentUser;
     private LocalDateTime updatedAt;
 
     public static ProfitRankingListResponse from(ProfitRanking profitRanking) {

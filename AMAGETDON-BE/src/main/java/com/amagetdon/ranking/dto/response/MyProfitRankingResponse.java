@@ -13,7 +13,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class MyProfitRankingResponse {
 
+    private Long rankingId;
     private Long userId;
+    private String nickname;
+    private String currentTitle;
     private Integer rank;
     private BigDecimal totalProfit;
     private LocalDateTime updatedAt;
