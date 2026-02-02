@@ -32,6 +32,39 @@
     box-shadow: 0 2px 12px rgba(245, 215, 100, 0.15);
 }
 
+/* shimmer를 border 안쪽으로 clip — 뱃지는 overflow visible 유지 */
+.achievement-card--achieved .achievement-card__shimmer {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.achievement-card--achieved .achievement-card__shimmer::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -60%;
+    width: 40%;
+    height: 200%;
+    background: linear-gradient(
+        105deg,
+        transparent 40%,
+        rgba(255, 255, 255, 0.5) 45%,
+        rgba(255, 255, 255, 0.8) 50%,
+        rgba(255, 255, 255, 0.5) 55%,
+        transparent 60%
+    );
+    transform: rotate(25deg);
+    animation: cardShimmer 4s ease-in-out infinite;
+}
+
+@keyframes cardShimmer {
+    0%, 100% { left: -60%; }
+    50% { left: 120%; }
+}
+
 /* 달성 카드 호버: 살짝 들어올리면서 흔들림 */
 .achievement-card--achieved.achievement-visible:hover {
     transform: translateY(-4px);

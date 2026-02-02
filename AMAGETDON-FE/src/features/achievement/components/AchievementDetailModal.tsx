@@ -13,9 +13,12 @@ interface AchievementDetailModalProps {
     onTitleChanged: (newTitle: string) => void;
 }
 
+//confetti 파티클 개수
+const CONFETTI_COUNT = 24;
+
 /**
  * 업적 상세 모달
- * - 달성 업적: 아이콘 + 달성 뱃지 + 이름 + 달성일 + 설명 + 칭호 설정 버튼
+ * - 달성 업적: confetti 팡팡 + 아이콘 + 달성 뱃지 + 이름 + 달성일 + 설명 + 칭호 설정 버튼
  * - 미달성 업적: 자물쇠 + 이름 + 카테고리 + 안내 문구
  */
 export const AchievementDetailModal = ({
@@ -59,6 +62,13 @@ export const AchievementDetailModal = ({
                     {isAchieved ? (
                         /* ─── 달성 업적 ─── */
                         <>
+                            {/* confetti 파티클 */}
+                            <div className="achievement-detail__confetti" aria-hidden="true">
+                                {Array.from({ length: CONFETTI_COUNT }, (_, i) => (
+                                    <span key={i} className="achievement-detail__particle" />
+                                ))}
+                            </div>
+
                             <div className="achievement-detail__icon-wrap">
                                 {achievementIcon ? (
                                     <img

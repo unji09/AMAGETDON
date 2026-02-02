@@ -28,6 +28,9 @@ export const AchievementCard = ({ achievement, isCurrentTitle, onClick }: Achiev
             className={`achievement-card ${isAchieved ? 'achievement-card--achieved' : 'achievement-card--locked'}`}
             onClick={onClick}
         >
+            {/* shimmer 효과 (달성 카드 전용, overflow:hidden 격리) */}
+            {isAchieved && <div className="achievement-card__shimmer" />}
+
             {/* 칭호 뱃지 */}
             {isCurrentTitle && (
                 <span className="achievement-card__title-badge">칭호</span>
