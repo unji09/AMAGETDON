@@ -145,9 +145,9 @@
     object-fit: contain;
 }
 
-.achievement-card__lock {
-    font-size: 20px;
-    opacity: 0.4;
+.achievement-card__lock-icon {
+    color: #bbb;
+    opacity: 0.6;
 }
 
 /* ─── 보상 뱃지 ─── */

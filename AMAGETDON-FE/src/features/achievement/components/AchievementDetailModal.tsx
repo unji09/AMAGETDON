@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Lock, Trophy } from 'lucide-react';
 import { Modal, Button, Toast } from '@/components/common';
 import { updateUserTitle } from '@/api/achievementApi';
 import { CATEGORY_LABELS } from '../types/achievement';
@@ -77,7 +78,7 @@ export const AchievementDetailModal = ({
                                         alt={achievementName}
                                     />
                                 ) : (
-                                    <span className="achievement-detail__icon-placeholder">&#127942;</span>
+                                    <Trophy size={40} strokeWidth={1.5} className="achievement-detail__trophy-icon" />
                                 )}
                             </div>
                             <span className="achievement-detail__badge">업적 달성 완료</span>
@@ -103,7 +104,7 @@ export const AchievementDetailModal = ({
                         /* ─── 미달성 업적 ─── */
                         <>
                             <div className="achievement-detail__icon-wrap achievement-detail__icon-wrap--locked">
-                                <span className="achievement-detail__lock">&#128274;</span>
+                                <Lock size={36} strokeWidth={1.5} className="achievement-detail__lock-icon" />
                             </div>
                             <h3 className="achievement-detail__name">{achievementName}</h3>
                             <span className="achievement-detail__category-tag">

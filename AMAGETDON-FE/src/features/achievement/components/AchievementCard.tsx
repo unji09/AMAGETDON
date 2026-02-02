@@ -1,3 +1,4 @@
+import { Lock } from 'lucide-react';
 import type { AchievementItem } from '../types/achievement';
 import { CATEGORY_LABELS } from '../types/achievement';
 import './AchievementCard.css';
@@ -41,7 +42,7 @@ export const AchievementCard = ({ achievement, isCurrentTitle, onClick }: Achiev
                 {isAchieved && achievementIcon ? (
                     <img src={achievementIcon} alt={achievementName} />
                 ) : (
-                    <span className="achievement-card__lock">&#128274;</span>
+                    <Lock size={22} strokeWidth={1.8} className="achievement-card__lock-icon" />
                 )}
             </div>
 

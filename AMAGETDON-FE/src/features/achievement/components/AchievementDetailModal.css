@@ -105,12 +105,12 @@
     object-fit: contain;
 }
 
-.achievement-detail__icon-placeholder {
-    font-size: 40px;
+.achievement-detail__trophy-icon {
+    color: #d4a017;
 }
 
-.achievement-detail__lock {
-    font-size: 36px;
+.achievement-detail__lock-icon {
+    color: #bbb;
     opacity: 0.5;
 }
 
