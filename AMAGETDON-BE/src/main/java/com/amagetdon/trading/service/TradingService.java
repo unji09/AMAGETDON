@@ -74,6 +74,26 @@ public class TradingService {
 
                 long totalBoughtCount = achievementRedisRepository.increment(userId, "total_bought_count");
                 achievementService.checkAndAwardAchievements(userId, totalBoughtCount, I_PICK_YOU);
+
+                String sectorCode = stock.getSector().getSectorCode();
+
+                // 바이오/의료 (MEDIUM: 0321)
+                if (sectorCode.startsWith("0321")) {
+                    long bioCount = achievementRedisRepository.increment(userId, "bio_count");
+                    achievementService.checkAndAwardAchievements(userId, bioCount, PHARMACIST);
+                }
+
+                // 철강 (MEDIUM: 0324)
+                if (sectorCode.startsWith("0324")) {
+                    long steelCount = achievementRedisRepository.increment(userId, "steel_count");
+                    achievementService.checkAndAwardAchievements(userId, steelCount, IRON_MAN);
+                }
+
+                // 반도체 (SMALL: 032601)
+                if (sectorCode.equals("032601")) {
+                    long chipCount = achievementRedisRepository.increment(userId, "chip_count");
+                    achievementService.checkAndAwardAchievements(userId, chipCount, KOREA_CHIP);
+                }
             }
             case SELL -> {
                 long balance = user.getBalance();
