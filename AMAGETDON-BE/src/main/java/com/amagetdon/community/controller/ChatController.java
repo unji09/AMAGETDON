@@ -41,15 +41,32 @@ public class ChatController {
     @PostMapping("/send")
     public ResponseEntity<Void> sendMessage(@RequestBody ChatMessageRequestDto request){
 
-        Long userId = SecurityUtil.getCurrentUserId();
-        if(userId == null){
-            return ResponseEntity.status(401).build();
-        }
+//        Long userId = SecurityUtil.getCurrentUserId();
+//        if(userId == null){
+//            return ResponseEntity.status(401).build();
+//        }
+//
+//        // 세션 확인
+//        if(openVidu.getActiveSession(request.openviduSessionId()) == null){
+//            return ResponseEntity.notFound().build();
+//        }
 
-        // 세션 확인
-        if(openVidu.getActiveSession(request.openviduSessionId()) == null){
-            return ResponseEntity.notFound().build();
-        }
+            System.out.println("Request: " + request);  // ✅ 추가!
+
+            Long userId = SecurityUtil.getCurrentUserId();
+            System.out.println("userId: " + userId);  // ✅ 추가!
+            if(userId == null){
+                return ResponseEntity.status(401).build();
+            }
+
+//            // 세션 확인
+//            System.out.println("Checking session: " + request.openviduSessionId());  // ✅ 추가!
+//            if(openVidu.getActiveSession(request.openviduSessionId()) == null){
+//                System.out.println("⚠️ Session not found!");  // ✅ 추가!
+//                return ResponseEntity.notFound().build();
+//            }
+
+        System.out.println("✅ Proceeding without session check");
 
         // 방 찾기
         Room room = roomRepository.findByOpenviduSessionId(request.openviduSessionId())
@@ -63,24 +80,46 @@ public class ChatController {
                 request.type()
         );
 
-        // 오픈비두 서버 REST API 엔드포인트 설정
-        String baseUrl = openViduUrl.endsWith("/") ? openViduUrl : openViduUrl + "/";
-        String url = baseUrl + "openvidu/api/signal";
+        // OpenVidu signal 전송 (에러 발생 시 무시)
+        try {
+            String baseUrl = openViduUrl.endsWith("/") ? openViduUrl : openViduUrl + "/";
+            String url = baseUrl + "openvidu/api/signal";
 
-        // HTTP Header 설정 (Basic Auth 인증 필요함)
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBasicAuth("OPENVIDUAPP", openViduSecret); // OPENVIDU 표준 인증 방식
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBasicAuth("OPENVIDUAPP", openViduSecret);
 
-        // 전송할 데이터 구성
-        Map<String, Object> body = new HashMap<>();
-        body.put("session", request.openviduSessionId());
-        body.put("data", request.message());
-        body.put("type", request.type());
+            Map<String, Object> body = new HashMap<>();
+            body.put("session", request.openviduSessionId());
+            body.put("data", request.message());
+            body.put("type", request.type());
 
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+            restTemplate.postForEntity(url, entity, Void.class);
 
-        restTemplate.postForEntity(url, entity, Void.class);
+            System.out.println("✅ OpenVidu signal sent successfully");
+        } catch (Exception e) {
+            System.err.println("⚠️ OpenVidu signal failed (ignored): " + e.getMessage());
+        }
+
+//        // 오픈비두 서버 REST API 엔드포인트 설정
+//        String baseUrl = openViduUrl.endsWith("/") ? openViduUrl : openViduUrl + "/";
+//        String url = baseUrl + "openvidu/api/signal";
+//
+//        // HTTP Header 설정 (Basic Auth 인증 필요함)
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setContentType(MediaType.APPLICATION_JSON);
+//        headers.setBasicAuth("OPENVIDUAPP", openViduSecret); // OPENVIDU 표준 인증 방식
+//
+//        // 전송할 데이터 구성
+//        Map<String, Object> body = new HashMap<>();
+//        body.put("session", request.openviduSessionId());
+//        body.put("data", request.message());
+//        body.put("type", request.type());
+//
+//        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+//
+//        restTemplate.postForEntity(url, entity, Void.class);
 
         return ResponseEntity.ok().build();
     }
