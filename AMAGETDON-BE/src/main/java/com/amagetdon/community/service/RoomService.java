@@ -43,10 +43,6 @@ public class RoomService {
     private final AchievementService achievementService;
     private final AchievementRedisRepository achievementRedisRepository;
 
-    // 업적 관련
-    private final AchievementService achievementService;
-    private final AchievementRedisRepository achievementRedisRepository;
-
     @Transactional
     public RoomResponseDto createGroup(Long ownerId, RoomCreateRequestDto request)
     throws OpenViduJavaClientException, OpenViduHttpException {
