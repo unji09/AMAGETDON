@@ -23,8 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-import static com.amagetdon.achievement.entity.AchievementIdCode.DIVERSIFY_EGGS;
-import static com.amagetdon.achievement.entity.AchievementIdCode.I_PICK_YOU;
+import static com.amagetdon.achievement.entity.AchievementIdCode.*;
 import static com.amagetdon.common.ErrorCode.*;
 
 @Service
@@ -67,12 +66,20 @@ public class TradingService {
         // 거래 내역 저장
         transactionRepository.save(transaction);
 
-        if (type == TransactionType.BUY) {
-            long stockHoldingCount = accountRepository.countByStockHoldingIdUserId(userId);
-            achievementService.checkAndAwardAchievements(userId, stockHoldingCount, DIVERSIFY_EGGS);
+        // 업적 체크
+        switch (type) {
+            case BUY -> {
+                long stockHoldingCount = accountRepository.countByStockHoldingIdUserId(userId);
+                achievementService.checkAndAwardAchievements(userId, stockHoldingCount, DIVERSIFY_EGGS);
 
-            Long totalBoughtCount = achievementRedisRepository.increment(userId, "total_bought_count");
-            achievementService.checkAndAwardAchievements(userId, totalBoughtCount, I_PICK_YOU);
+                long totalBoughtCount = achievementRedisRepository.increment(userId, "total_bought_count");
+                achievementService.checkAndAwardAchievements(userId, totalBoughtCount, I_PICK_YOU);
+            }
+            case SELL -> {
+                long balance = user.getBalance();
+                achievementService.checkAndAwardAchievements(userId, balance, ZERO_BALANCE);
+                achievementService.checkAndAwardAchievements(userId, balance, BROKE);
+            }
         }
 
         return TradingResponse.of(transaction, user.getBalance());
