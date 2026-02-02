@@ -4,6 +4,7 @@ import com.amagetdon.community.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -23,5 +24,8 @@ public interface MemberRepository extends JpaRepository<Member,Long> {
 
     // 특정 그룹의 확성 멤버 수 조회
     long countByRoomIdAndIsActiveTrue(Long roomId);
+
+    // 특정 그룹의 활성 멤버 목록 조회 (참여 날짜 순 정렬)
+    List<Member> findByRoomIdAndIsActiveTrueOrderByJoinedAtDesc(Long roomId);
 
 }

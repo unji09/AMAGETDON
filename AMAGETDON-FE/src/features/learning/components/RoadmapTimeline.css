@@ -1,0 +1,37 @@
+.roadmap-timeline {
+    position: relative;
+    padding: var(--spacing-8) 0 var(--spacing-16);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.roadmap-timeline__line {
+    position: absolute;
+    left: 28px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #ccc;
+}
+
+.roadmap-timeline__items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-10);
+    position: relative;
+}
+
+.roadmap-timeline__item {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.roadmap-timeline__item--main {
+    padding-left: 0;
+}
+
+/* 사이드 노드: 세로 라인 중심(28px) + 라인 폭 절반 + 커넥터 길이(40px) 만큼 오른쪽 배치 */
+.roadmap-timeline__item--side {
+    padding-left: 70px;
+}

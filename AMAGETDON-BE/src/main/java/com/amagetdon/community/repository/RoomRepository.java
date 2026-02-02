@@ -17,4 +17,6 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
 
     Page<Room> findByIsPublicTrue(Pageable pageable);
 
+    Page<Room> findByNameContainingIgnoreCaseAndIsPublicTrue(String name, Pageable pageable);
+
 }

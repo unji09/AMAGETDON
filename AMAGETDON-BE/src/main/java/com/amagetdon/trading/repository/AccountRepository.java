@@ -12,4 +12,6 @@ public interface AccountRepository extends JpaRepository<StockHolding, StockHold
     Page<StockHolding> findByStockHoldingIdUserId(Long userId, Pageable pageable);
 
     List<StockHolding> findByStockHoldingIdUserId(Long userId);
+
+    long countByStockHoldingIdUserId(Long userId);
 }

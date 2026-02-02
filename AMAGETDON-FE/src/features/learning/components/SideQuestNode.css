@@ -1,0 +1,82 @@
+.side-quest {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    position: relative;
+    transition: transform 0.2s ease;
+}
+
+.side-quest:hover:not(:disabled) {
+    transform: scale(1.03);
+}
+
+.side-quest:disabled {
+    cursor: default;
+    opacity: 0.5;
+}
+
+/* 세로 줄기(left:28px)에서 동그라미까지 이어지는 가로선 */
+.side-quest__connector {
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    width: 40px;
+    height: 2px;
+    background: #ccc;
+    transform: translateY(-50%);
+}
+
+.side-quest__circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 16px;
+    background: var(--color-white);
+    border: 2px solid #ccc;
+}
+
+.side-quest--completed .side-quest__circle {
+    border-color: var(--color-main-green);
+    color: var(--color-main-green);
+}
+
+.side-quest--available .side-quest__circle {
+    border-color: var(--color-brown);
+    color: var(--color-brown);
+}
+
+.side-quest--locked .side-quest__circle {
+    border-color: #d0d0d0;
+    color: #aaa;
+}
+
+.side-quest__info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.side-quest__label {
+    font-size: 11px;
+    color: #999;
+    font-weight: var(--font-weight-medium);
+}
+
+.side-quest__title {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+}
+
+.side-quest--locked .side-quest__title {
+    color: #aaa;
+}

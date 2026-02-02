@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/amagetdon?serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
+    username: root
+    password: 8287
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+fastapi:
+  url: http://localhost:8000
+  quiz:
+    generate-endpoint: /api/quiz/generate
+
+logging:
+  level:
+    com.amagetdon: DEBUG
+    org.springframework.web: DEBUG

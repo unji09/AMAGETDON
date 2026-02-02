@@ -1,14 +1,16 @@
 package com.amagetdon.community.service;
 
+import com.amagetdon.achievement.repository.AchievementRedisRepository;
+import com.amagetdon.achievement.service.AchievementService;
 import com.amagetdon.common.ErrorCode;
-import com.amagetdon.community.dto.response.MemberResponseDto;
+import com.amagetdon.community.dto.response.*;
 import com.amagetdon.community.dto.request.RoomCreateRequestDto;
-import com.amagetdon.community.dto.response.RoomLeaveResponseDto;
-import com.amagetdon.community.dto.response.RoomResponseDto;
 import com.amagetdon.community.entity.Member;
 import com.amagetdon.community.entity.Room;
 import com.amagetdon.community.repository.MemberRepository;
 import com.amagetdon.community.repository.RoomRepository;
+import com.amagetdon.user.entity.User;
+import com.amagetdon.user.service.UserService;
 import io.openvidu.java.client.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +21,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static com.amagetdon.achievement.entity.AchievementIdCode.I_AM_GROOVE;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +35,11 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final MemberRepository memberRepository;
     private final ChatMessageService chatMessageService;
+    private final UserService userService;
+
+    // 업적 관련
+    private final AchievementService achievementService;
+    private final AchievementRedisRepository achievementRedisRepository;
 
     @Transactional
     public RoomResponseDto createGroup(Long ownerId, RoomCreateRequestDto request)
@@ -60,6 +71,9 @@ public class RoomService {
                 .build();
         memberRepository.save(ownerMember);
 
+        Long createCount = achievementRedisRepository.increment(ownerId, "create_room_count");
+        achievementService.checkAndAwardAchievements(ownerId, createCount, I_AM_GROOVE);
+
         return RoomResponseDto.builder()
                 .roomId(savedRoom.getId())
                 .name(savedRoom.getName())
@@ -73,9 +87,16 @@ public class RoomService {
 
     }
 
-    public Page<RoomResponseDto> getPublicRooms(int page, int size) {
+    // 그룹 검색 기능 추가
+    public Page<RoomResponseDto> getPublicRooms(String search, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<Room> rooms = roomRepository.findByIsPublicTrue(pageable);
+        Page<Room> rooms;
+
+        if(search != null && !search.trim().isEmpty()) {
+            rooms = roomRepository.findByNameContainingIgnoreCaseAndIsPublicTrue(search.trim(), pageable);
+        } else {
+            rooms = roomRepository.findByIsPublicTrue(pageable);
+        }
 
         return rooms.map(room -> RoomResponseDto.builder()
                 .roomId(room.getId())
@@ -236,6 +257,37 @@ public class RoomService {
                 .joinCode(room.getJoinCode())
                 .openviduSessionId(room.getOpenviduSessionId())
                 .createdAt(room.getCreatedAt())
+                .build();
+    }
+
+    // 그룹 참여자 목록 조회
+    public RoomMemberListResponseDto getMembers(Long roomId) {
+
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException(ErrorCode.ROOM_NOT_FOUND.getMessage()));
+
+        List<Member> members = memberRepository.findByRoomIdAndIsActiveTrueOrderByJoinedAtDesc(roomId);
+
+        List<RoomMemberDto> memberDtos = members.stream()
+                .map(member -> {
+
+                    User user = userService.getUserInfo(member.getUserId());
+                    String nickname = user.getNickname();
+
+                    return RoomMemberDto.builder()
+                            .memberId(member.getId())
+                            .userId(member.getUserId())
+                            .nickname(nickname)
+                            .joinedAt(member.getJoinedAt())
+                            .isOwner(member.getUserId().equals(room.getOwnerId()))
+                            .build();
+                })
+                .collect(Collectors.toList());
+        return RoomMemberListResponseDto.builder()
+                .roomId(room.getId())
+                .roomName(room.getName())
+                .totalMembers(memberDtos.size())
+                .members(memberDtos)
                 .build();
     }
 }

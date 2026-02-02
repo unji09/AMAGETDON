@@ -1,5 +1,6 @@
 package com.amagetdon.watchlist.service;
 
+import com.amagetdon.achievement.service.AchievementService;
 import com.amagetdon.stock.entity.Stock;
 import com.amagetdon.stock.repository.StockRepository;
 import com.amagetdon.user.entity.User;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import static com.amagetdon.achievement.entity.AchievementIdCode.DIVERSIFY_EGGS;
 import static com.amagetdon.common.ErrorCode.*;
 
 @Service
@@ -24,6 +26,7 @@ public class WatchlistService {
     private final WatchlistRepository watchlistRepository;
     private final UserRepository userRepository;
     private final StockRepository stockRepository;
+    private final AchievementService achievementService;
 
     public WatchlistResponse getWatchlist(Long userId, Pageable pageable) {
         Page<Watchlist> watchlistPage = watchlistRepository.findByUserUserId(userId, pageable);
@@ -52,6 +55,9 @@ public class WatchlistService {
                 .build();
 
         watchlistRepository.save(watchlist);
+
+        long watchlistCount = watchlistRepository.countByUserUserId(userId);
+        achievementService.checkAndAwardAchievements(userId, watchlistCount, DIVERSIFY_EGGS);
     }
 
     @Transactional

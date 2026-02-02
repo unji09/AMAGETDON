@@ -2,7 +2,6 @@ package com.amagetdon.user.service;
 
 import com.amagetdon.common.ErrorCode;
 import com.amagetdon.common.oauth.dto.response.KakaoUserResponse;
-import com.amagetdon.common.security.SecurityUtil;
 import com.amagetdon.user.dto.request.UserLoginRequest;
 import com.amagetdon.user.dto.request.UserSignupRequest;
 import com.amagetdon.user.entity.LoginType;
@@ -82,6 +81,13 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));
         user.updatePassword(passwordEncoder.encode(newPassword));
+    }
+
+    public String updateCurrentTitle(Long userId, String newTitle) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));
+        user.updateCurrentTitle(newTitle);
+        return user.getCurrentTitle();
     }
 
     public User oAuthSignup(KakaoUserResponse userInfo, LoginType provider) {
