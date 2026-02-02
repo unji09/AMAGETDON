@@ -134,17 +134,10 @@ public class ReviewNoteService {
      * 오답노트 삭제
      */
     public void deleteReviewNote(Long userId, Long reviewNoteId) {
-        // 1. 오답노트 존재 여부 확인 (404)
+
         ReviewNote reviewNote = reviewNoteRepository.findById(reviewNoteId)
                 .orElseThrow(() -> new EntityNotFoundException(ErrorCode.REVIEW_NOTE_NOT_FOUND.getMessage()));
 
-        // 2. 삭제 권한 확인 (JWT 토큰의 userId와 비교)
-        // JWT 도입 후에는 이 체크가 자동으로 처리되므로 불필요할 수 있음
-        if (!reviewNote.getUserId().equals(userId)) {
-            throw new IllegalArgumentException(ErrorCode.REVIEW_NOTE_ACCESS_DENIED.getMessage());
-        }
-
-        // 3. 삭제 실행
         reviewNoteRepository.delete(reviewNote);
     }
 
