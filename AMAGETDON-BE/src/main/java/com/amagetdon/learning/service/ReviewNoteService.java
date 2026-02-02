@@ -9,6 +9,7 @@ import com.amagetdon.learning.entity.*;
 import com.amagetdon.learning.repository.*;
 import com.amagetdon.user.entity.User;
 import com.amagetdon.user.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -133,17 +134,17 @@ public class ReviewNoteService {
      * 오답노트 삭제
      */
     public void deleteReviewNote(Long userId, Long reviewNoteId) {
-        // TODO(민규): Spring Security 도입 후 예외 처리 개선
-        //  - 404: NotFoundException 생성
-        //  - 403: ForbiddenException 생성 (비즈니스 권한)
-        //  - AccessDeniedException은 Security Layer에서 사용 (Role 권한)
+        // 1. 오답노트 존재 여부 확인 (404)
         ReviewNote reviewNote = reviewNoteRepository.findById(reviewNoteId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 오답노트입니다"));
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.REVIEW_NOTE_NOT_FOUND.getMessage()));
 
+        // 2. 삭제 권한 확인 (JWT 토큰의 userId와 비교)
+        // JWT 도입 후에는 이 체크가 자동으로 처리되므로 불필요할 수 있음
         if (!reviewNote.getUserId().equals(userId)) {
-            throw new IllegalArgumentException("삭제 권한이 없습니다");
+            throw new IllegalArgumentException(ErrorCode.REVIEW_NOTE_ACCESS_DENIED.getMessage());
         }
 
+        // 3. 삭제 실행
         reviewNoteRepository.delete(reviewNote);
     }
 
