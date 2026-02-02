@@ -1,5 +1,6 @@
 package com.amagetdon.trading.service;
 
+import com.amagetdon.achievement.repository.AchievementRedisRepository;
 import com.amagetdon.achievement.service.AchievementService;
 import com.amagetdon.stock.entity.Stock;
 import com.amagetdon.stock.entity.StockPrice;
@@ -23,6 +24,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 import static com.amagetdon.achievement.entity.AchievementIdCode.DIVERSIFY_EGGS;
+import static com.amagetdon.achievement.entity.AchievementIdCode.I_PICK_YOU;
 import static com.amagetdon.common.ErrorCode.*;
 
 @Service
@@ -34,6 +36,7 @@ public class TradingService {
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
     private final AchievementService achievementService;
+    private final AchievementRedisRepository achievementRedisRepository;
 
     @Transactional
     public TradingResponse buyStock(Long userId, TradingRequest request) {
@@ -67,6 +70,9 @@ public class TradingService {
         if (type == TransactionType.BUY) {
             long stockHoldingCount = accountRepository.countByStockHoldingIdUserId(userId);
             achievementService.checkAndAwardAchievements(userId, stockHoldingCount, DIVERSIFY_EGGS);
+
+            Long totalBoughtCount = achievementRedisRepository.increment(userId, "total_bought_count");
+            achievementService.checkAndAwardAchievements(userId, totalBoughtCount, I_PICK_YOU);
         }
 
         return TradingResponse.of(transaction, user.getBalance());
