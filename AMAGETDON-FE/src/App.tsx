@@ -4,8 +4,13 @@ import { HomePage } from '@/pages/HomePage';
 import { CommunityPage } from '@/pages/CommunityPage';
 import { RankingPage } from '@/pages/RankingPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
+import { LoginPage } from "@/pages/LoginPage.tsx";
 import LoginPage from "@/pages/LoginPage.tsx";
 import OAuthKakaoCallback from "./pages/OAuthKakaoCallback";
+import { LearningPage } from '@/pages/LearningPage';
+import { ChapterDetailPage } from '@/pages/ChapterDetailPage';
+import { AchievementPage } from '@/pages/AchievementPage';
+import ChatRoomPage from '@/pages/ChatRoomPage';
 import SignupPage from "@/pages/SignupPage.tsx";
 import PasswordResetPage from "@/pages/PasswordResetPage.tsx";
 import MyInfoPage from "@/pages/MyInfoPage.tsx";
@@ -18,7 +23,11 @@ function App() {
             <BrowserRouter>
                 <Routes>
                     <Route path="/" element={<HomePage />} />
+                    <Route path="/learning" element={<LearningPage />} />
+                    <Route path="/learning/:chapterId" element={<ChapterDetailPage />} />
+                    <Route path="/achievement" element={<AchievementPage />} />
                     <Route path="/community" element={<CommunityPage />} />
+                    <Route path="/community/chat/:roomId" element={<ChatRoomPage />} />
                     <Route path="/ranking" element={<RankingPage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/signup" element={<SignupPage />} />

@@ -1,0 +1,30 @@
+services:
+  fastapi:
+    build: .
+    container_name: amagetdon-fastapi-quiz
+    ports:
+      - "8000:8000"
+    environment:
+      # MySQL 연결 정보
+      - MYSQL_HOST=host.docker.internal
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=amagetdon
+
+      # GMS API Key
+      - GMS_API_KEY=${GMS_API_KEY}
+    volumes:
+      # 개발 시 코드 변경 실시간 반영
+      - ./app:/app/app
+      - ./config:/app/config
+      - ./models:/app/models
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload

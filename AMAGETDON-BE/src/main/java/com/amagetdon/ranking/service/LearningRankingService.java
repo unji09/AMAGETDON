@@ -1,6 +1,8 @@
 package com.amagetdon.ranking.service;
 
 import com.amagetdon.common.ErrorCode;
+import com.amagetdon.ranking.dto.response.LearningRankingListResponse;
+import com.amagetdon.ranking.dto.response.MyLearningRankingResponse;
 import com.amagetdon.ranking.entity.LearningRanking;
 import com.amagetdon.ranking.repository.LearningRankingRepository;
 import com.amagetdon.user.entity.User;
@@ -9,12 +11,14 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -99,16 +103,52 @@ public class LearningRankingService {
 
     // 특정 유저의 학습 랭킹 정보를 조회
     @Transactional(readOnly = true)
-    public LearningRanking getMyLearningRanking(Long userId) {
-        return learningRankingRepository.findByUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        ErrorCode.LEARNING_RANKING_NOT_FOUND.getMessage()
-                ));
+    public MyLearningRankingResponse getMyLearningRanking(Long userId) {
+
+        Optional<LearningRanking> rankingOptional = learningRankingRepository.findByUserId(userId);
+
+        // 랭킹 데이터가 없으면 null 반환
+        if(rankingOptional.isEmpty()) {
+            return null;
+        }
+
+        LearningRanking ranking = rankingOptional.get();
+
+        User user = userRepository.findById(userId).orElse(null);
+
+        return MyLearningRankingResponse.builder()
+                .rankingId(ranking.getId())
+                .userId(ranking.getUserId())
+                .nickname(user != null ? user.getNickname() : null)
+                .currentTitle(user != null ? user.getCurrentTitle() : null)
+                .rank(ranking.getRank())
+                .totalCorrect(ranking.getTotalCorrect())
+                .updatedAt(ranking.getUpdatedAt())
+                .build();
     }
 
     // 학습 랭킹 목록을 페이징하여 조회
     @Transactional(readOnly = true)
-    public Page<LearningRanking> getLearningRankings(Pageable pageable) {
-        return learningRankingRepository.findAll(pageable);
+    public Page<LearningRankingListResponse> getLearningRankings(Pageable pageable, Long currentUserId) {
+
+        Page<LearningRanking> rankings = learningRankingRepository.findAll(pageable);
+
+        List<LearningRankingListResponse> responses = rankings.getContent().stream()
+                .map(ranking -> {
+                    User user = userRepository.findById(ranking.getUserId()).orElse(null);
+
+                    return LearningRankingListResponse.builder()
+                            .userId(ranking.getUserId())
+                            .rank(ranking.getRank())
+                            .nickname(user != null ? user.getNickname() : null)
+                            .currentTitle(user != null ? user.getCurrentTitle() : null)
+                            .totalCorrect(ranking.getTotalCorrect())
+                            .isCurrentUser(ranking.getUserId().equals(currentUserId))
+                            .updatedAt(ranking.getUpdatedAt())
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(responses, pageable, rankings.getTotalElements());
     }
 }

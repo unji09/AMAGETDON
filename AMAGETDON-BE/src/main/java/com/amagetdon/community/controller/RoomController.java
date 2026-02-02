@@ -5,6 +5,7 @@ import com.amagetdon.community.dto.request.JoinPrivateRoomRequest;
 import com.amagetdon.community.dto.response.MemberResponseDto;
 import com.amagetdon.community.dto.request.RoomCreateRequestDto;
 import com.amagetdon.community.dto.response.RoomLeaveResponseDto;
+import com.amagetdon.community.dto.response.RoomMemberListResponseDto;
 import com.amagetdon.community.dto.response.RoomResponseDto;
 import com.amagetdon.community.service.RoomService;
 import lombok.RequiredArgsConstructor;
@@ -62,6 +63,7 @@ public class RoomController {
         data.put("totalElements", roomsPage.getTotalElements());
         data.put("totalPages", roomsPage.getTotalPages());
         data.put("currentPage", roomsPage.getNumber());
+        data.put("pageSize",  roomsPage.getSize());
 
         response.put("data", data);
 
@@ -135,6 +137,23 @@ public class RoomController {
         Map<String, Object> data = new HashMap<>();
         data.put("room", myRoom);
         response.put("data", data);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{roomId}/members")
+    public ResponseEntity<Map<String, Object>> getMembers(@PathVariable Long roomId) {
+
+        Long userId = SecurityUtil.getCurrentUserId();
+
+        if(userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        RoomMemberListResponseDto memberListResponse = roomService.getMembers(roomId);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("data", memberListResponse);
 
         return ResponseEntity.ok(response);
     }

@@ -19,11 +19,16 @@ public record StockHoldingResponse(
             Integer quantity,
             BigDecimal avgPrice,
             Integer currentPrice,
+            BigDecimal changeRate,
             Long totalValue,
             Long profitAmount,
             BigDecimal profitRate
     ) {
-        public static StockHoldingItem from(StockHolding holding, Integer currentPrice) {
+        public static StockHoldingItem from(
+                StockHolding holding,
+                Integer currentPrice,
+                BigDecimal changeRate
+        ) {
             Stock stock = holding.getStock();
             int quantity = holding.getQuantity();
             BigDecimal avgPrice = holding.getAvgPrice();
@@ -39,6 +44,7 @@ public record StockHoldingResponse(
                     quantity,
                     avgPrice,
                     currentPrice,
+                    changeRate,
                     totalValue,
                     profitAmount,
                     profitRate

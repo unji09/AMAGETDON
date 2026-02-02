@@ -4,6 +4,7 @@ import com.amagetdon.common.ErrorCode;
 import com.amagetdon.common.oauth.dto.response.KakaoUserResponse;
 import com.amagetdon.user.dto.request.UserLoginRequest;
 import com.amagetdon.user.dto.request.UserSignupRequest;
+import com.amagetdon.user.entity.InvestmentType;
 import com.amagetdon.user.entity.LoginType;
 import com.amagetdon.user.entity.User;
 import com.amagetdon.user.repository.UserRepository;
@@ -26,7 +27,7 @@ public class UserService {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new SecurityException("아이디 또는 비밀번호가 일치하지 않습니다."));
 
-        if(!passwordEncoder.matches(request.password(), user.getPassword())) {
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new SecurityException("비밀번호가 일치하지 않습니다.");
         }
 
@@ -70,7 +71,7 @@ public class UserService {
         String password = updatedInfo.getPassword() == null ? user.getPassword() : passwordEncoder.encode(updatedInfo.getPassword());
 
         String nickname = updatedInfo.getNickname();
-        if(!nickname.equals(user.getNickname())) existsByNickname(nickname);
+        if (!nickname.equals(user.getNickname())) existsByNickname(nickname);
 
         user.updateUser(email, password, nickname);
 
@@ -123,14 +124,22 @@ public class UserService {
     }
 
     private void existsByEmail(@Email String email) {
-        if(userRepository.existsByEmail(email)) {
+        if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("이미 사용중인 이메일입니다.");
         }
     }
 
     private void existsByNickname(String nickname) {
-        if(userRepository.existsByNickname(nickname)) {
+        if (userRepository.existsByNickname(nickname)) {
             throw new IllegalArgumentException("이미 사용중인 닉네임입니다.");
         }
+    }
+
+    @Transactional
+    public void updateInvestmentType(Long userId, InvestmentType investmentType) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND_SIMPLE.getMessage()));
+
+        user.updateInvestmentType(investmentType);
     }
 }

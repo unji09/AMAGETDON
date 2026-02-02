@@ -12,12 +12,12 @@
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 var(--spacing-4);
+    padding: 0 20px;
 }
 
 /* 반응형 */
 @media (max-width: 768px) {
     .container-content {
-        padding: 0 var(--spacing-3);
+        padding: 0 16px;
     }
 }

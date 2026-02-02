@@ -1,0 +1,187 @@
+.roadmap-header {
+    margin-bottom: var(--spacing-10);
+    animation: headerSlideIn 0.6s ease-out;
+}
+
+@keyframes headerSlideIn {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.roadmap-header__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-top: var(--spacing-6);
+    margin-bottom: var(--spacing-6);
+    gap: var(--spacing-6);
+    flex-wrap: wrap;
+}
+
+.roadmap-header__title {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+    margin-bottom: var(--spacing-2);
+}
+
+.roadmap-header__subtitle {
+    font-size: var(--font-size-base);
+    color: #666;
+}
+
+/* 성향 토글 */
+.roadmap-header__toggle {
+    display: flex;
+    gap: var(--spacing-2);
+    background: var(--color-white);
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 4px;
+}
+
+.roadmap-header__toggle-btn {
+    padding: var(--spacing-2) var(--spacing-4);
+    border-radius: 8px;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: #666;
+    background: transparent;
+    transition: all 0.2s ease;
+}
+
+.roadmap-header__toggle-btn:hover {
+    background: var(--color-background);
+}
+
+.roadmap-header__toggle-btn--active {
+    background: var(--color-main-green);
+    color: var(--color-white);
+}
+
+.roadmap-header__toggle-btn--active:hover {
+    background: var(--color-main-green);
+}
+
+/* 진행률 섹션 */
+.roadmap-header__progress-section {
+    background: var(--color-white);
+    border-radius: 12px;
+    padding: var(--spacing-5);
+}
+
+.roadmap-header__progress {
+    margin-bottom: var(--spacing-5);
+}
+
+.roadmap-header__progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-2);
+}
+
+.roadmap-header__progress-label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-dark-gray);
+}
+
+.roadmap-header__progress-percent {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+}
+
+.roadmap-header__progress-bar {
+    width: 100%;
+    height: 12px;
+    background: #e8e8e8;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.roadmap-header__progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-main-green), #3a6b4f);
+    border-radius: 6px;
+    transition: width 0.5s ease;
+}
+
+/* 타입별 달성도 */
+.roadmap-header__type-progress {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-4);
+    padding-top: var(--spacing-4);
+    border-top: 1px solid #eee;
+}
+
+.roadmap-header__type-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+}
+
+.roadmap-header__type-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.roadmap-header__type-label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: #666;
+}
+
+.roadmap-header__type-count {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    color: #888;
+}
+
+.roadmap-header__type-bar {
+    width: 100%;
+    height: 6px;
+    background: #e8e8e8;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.roadmap-header__type-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.roadmap-header__type-fill--normal {
+    background: var(--color-main-green);
+}
+
+.roadmap-header__type-fill--aggressive {
+    background: var(--color-chart-up);
+}
+
+.roadmap-header__type-fill--neutral {
+    background: var(--color-brown);
+}
+
+.roadmap-header__type-fill--stable {
+    background: var(--color-chart-down);
+}
+
+@media (max-width: 768px) {
+    .roadmap-header__top {
+        flex-direction: column;
+    }
+
+    .roadmap-header__toggle {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .roadmap-header__type-progress {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static com.amagetdon.common.ErrorCode.PRICE_NOT_AVAILABLE;
@@ -42,15 +43,16 @@ public class StockHoldingService {
     }
 
     private StockHoldingItem convertToItem(StockHolding holding) {
-        Integer currentPrice = getCurrentPrice(holding);
-        return StockHoldingItem.from(holding, currentPrice);
+        StockPrice latestPrice = getLatestStockPrice(holding);
+        Integer currentPrice = Integer.parseInt(latestPrice.getCurrentPrice());
+        BigDecimal changeRate = latestPrice.getChangeRate();
+
+        return StockHoldingItem.from(holding, currentPrice, changeRate);
     }
 
-    private Integer getCurrentPrice(StockHolding holding) {
+    private StockPrice getLatestStockPrice(StockHolding holding) {
         return stockPriceRepository
                 .findTopByStockOrderByCreatedAtDesc(holding.getStock())
-                .map(StockPrice::getCurrentPrice)
-                .map(Integer::parseInt)
                 .orElseThrow(() -> new IllegalStateException(PRICE_NOT_AVAILABLE.getMessage()));
     }
 }

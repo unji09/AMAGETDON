@@ -3,14 +3,14 @@ package com.amagetdon.community.service;
 import com.amagetdon.achievement.repository.AchievementRedisRepository;
 import com.amagetdon.achievement.service.AchievementService;
 import com.amagetdon.common.ErrorCode;
-import com.amagetdon.community.dto.response.MemberResponseDto;
+import com.amagetdon.community.dto.response.*;
 import com.amagetdon.community.dto.request.RoomCreateRequestDto;
-import com.amagetdon.community.dto.response.RoomLeaveResponseDto;
-import com.amagetdon.community.dto.response.RoomResponseDto;
 import com.amagetdon.community.entity.Member;
 import com.amagetdon.community.entity.Room;
 import com.amagetdon.community.repository.MemberRepository;
 import com.amagetdon.community.repository.RoomRepository;
+import com.amagetdon.user.entity.User;
+import com.amagetdon.user.service.UserService;
 import io.openvidu.java.client.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.amagetdon.achievement.entity.AchievementIdCode.I_AM_GROOVE;
 
@@ -33,6 +35,7 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final MemberRepository memberRepository;
     private final ChatMessageService chatMessageService;
+    private final UserService userService;
 
     // 업적 관련
     private final AchievementService achievementService;
@@ -254,6 +257,37 @@ public class RoomService {
                 .joinCode(room.getJoinCode())
                 .openviduSessionId(room.getOpenviduSessionId())
                 .createdAt(room.getCreatedAt())
+                .build();
+    }
+
+    // 그룹 참여자 목록 조회
+    public RoomMemberListResponseDto getMembers(Long roomId) {
+
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException(ErrorCode.ROOM_NOT_FOUND.getMessage()));
+
+        List<Member> members = memberRepository.findByRoomIdAndIsActiveTrueOrderByJoinedAtDesc(roomId);
+
+        List<RoomMemberDto> memberDtos = members.stream()
+                .map(member -> {
+
+                    User user = userService.getUserInfo(member.getUserId());
+                    String nickname = user.getNickname();
+
+                    return RoomMemberDto.builder()
+                            .memberId(member.getId())
+                            .userId(member.getUserId())
+                            .nickname(nickname)
+                            .joinedAt(member.getJoinedAt())
+                            .isOwner(member.getUserId().equals(room.getOwnerId()))
+                            .build();
+                })
+                .collect(Collectors.toList());
+        return RoomMemberListResponseDto.builder()
+                .roomId(room.getId())
+                .roomName(room.getName())
+                .totalMembers(memberDtos.size())
+                .members(memberDtos)
                 .build();
     }
 }

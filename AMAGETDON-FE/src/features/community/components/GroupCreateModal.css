@@ -1,0 +1,502 @@
+/**
+ * GroupCreateModal 스타일
+ * 균형 잡힌 레이아웃
+ */
+
+/* 모달 오버레이 */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+/* 모달 컨텐츠 */
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    outline: 1px #E0E0E0 solid;
+    outline-offset: -0.5px;
+}
+
+/* 모달 헤더 */
+.modal-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 32px 40px;
+    border-bottom: 1px solid #E0E0E0;
+    position: relative;
+}
+
+.modal-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1A1A1A;
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+}
+
+.modal-close {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: white;
+    border: 2px solid #E0E0E0;
+    border-radius: 8px;
+    font-size: 20px;
+    color: #666;
+    cursor: pointer;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+    background: #F5F5F5;
+    border-color: #999;
+}
+
+/* 모달 바디 */
+.modal-body {
+    padding: 32px 40px;
+}
+
+/* 폼 그룹 */
+.form-group {
+    margin-bottom: 28px;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1A1A1A;
+    margin-bottom: 12px;
+    font-family: 'Inter', sans-serif;
+}
+
+.required {
+    color: #DC0000;
+}
+
+/* 입력 필드 */
+.form-input {
+    width: 100%;
+    height: 56px;
+    padding: 0 20px;
+    border: 1px solid #E5E7EB;
+    border-radius: 4px;
+    font-size: 15px;
+    color: #1A1A1A;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+.form-input::placeholder {
+    color: #9CA3AF;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #203C2E;
+    border-width: 2px;
+}
+
+.form-input--error {
+    border-color: #DC0000;
+    border-width: 2px;
+}
+
+.error-message {
+    display: block;
+    font-size: 12px;
+    color: #DC0000;
+    margin-top: 8px;
+    font-family: 'Inter', sans-serif;
+}
+
+.input-counter {
+    text-align: right;
+    font-size: 12px;
+    color: #6B7280;
+    margin-top: 8px;
+    font-family: 'Inter', sans-serif;
+}
+
+.input-help {
+    font-size: 12px;
+    color: #6B7280;
+    margin-top: 8px;
+    line-height: 1.5;
+    font-family: 'Inter', sans-serif;
+}
+
+/* 라디오 버튼 그룹 - 균등 배치 */
+.radio-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    border: 2px solid #E5E7EB;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+    min-height: 80px;
+}
+
+/* 공개 그룹 선택 시 */
+.radio-option--public-active {
+    background: #E8F5E9;
+    border-color: #4CAF50;
+}
+
+/* 비밀 그룹 선택 시 */
+.radio-option--private-active {
+    background: #FFF8E6;
+    border-color: #FADB13;
+}
+
+.radio-option input[type="radio"] {
+    width: 24px;
+    height: 24px;
+    margin-right: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+    appearance: none;
+    background: white;
+    border: 2px solid #D1D5DB;
+    border-radius: 50%;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+/* 공개 그룹 라디오 버튼 체크 시 */
+.radio-option--public-active input[type="radio"] {
+    background: #4CAF50;
+    border-color: #4CAF50;
+}
+
+.radio-option--public-active input[type="radio"]::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: white;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+}
+
+/* 비밀 그룹 라디오 버튼 체크 시 */
+.radio-option--private-active input[type="radio"] {
+    background: #FADB13;
+    border-color: #FADB13;
+}
+
+.radio-option--private-active input[type="radio"]::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: white;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+}
+
+.radio-content {
+    flex: 1;
+}
+
+.radio-title {
+    font-size: 16px;
+    font-weight: 400;
+    color: #1A1A1A;
+    margin-bottom: 4px;
+    font-family: 'Inter', sans-serif;
+}
+
+/* 선택된 라디오 타이틀은 bold */
+.radio-option--public-active .radio-title,
+.radio-option--private-active .radio-title {
+    font-weight: 700;
+}
+
+.radio-desc {
+    font-size: 13px;
+    color: #666666;
+    line-height: 1.4;
+    font-family: 'Inter', sans-serif;
+}
+
+/* 그룹 타입 설명 박스 */
+.group-type-info {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 4px;
+}
+
+/* 공개 그룹 설명 박스 */
+.group-type-info--public {
+    background: #E8F5E9;
+}
+
+.info-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    font-family: 'Inter', sans-serif;
+}
+
+/* 공개 그룹 타이틀 */
+.group-type-info--public .info-title {
+    color: #203C2E;
+}
+
+.info-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.info-list li {
+    font-size: 13px;
+    line-height: 1.8;
+    padding-left: 0;
+    margin-bottom: 4px;
+    font-family: 'Inter', sans-serif;
+}
+
+.info-list li:last-child {
+    margin-bottom: 0;
+}
+
+/* 공개 그룹 리스트 아이템 */
+.group-type-info--public .info-list li {
+    color: #4CAF50;
+}
+
+/* 숫자 입력 그룹 */
+.number-input-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.number-input-group input {
+    width: 200px;
+    height: 56px;
+    padding: 0 20px;
+    border: 1px solid #E5E7EB;
+    border-radius: 4px;
+    font-size: 15px;
+    color: #1A1A1A;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s ease;
+}
+
+.number-input-group input:focus {
+    outline: none;
+    border-color: #203C2E;
+    border-width: 2px;
+}
+
+.number-unit {
+    font-size: 14px;
+    color: #9CA3AF;
+    font-family: 'Inter', sans-serif;
+}
+
+/* 참여 코드 섹션 */
+.code-section {
+    margin-top: 12px;
+}
+
+.code-input-wrapper {
+    background: #FFF8E6;
+    border: 2px solid #FADB13;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    padding: 18px 20px;
+    gap: 16px;
+    margin-bottom: 0;
+}
+
+.code-input {
+    flex: 1;
+    height: 44px;
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-align: center;
+    color: #1A1A1A;
+    padding: 0 16px;
+}
+
+.code-info {
+    background: #FFF8E6;
+    padding: 16px 20px;
+    border-radius: 0 0 4px 4px;
+}
+
+.code-info-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #96773D;
+    margin-bottom: 8px;
+    font-family: 'Inter', sans-serif;
+}
+
+.code-info-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.code-info-list li {
+    font-size: 13px;
+    color: #96773D;
+    line-height: 1.8;
+    margin-bottom: 4px;
+    font-family: 'Inter', sans-serif;
+}
+
+.code-info-list li:last-child {
+    margin-bottom: 0;
+}
+
+/* 모달 푸터 */
+.modal-footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 24px 40px 32px 40px;
+    border-top: 1px solid #E5E7EB;
+}
+
+/* 버튼 스타일 - 균등 크기 */
+.btn-primary,
+.btn-secondary {
+    height: 52px;
+    border: none;
+    border-radius: 4px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.btn-primary {
+    background: #203C2E;
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #162B20;
+}
+
+.btn-primary:disabled {
+    background: #CCCCCC;
+    color: #666666;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background: white;
+    color: #666666;
+    border: 1px solid #E5E7EB;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: #F8F8F8;
+}
+
+.btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-small {
+    width: 85px;
+    height: 44px;
+    background: #203C2E;
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.btn-small:hover:not(:disabled) {
+    background: #162B20;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        max-height: 95vh;
+    }
+
+    .modal-header {
+        padding: 24px 20px;
+    }
+
+    .modal-body {
+        padding: 24px 20px;
+    }
+
+    .modal-footer {
+        grid-template-columns: 1fr;
+        padding: 20px;
+    }
+
+    .radio-group {
+        grid-template-columns: 1fr;
+    }
+
+    .number-input-group input {
+        width: 150px;
+    }
+}
