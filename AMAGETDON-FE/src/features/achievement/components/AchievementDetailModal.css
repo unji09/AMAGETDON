@@ -1,0 +1,100 @@
+/* ─── 업적 상세 모달 ─── */
+.achievement-detail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--spacing-4) 0;
+}
+
+/* ─── 아이콘 래퍼 ─── */
+.achievement-detail__icon-wrap {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fff9e0, #f5d764);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--spacing-4);
+}
+
+.achievement-detail__icon-wrap--locked {
+    background: #e8e8e8;
+}
+
+.achievement-detail__icon {
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+}
+
+.achievement-detail__icon-placeholder {
+    font-size: 40px;
+}
+
+.achievement-detail__lock {
+    font-size: 36px;
+    opacity: 0.5;
+}
+
+/* ─── 달성 뱃지 ─── */
+.achievement-detail__badge {
+    display: inline-block;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-main-green);
+    background: rgba(199, 216, 183, 0.3);
+    padding: 4px 12px;
+    border-radius: 12px;
+    margin-bottom: var(--spacing-3);
+}
+
+/* ─── 이름 ─── */
+.achievement-detail__name {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+    margin-bottom: var(--spacing-2);
+}
+
+/* ─── 달성일 ─── */
+.achievement-detail__date {
+    font-size: var(--font-size-sm);
+    color: var(--color-main-green);
+    margin-bottom: var(--spacing-4);
+}
+
+/* ─── 설명 ─── */
+.achievement-detail__desc {
+    font-size: var(--font-size-sm);
+    color: #666;
+    line-height: var(--line-height-relaxed);
+    max-width: 360px;
+    margin-bottom: var(--spacing-6);
+}
+
+/* ─── 액션 버튼 ─── */
+.achievement-detail__actions {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+/* ─── 카테고리 태그 (미달성) ─── */
+.achievement-detail__category-tag {
+    display: inline-block;
+    font-size: var(--font-size-xs);
+    color: #999;
+    background: #f0f0f0;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: var(--spacing-4);
+}
+
+/* ─── 잠김 안내 ─── */
+.achievement-detail__locked-msg {
+    font-size: var(--font-size-sm);
+    color: #999;
+    margin-top: var(--spacing-2);
+}
