@@ -6,11 +6,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { OpenVidu, Session, Publisher, SignalEvent } from 'openvidu-browser';
 import { getOpenViduToken } from '@/api/communityApi';
-import type { ChatMessage } from '@/features/community/types/CommunityTypes';
+
+// 간단한 메시지 데이터 (OpenVidu 전용)
+interface SimpleMessage {
+    userName: string;
+    message: string;
+    createdAt: string;
+}
 
 interface UseOpenViduProps {
     sessionId: string | null;
-    onMessageReceived: (message: ChatMessage) => void;
+    onMessageReceived: (message: SimpleMessage) => void;
 }
 
 interface UseOpenViduReturn {
@@ -22,6 +28,13 @@ interface UseOpenViduReturn {
     connect: () => Promise<void>;
     disconnect: () => void;
     sendMessage: (message: string) => void;
+}
+
+// OpenVidu 메시지 데이터 타입
+interface OpenViduMessageData {
+    sender: string;
+    message: string;
+    timestamp: string;
 }
 
 export const useOpenVidu = ({ sessionId, onMessageReceived }: UseOpenViduProps): UseOpenViduReturn => {
@@ -56,11 +69,16 @@ export const useOpenVidu = ({ sessionId, onMessageReceived }: UseOpenViduProps):
 
             // 메시지 수신 이벤트
             newSession.on('signal:chat', (event: SignalEvent) => {
+                if (!event.data) {
+                    console.warn('메시지 데이터가 없습니다.');
+                    return;
+                }
+
                 try {
-                    const data = JSON.parse(event.data);
-                    const message: ChatMessage = {
+                    const data = JSON.parse(event.data) as OpenViduMessageData;
+                    const message: SimpleMessage = {
                         userName: data.sender || '알 수 없음',
-                        message: data.message,
+                        message: data.message || '',
                         createdAt: data.timestamp || new Date().toISOString(),
                     };
                     onMessageReceived(message);
@@ -137,7 +155,7 @@ export const useOpenVidu = ({ sessionId, onMessageReceived }: UseOpenViduProps):
             return;
         }
 
-        const data = {
+        const data: OpenViduMessageData = {
             sender: '현재 사용자', // TODO: 실제 사용자 이름
             message: message,
             timestamp: new Date().toISOString(),

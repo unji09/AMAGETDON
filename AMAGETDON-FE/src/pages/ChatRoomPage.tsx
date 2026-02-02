@@ -1,12 +1,13 @@
 /**
- * ChatRoomPage - 채팅방 페이지
- * 그룹 채팅 메시지 표시 및 전송
+ * ChatRoomPage - 채팅방 페이지 (OpenVidu 통합)
+ * 실시간 채팅 메시지 전송/수신
  */
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout';
 import { getChatMessages, sendChatMessage, getMyRoom, leaveRoom } from '@/api/communityApi';
+import { useOpenVidu } from '@/hooks/useOpenVidu';
 import type { ChatMessage, RoomResponse } from '@/features/community/types/CommunityTypes';
 import './ChatRoomPage.css';
 
@@ -20,6 +21,25 @@ const ChatRoomPage = () => {
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    // OpenVidu Hook
+    const { connected, connect, disconnect, sendMessage: sendOpenViduMessage } = useOpenVidu({
+        sessionId: room?.openviduSessionId || null,
+        onMessageReceived: (simpleMessage) => {
+            // 실시간 메시지를 ChatMessage로 변환
+            if (!room) return;
+
+            const chatMessage: ChatMessage = {
+                roomId: room.roomId,
+                userId: 0, // TODO: 실제 사용자 ID
+                userName: simpleMessage.userName,
+                message: simpleMessage.message,
+                type: 'text',
+                createdAt: simpleMessage.createdAt,
+            };
+            setMessages((prev) => [...prev, chatMessage]);
+        },
+    });
 
     // 메시지 목록 스크롤
     const scrollToBottom = () => {
@@ -36,6 +56,17 @@ const ChatRoomPage = () => {
         scrollToBottom();
     }, [messages]);
 
+    // OpenVidu 연결
+    useEffect(() => {
+        if (room?.openviduSessionId) {
+            connect();
+        }
+
+        return () => {
+            disconnect();
+        };
+    }, [room?.openviduSessionId]);
+
     const loadInitialData = async () => {
         try {
             setLoading(true);
@@ -50,7 +81,7 @@ const ChatRoomPage = () => {
 
             setRoom(myRoom);
 
-            // 채팅 메시지 가져오기
+            // 기존 채팅 메시지 가져오기
             const chatMessages = await getChatMessages(myRoom.roomId);
             setMessages(chatMessages);
         } catch (error) {
@@ -69,25 +100,36 @@ const ChatRoomPage = () => {
             return;
         }
 
-        // OpenVidu sessionId 확인
-        if (!room.openviduSessionId) {
-            alert('채팅 세션이 생성되지 않았습니다. OpenVidu 설정을 확인해주세요.');
-            return;
-        }
-
         try {
             setSending(true);
 
-            await sendChatMessage({
-                openviduSessionId: room.openviduSessionId,
-                sender: '현재 사용자', // TODO: 실제 사용자 이름으로 변경
-                message: newMessage,
-                type: 'text',
-            });
+            if (connected && room.openviduSessionId) {
+                // OpenVidu로 실시간 전송
+                sendOpenViduMessage(newMessage);
 
-            // 메시지 목록 새로고침
-            const updatedMessages = await getChatMessages(room.roomId);
-            setMessages(updatedMessages);
+                // 백엔드에도 저장
+                await sendChatMessage({
+                    openviduSessionId: room.openviduSessionId,
+                    sender: '현재 사용자', // TODO: 실제 사용자 이름으로 변경
+                    message: newMessage,
+                    type: 'text',
+                });
+            } else {
+                // OpenVidu 연결 안됨 - 백엔드만 사용
+                console.warn('OpenVidu 미연결 - 백엔드 API만 사용');
+
+                await sendChatMessage({
+                    openviduSessionId: room.openviduSessionId || '',
+                    sender: '현재 사용자',
+                    message: newMessage,
+                    type: 'text',
+                });
+
+                // 메시지 목록 새로고침
+                const updatedMessages = await getChatMessages(room.roomId);
+                setMessages(updatedMessages);
+            }
+
             setNewMessage('');
         } catch (error) {
             console.error('메시지 전송 실패:', error);
@@ -111,7 +153,12 @@ const ChatRoomPage = () => {
 
         if (window.confirm('그룹을 나가시겠습니까?')) {
             try {
+                // OpenVidu 세션 종료
+                disconnect();
+
+                // 백엔드 API 호출
                 await leaveRoom(room.roomId);
+
                 alert('그룹에서 나갔습니다.');
                 navigate('/community');
             } catch (error) {
@@ -180,6 +227,10 @@ const ChatRoomPage = () => {
                             <span className="chatroom-header__type">
                                 {room.isPublic ? '공개방' : '비밀방'}
                             </span>
+                            <span className="chatroom-header__divider">•</span>
+                            <span className={`chatroom-header__status ${connected ? 'connected' : 'disconnected'}`}>
+                                {connected ? '🟢 연결됨' : '🔴 연결 안됨'}
+                            </span>
                         </div>
                     </div>
                     <div className="chatroom-header__actions">
@@ -238,14 +289,14 @@ const ChatRoomPage = () => {
                             value={newMessage}
                             onChange={(e) => setNewMessage(e.target.value)}
                             onKeyPress={handleKeyPress}
-                            placeholder="메시지를 입력하세요..."
+                            placeholder={connected ? "메시지를 입력하세요..." : "연결 중..."}
                             maxLength={1000}
-                            disabled={sending}
+                            disabled={sending || !connected}
                             className="chatroom-input__field"
                         />
                         <button
                             onClick={handleSendMessage}
-                            disabled={!newMessage.trim() || sending}
+                            disabled={!newMessage.trim() || sending || !connected}
                             className="chatroom-input__button"
                         >
                             {sending ? '전송 중...' : '전송'}
