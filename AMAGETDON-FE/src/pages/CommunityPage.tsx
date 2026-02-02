@@ -49,7 +49,6 @@ export const CommunityPage = () => {
     const handleJoinPrivate = async (joinCode: string): Promise<MemberResponse> => {
         console.log('참여코드로 그룹 참여:', joinCode);
 
-        // TODO: 실제 API 호출로 교체
         // const response = await joinPrivateRoom(joinCode);
         // return response;
 
