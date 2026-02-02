@@ -14,7 +14,10 @@ public class LearningRankingListResponse {
 
     private Long userId;
     private Integer rank;
+    private String nickname;
+    private String currentTitle;
     private Integer totalCorrect;
+    private Boolean isCurrentUser;
     private LocalDateTime updatedAt;
 
     public static LearningRankingListResponse from(LearningRanking learningRanking) {

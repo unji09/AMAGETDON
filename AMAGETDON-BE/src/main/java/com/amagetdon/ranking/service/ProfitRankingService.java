@@ -1,13 +1,15 @@
 package com.amagetdon.ranking.service;
 
+import com.amagetdon.ranking.dto.response.MyProfitRankingResponse;
+import com.amagetdon.ranking.dto.response.ProfitRankingListResponse;
 import com.amagetdon.ranking.entity.ProfitRanking;
 import com.amagetdon.ranking.repository.ProfitRankingRepository;
 import com.amagetdon.user.entity.User;
 import com.amagetdon.user.repository.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -99,17 +102,53 @@ public class ProfitRankingService {
         return rankings;
     }
 
+    // 특정 유저의 수익 랭킹 정보를 조회
     @Transactional(readOnly = true)
-    public ProfitRanking getMyProfitRanking(Long userId) {
-        return profitRankingRepository.findByUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "수익 랭킹 정보를 찾을 수 없습니다."
-                ));
+    public MyProfitRankingResponse getMyProfitRanking(Long userId) {
+
+        Optional<ProfitRanking> rankingOptional = profitRankingRepository.findByUserId(userId);
+
+        if(rankingOptional.isEmpty()) {
+            return null;
+        }
+
+        ProfitRanking ranking = rankingOptional.get();
+
+        User user = userRepository.findById(userId).orElse(null);
+
+        return MyProfitRankingResponse.builder()
+                .rankingId(ranking.getId())
+                .userId(ranking.getUserId())
+                .nickname(user != null ? user.getNickname() : null)
+                .currentTitle(user != null ? user.getCurrentTitle() : null)
+                .rank(ranking.getRank())
+                .totalProfit(ranking.getTotalProfit())
+                .updatedAt(ranking.getUpdatedAt())
+                .build();
     }
 
     // 수익 랭킹 목록을 페이징하여 조회
     @Transactional(readOnly = true)
-    public Page<ProfitRanking> getProfitRankings(Pageable pageable) {
-        return profitRankingRepository.findAll(pageable);
+    public Page<ProfitRankingListResponse> getProfitRankings(Pageable pageable, Long currentUserId) {
+        Page<ProfitRanking> rankings = profitRankingRepository.findAll(pageable);
+
+        // Users 조인하여 DTO 변환
+        List<ProfitRankingListResponse> responses = rankings.getContent().stream()
+                .map(ranking -> {
+                    User user = userRepository.findById(ranking.getUserId()).orElse(null);
+
+                    return ProfitRankingListResponse.builder()
+                            .userId(ranking.getUserId())
+                            .rank(ranking.getRank())
+                            .nickname(user != null ? user.getNickname() : null)
+                            .currentTitle(user != null ? user.getCurrentTitle() : null)
+                            .totalProfit(ranking.getTotalProfit())
+                            .isCurrentUser(ranking.getUserId().equals(currentUserId))
+                            .updatedAt(ranking.getUpdatedAt())
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(responses, pageable, rankings.getTotalElements());
     }
 }
