@@ -20,12 +20,23 @@ class PersonalityService:
         2: InvestmentType.NEUTRAL
     }
 
-    def __init__(self, db: Session, model_path: str = "ml/personality_model.pkl"):
+    # 모델을 클래스 변수로 (한 번만 로드)
+    _model = None
+    _model_path = "ml/personality_model.pkl"
+
+    @classmethod
+    def _load_model(cls):
+        """모델을 한 번만 로드"""
+        if cls._model is None:
+            try:
+                cls._model = joblib.load(cls._model_path)
+            except FileNotFoundError:
+                raise FileNotFoundError(f"모델 파일을 찾을 수 없습니다: {cls._model_path}")
+        return cls._model
+
+    def __init__(self, db: Session):
         self.db = db
-        try:
-            self.model = joblib.load(model_path)
-        except FileNotFoundError:
-            raise FileNotFoundError(f"모델 파일을 찾을 수 없습니다: {model_path}")
+        self.model = self._load_model()  # 이미 로드되어 있으면 재사용
 
     def analyze_personality(self, user_id: int) -> PersonalityAnalyzeResponse:
         """
