@@ -83,6 +83,13 @@ public class UserService {
         user.updatePassword(passwordEncoder.encode(newPassword));
     }
 
+    public String updateCurrentTitle(Long userId, String newTitle) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));
+        user.updateCurrentTitle(newTitle);
+        return user.getCurrentTitle();
+    }
+
     public User oAuthSignup(KakaoUserResponse userInfo, LoginType provider) {
         String originalNickname = userInfo.properties().nickname();
         String nickname = originalNickname;
