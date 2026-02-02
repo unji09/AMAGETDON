@@ -1,10 +1,13 @@
+import os
 import pymysql
 import csv
 import time
-import asyncio 
+import asyncio
+import aiohttp
 from config.config import DB_CONFIG
 from utils.logger import logger
 from utils.kis_api_client import KISApiClient
+from utils.rate_limiter import HardRateLimiter
 from core.token_manager import TokenManager
 
 class StockParser:
@@ -158,76 +161,6 @@ class StockParser:
             raise
     
     #업종 코드 수집
-    # def fetch_and_update_sector_codes(self):
-    #     self.connect_db()
-    #     cursor = self.conn.cursor()
-
-    #     cursor.execute("SELECT COUNT(*) FROM stock WHERE sector_code != '000000'")
-    #     updated_count = cursor.fetchone()[0]
-
-    #     if updated_count > 0:
-    #         logger.info(f"업종 코드 이미 업데이트됨: {updated_count}개 - 스킵")
-    #         return
-
-    #     cursor.execute("SELECT stock_code FROM stock WHERE sector_code = '000000'")
-    #     stock_codes = [row[0] for row in cursor.fetchall()]
-
-    #     logger.info(f"총 {len(stock_codes)}개 종목 업종 코드 수집 시작 (병렬 처리)")
-
-    #     token_manager = TokenManager.get_instance()
-    #     api_client = KISApiClient(token_manager)
-
-    #     success_count = 0
-    #     fail_count = 0
-    #     valid_sector_codes = set()
-
-    #     cursor.execute("SELECT sector_code FROM sector WHERE sector_level = 'SMALL'")
-    #     db_sector_codes = set(row[0] for row in cursor.fetchall())
-
-    #     logger.info(f"DB 소분류 업종 코드: {len(db_sector_codes)}개")
-
-    #     # 배치 처리 (100개씩)
-    #     batch_size = 100
-    #     for i in range(0, len(stock_codes), batch_size):
-    #         batch = stock_codes[i:i + batch_size]
-
-    #         # 비동기 배치 호출
-    #         results = asyncio.run(api_client.fetch_stock_basic_info_batch(batch))
-
-    #         for stock_code, stock_info in results.items():
-    #             if stock_info:
-    #                 sector_value = stock_info.get('sector_small_code')
-
-    #                 if not sector_value:
-    #                     fail_count += 1
-    #                     continue
-
-    #                 if sector_value in db_sector_codes:
-    #                     sql = """
-    #                         UPDATE stock
-    #                         SET sector_code = %s, updated_at = NOW()
-    #                         WHERE stock_code = %s
-    #                     """
-    #                     cursor.execute(sql, (sector_value, stock_code))
-    #                     success_count += 1
-    #                     valid_sector_codes.add(sector_value)
-    #                 else:
-    #                     fail_count += 1
-    #                     logger.debug(f"{stock_code}: 업종 '{sector_value}' DB에 없음")
-
-    #         # 배치에서 실패한 종목 카운트
-    #         fail_count += len(batch) - len(results)
-
-    #         self.conn.commit()
-    #         logger.info(f"진행: {min(i + batch_size, len(stock_codes))}/{len(stock_codes)} (성공: {success_count}, 실패: {fail_count})")
-
-    #     self.conn.commit()
-
-    #     logger.info(f"업종 코드 수집 완료 - 성공: {success_count}, 실패: {fail_count}")
-    #     logger.info(f"발견된 유효 업종 코드: {len(valid_sector_codes)}개")
-
-    #     token_manager.close()
-
     async def fetch_and_update_sector_codes(self):
         self.connect_db()
         cursor = self.conn.cursor()
@@ -246,62 +179,69 @@ class StockParser:
 
         token_manager = TokenManager.get_instance()
         api_client = KISApiClient(token_manager)
+        limiter = HardRateLimiter(18)
 
         cursor.execute("SELECT sector_code FROM sector WHERE sector_level = 'SMALL'")
         db_sector_codes = set(row[0] for row in cursor.fetchall())
 
         logger.info(f"DB 소분류 업종 코드: {len(db_sector_codes)}개")
 
-        # 전체를 하나의 async 컨텍스트에서 실행 (asyncio.run 한 번만 호출)
-        async def fetch_all_sector_codes():
-            success_count = 0
-            fail_count = 0
-            valid_sector_codes = set()
-            batch_size = 100
+        start_time = time.time()
+        success_count = 0
+        fail_count = 0
+        batch_size = 100
+        total_batches = (len(stock_codes) + batch_size - 1) // batch_size
 
-            try:
-                for i in range(0, len(stock_codes), batch_size):
-                    batch = stock_codes[i:i + batch_size]
+        #업종 코드 조회
+        async def fetch_sector_code(session, stock_code):
+            sector_code = await api_client.fetch_sector_code_direct(session, stock_code, limiter)
+            return stock_code, sector_code
 
-                    results = await api_client.fetch_stock_basic_info_batch(batch)
+        connector = aiohttp.TCPConnector(limit=18)
+        timeout = aiohttp.ClientTimeout(total=600)
+        session = aiohttp.ClientSession(connector=connector, timeout=timeout)
 
-                    for stock_code, stock_info in results.items():
-                        if stock_info:
-                            sector_value = stock_info.get('sector_small_code')
+        try:
+            for batch_idx in range(total_batches):
+                batch_start_time = time.time()
+                batch_start = batch_idx * batch_size
+                batch_end = min(batch_start + batch_size, len(stock_codes))
+                batch_codes = stock_codes[batch_start:batch_end]
 
-                            if not sector_value:
-                                fail_count += 1
-                                continue
+                tasks = [fetch_sector_code(session, code) for code in batch_codes]
+                batch_results = await asyncio.gather(*tasks)
 
-                            if sector_value in db_sector_codes:
-                                sql = """
-                                    UPDATE stock
-                                    SET sector_code = %s, updated_at = NOW()
-                                    WHERE stock_code = %s
-                                """
-                                cursor.execute(sql, (sector_value, stock_code))
-                                success_count += 1
-                                valid_sector_codes.add(sector_value)
-                            else:
-                                fail_count += 1
-                                logger.debug(f"{stock_code}: 업종 '{sector_value}' DB에 없음")
+                batch_success = 0
+                batch_fail = 0
+                for stock_code, sector_code in batch_results:
+                    if sector_code:
+                        if sector_code in db_sector_codes:
+                            cursor.execute("""
+                                UPDATE stock
+                                SET sector_code = %s, updated_at = NOW()
+                                WHERE stock_code = %s
+                            """, (sector_code, stock_code))
+                            success_count += 1
+                            batch_success += 1
+                        else:
+                            fail_count += 1
+                            batch_fail += 1
+                            logger.debug(f"{stock_code}: 업종 '{sector_code}' DB에 없음")
+                    else:
+                        fail_count += 1
+                        batch_fail += 1
 
-                    # 배치에서 실패한 종목 카운트
-                    fail_count += len(batch) - len(results)
+                self.conn.commit()
 
-                    self.conn.commit()
-                    logger.info(f"진행: {min(i + batch_size, len(stock_codes))}/{len(stock_codes)} (성공: {success_count}, 실패: {fail_count})")
-            finally:
-                await api_client.close()
+                batch_elapsed = time.time() - batch_start_time
+                logger.info(f"업종 코드 배치 {batch_idx + 1}/{total_batches}: {batch_success}성공, {batch_fail}실패, {batch_elapsed:.1f}초")
 
-            return success_count, fail_count, valid_sector_codes
+        finally:
+            await session.close()
+            await api_client.close()
 
-        success_count, fail_count, valid_sector_codes = await fetch_all_sector_codes()
-
-        self.conn.commit()
-
-        logger.info(f"업종 코드 수집 완료 - 성공: {success_count}, 실패: {fail_count}")
-        logger.info(f"발견된 유효 업종 코드: {len(valid_sector_codes)}개")
+        elapsed = time.time() - start_time
+        logger.info(f"업종 코드 수집 완료: {success_count}성공, {fail_count}실패, {elapsed:.1f}초")
 
         token_manager.close()
 
