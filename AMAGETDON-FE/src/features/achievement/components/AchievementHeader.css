@@ -1,0 +1,128 @@
+/* ─── 업적 헤더 ─── */
+.achievement-header {
+    margin-bottom: var(--spacing-8);
+    animation: headerFadeIn 0.6s ease-out;
+}
+
+@keyframes headerFadeIn {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── 상단: 제목(좌) + 칭호 뱃지(우) ─── */
+.achievement-header__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: var(--spacing-6);
+    margin-bottom: var(--spacing-6);
+}
+
+.achievement-header__title {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+    margin-bottom: var(--spacing-1);
+}
+
+.achievement-header__subtitle {
+    font-size: var(--font-size-sm);
+    color: #666;
+}
+
+/* ─── 칭호 뱃지 (제목 우측) ─── */
+.achievement-header__title-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, #fffef5, #fff9e0);
+    border: 2px solid #f5d764;
+    border-radius: 12px;
+    padding: var(--spacing-3) var(--spacing-6);
+    flex-shrink: 0;
+    animation: titleCardPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
+}
+
+@keyframes titleCardPop {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.achievement-header__title-label {
+    font-size: 11px;
+    font-weight: var(--font-weight-semibold);
+    color: #b8a040;
+    letter-spacing: 0.5px;
+}
+
+.achievement-header__title-value {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+}
+
+.achievement-header__title-empty {
+    font-size: var(--font-size-sm);
+    color: #ccc;
+}
+
+/* ─── 프로그레스 카드 ─── */
+.achievement-header__progress-card {
+    background: var(--color-white);
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: var(--spacing-5) var(--spacing-6);
+}
+
+.achievement-header__progress-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-3);
+}
+
+.achievement-header__progress-label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-dark-gray);
+}
+
+.achievement-header__progress-count {
+    font-size: var(--font-size-sm);
+    color: #999;
+}
+
+.achievement-header__progress-count strong {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-main-green);
+}
+
+.achievement-header__progress-bar {
+    height: 10px;
+    background: #e8e8e8;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.achievement-header__progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-main-green), var(--color-pale-green));
+    border-radius: 5px;
+    transition: width 0.5s ease;
+}
+
+/* ─── 반응형 ─── */
+@media (max-width: 768px) {
+    .achievement-header__top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-4);
+    }
+
+    .achievement-header__title {
+        font-size: var(--font-size-2xl);
+    }
+
+}
