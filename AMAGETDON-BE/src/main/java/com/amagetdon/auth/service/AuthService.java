@@ -42,9 +42,12 @@ public class AuthService {
 
     public void logout(String refreshToken) {
         try {
-            Long userId = jwtTokenProvider.getUserId(refreshToken);
-            refreshTokenService.deleteRefreshTokenByUserId(userId);
+            Long userId = jwtTokenProvider.getUserIdIgnoringExpiration(refreshToken);
+            if (userId != null) {
+                refreshTokenService.deleteRefreshTokenByUserId(userId);
+            }
         } catch (Exception e) {
+            // 토큰 파싱 자체가 불가능한 경우 무시
         }
     }
 

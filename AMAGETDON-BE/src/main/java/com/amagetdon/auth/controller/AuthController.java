@@ -70,9 +70,9 @@ public class AuthController implements AuthControllerSwagger{
     }
 
     @DeleteMapping("/withdraw")
-    public ResponseEntity<String> withdraw(@CookieValue("refreshToken") String refreshToken) {
+    public ResponseEntity<String> withdraw(@CookieValue(value = "refreshToken", required = false) String refreshToken) {
         if (refreshToken == null || refreshToken.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("인증 정보가 없습니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("인증 정보가 없습니다.");
         }
 
         authService.withdraw(refreshToken);
@@ -85,7 +85,11 @@ public class AuthController implements AuthControllerSwagger{
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthLoginResponse> refresh(@CookieValue("refreshToken") String refreshToken) {
+    public ResponseEntity<?> refresh(@CookieValue(value = "refreshToken", required = false) String refreshToken) {
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("리프레시 토큰이 없습니다.");
+        }
+
         TokenResponse tokenResponse = authService.refresh(refreshToken);
 
         ResponseCookie newRefreshTokenCookie = refreshTokenService.createRefreshTokenCookie(tokenResponse.refreshToken());
