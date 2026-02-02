@@ -67,48 +67,7 @@ public class TradingService {
         transactionRepository.save(transaction);
 
         // 업적 체크
-        switch (type) {
-            case BUY -> {
-                long stockHoldingCount = accountRepository.countByStockHoldingIdUserId(userId);
-                achievementService.checkAndAwardAchievements(userId, stockHoldingCount, DIVERSIFY_EGGS);
-
-                long totalBoughtCount = achievementRedisRepository.increment(userId, "total_bought_count");
-                achievementService.checkAndAwardAchievements(userId, totalBoughtCount, I_PICK_YOU);
-
-                if (achievementRedisRepository.setFlagIfAbsent(userId, "is_early_bought")) {
-                    achievementService.checkAndAwardAchievements(userId, 1L, OPEN_RUN);
-                }
-
-                if (achievementRedisRepository.setFlagIfAbsent(userId, "is_late_bought")) {
-                    achievementService.checkAndAwardAchievements(userId, 1L, BUZZER_BEATER);
-                }
-
-                String sectorCode = stock.getSector().getSectorCode();
-
-                // 바이오/의료 (MEDIUM: 0321)
-                if (sectorCode.startsWith("0321")) {
-                    long bioCount = achievementRedisRepository.increment(userId, "bio_count");
-                    achievementService.checkAndAwardAchievements(userId, bioCount, PHARMACIST);
-                }
-
-                // 철강 (MEDIUM: 0324)
-                if (sectorCode.startsWith("0324")) {
-                    long steelCount = achievementRedisRepository.increment(userId, "steel_count");
-                    achievementService.checkAndAwardAchievements(userId, steelCount, IRON_MAN);
-                }
-
-                // 반도체 (SMALL: 032601)
-                if (sectorCode.equals("032601")) {
-                    long chipCount = achievementRedisRepository.increment(userId, "chip_count");
-                    achievementService.checkAndAwardAchievements(userId, chipCount, KOREA_CHIP);
-                }
-            }
-            case SELL -> {
-                long balance = user.getBalance();
-                achievementService.checkAndAwardAchievements(userId, balance, ZERO_BALANCE);
-                achievementService.checkAndAwardAchievements(userId, balance, BROKE);
-            }
-        }
+        checkAchievements(userId, user, stock, type);
 
         return TradingResponse.of(transaction, user.getBalance());
     }
@@ -196,5 +155,65 @@ public class TradingService {
         BigDecimal newQuantity = BigDecimal.valueOf(currentQuantity + buyQuantity);
 
         return newTotal.divide(newQuantity, 2, RoundingMode.HALF_UP);
+    }
+
+    private void checkAchievements(Long userId, User user, Stock stock, TransactionType type) {
+        switch (type) {
+            case BUY -> checkBuyAchievements(userId, stock);
+            case SELL -> checkSellAchievements(userId, user.getBalance());
+        }
+    }
+
+    private void checkBuyAchievements(Long userId, Stock stock) {
+        // 보유 종목 다양화
+        long stockHoldingCount = accountRepository.countByStockHoldingIdUserId(userId);
+        achievementService.checkAndAwardAchievements(userId, stockHoldingCount, DIVERSIFY_EGGS);
+
+        // 총 매수 횟수
+        long totalBoughtCount = achievementRedisRepository.increment(userId, "total_bought_count");
+        achievementService.checkAndAwardAchievements(userId, totalBoughtCount, I_PICK_YOU);
+
+        // 시간대 매수
+        checkTimingAchievements(userId);
+
+        // 섹터별 매수
+        checkSectorAchievements(userId, stock);
+    }
+
+    private void checkTimingAchievements(Long userId) {
+        if (achievementRedisRepository.setFlagIfAbsent(userId, "is_early_bought")) {
+            achievementService.checkAndAwardAchievements(userId, 1L, OPEN_RUN);
+        }
+
+        if (achievementRedisRepository.setFlagIfAbsent(userId, "is_late_bought")) {
+            achievementService.checkAndAwardAchievements(userId, 1L, BUZZER_BEATER);
+        }
+    }
+
+    private void checkSectorAchievements(Long userId, Stock stock) {
+        String sectorCode = stock.getSector().getSectorCode();
+
+        // 바이오/의료 (0321xx)
+        if (sectorCode.startsWith("0321")) {
+            long bioCount = achievementRedisRepository.increment(userId, "bio_count");
+            achievementService.checkAndAwardAchievements(userId, bioCount, PHARMACIST);
+        }
+
+        // 철강 (0324xx)
+        if (sectorCode.startsWith("0324")) {
+            long steelCount = achievementRedisRepository.increment(userId, "steel_count");
+            achievementService.checkAndAwardAchievements(userId, steelCount, IRON_MAN);
+        }
+
+        // 반도체 (032601)
+        if (sectorCode.equals("032601")) {
+            long chipCount = achievementRedisRepository.increment(userId, "chip_count");
+            achievementService.checkAndAwardAchievements(userId, chipCount, KOREA_CHIP);
+        }
+    }
+
+    private void checkSellAchievements(Long userId, Long balance) {
+        achievementService.checkAndAwardAchievements(userId, balance, ZERO_BALANCE);
+        achievementService.checkAndAwardAchievements(userId, balance, BROKE);
     }
 }
