@@ -228,7 +228,7 @@ class StockParser:
 
     #     token_manager.close()
 
-    def fetch_and_update_sector_codes(self):
+    async def fetch_and_update_sector_codes(self):
         self.connect_db()
         cursor = self.conn.cursor()
 
@@ -296,7 +296,7 @@ class StockParser:
 
             return success_count, fail_count, valid_sector_codes
 
-        success_count, fail_count, valid_sector_codes = asyncio.run(fetch_all_sector_codes())
+        success_count, fail_count, valid_sector_codes = await fetch_all_sector_codes()
 
         self.conn.commit()
 
@@ -305,7 +305,7 @@ class StockParser:
 
         token_manager.close()
 
-    def parse_and_save(self):
+    async def parse_and_save(self):
         logger.info("파싱 시작")
 
         self.parse_sector_csv()
@@ -323,7 +323,7 @@ class StockParser:
         else:
             logger.warning("파싱된 종목 없음")
 
-        self.fetch_and_update_sector_codes()
+        await self.fetch_and_update_sector_codes()
         
         if self.conn:
             self.conn.close()
