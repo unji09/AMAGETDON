@@ -9,7 +9,12 @@ import java.time.LocalDateTime;
 
 
 @Entity
-@Table(name = "members")
+@Table(name = "members",
+uniqueConstraints = {
+        @UniqueConstraint(
+                name = "uk_member_user_active",
+                columnNames = {"userId", "isActive"})},
+indexes = {@Index(name = "idx_member_room_user_active", columnList = "roomId, userId, isActive")})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
