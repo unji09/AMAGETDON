@@ -50,7 +50,7 @@ public class ChatMessageService {
     // 채팅 메시지 조회(입장 시간 이후 메시지만)
     public List<ChatMessage> getMessages(Long roomId, Long userId) {
 
-        Member member = memberRepository.findByRoomIdAndUserId(roomId, userId)
+        Member member = memberRepository.findByRoomIdAndUserIdAndIsActiveTrue(roomId, userId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         ErrorCode.NOT_ROOM_MEMBER.getMessage()));
 
