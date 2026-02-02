@@ -27,8 +27,6 @@ import java.util.stream.Collectors;
 
 import static com.amagetdon.achievement.entity.AchievementIdCode.I_AM_GROOVE;
 
-import static com.amagetdon.achievement.entity.AchievementIdCode.I_AM_GROOVE;
-
 @Service
 @RequiredArgsConstructor
 public class RoomService {
