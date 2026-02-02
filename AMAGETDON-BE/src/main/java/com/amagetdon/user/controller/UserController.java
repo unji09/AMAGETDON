@@ -10,6 +10,10 @@ import com.amagetdon.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.amagetdon.user.dto.request.UpdateInvestmentTypeRequest;
+import com.amagetdon.user.dto.response.UpdateInvestmentTypeResponse;
+import com.amagetdon.user.service.UserService;
+import jakarta.validation.Valid;
 
 @RestController
 @RequiredArgsConstructor
@@ -53,5 +57,17 @@ public class UserController implements UserControllerSwagger {
         Long userId = SecurityUtil.getCurrentUserId();
         String updatedTitle = userService.updateCurrentTitle(userId, request.newTitle());
         return ResponseEntity.ok(updatedTitle);
+    }
+
+    @PatchMapping("/investmentType")
+    public ResponseEntity<UpdateInvestmentTypeResponse> updateInvestmentType(
+            @Valid @RequestBody UpdateInvestmentTypeRequest request
+    ) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        userService.updateInvestmentType(userId, request.getInvestmentType());
+
+        return ResponseEntity.ok(
+                new UpdateInvestmentTypeResponse(userId, request.getInvestmentType())
+        );
     }
 }

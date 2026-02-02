@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import quiz_router
+from app.api import quiz_router, personality_router
 
 # FastAPI 앱 생성
 app = FastAPI(
@@ -20,6 +20,7 @@ app.add_middleware(
 
 # 라우터 등록
 app.include_router(quiz_router.router)
+app.include_router(personality_router.router)
 
 @app.get("/")
 def root():
