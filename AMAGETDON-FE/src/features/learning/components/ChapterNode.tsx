@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { Lock, Play, CheckCircle } from 'lucide-react';
 import type { ChapterItem } from '../types/learning';
 import './ChapterNode.css';
 
@@ -6,21 +8,15 @@ interface ChapterNodeProps {
     onClick: (chapter: ChapterItem) => void;
 }
 
-// TODO (지원) : 자물괴 이모지 변경, 재생 버튼 위치 변경(가운데로)
-/**
- * 챕터 상태에 따른 아이콘을 렌더링하는 컴포넌트
- * - COMPLETED: 체크 표시
- * - AVAILABLE: 재생 버튼
- * - LOCKED: 자물쇠
- */
+//챕터 상태에 따른 아이콘을 렌더링하는 컴포넌트
 const StatusIcon = ({ status }: { status: ChapterItem['status'] }) => {
     switch (status) {
         case 'COMPLETED':
-            return <span className="chapter-node__icon chapter-node__icon--completed">&#10003;</span>;
+            return <CheckCircle size={24} strokeWidth={2.5} />;
         case 'AVAILABLE':
-            return <span className="chapter-node__icon chapter-node__icon--available">&#9654;</span>;
+            return <Play size={22} fill="currentColor" strokeWidth={0} />;
         case 'LOCKED':
-            return <span className="chapter-node__icon chapter-node__icon--locked">&#128274;</span>;
+            return <Lock size={20} />;
     }
 };
 
@@ -33,26 +29,34 @@ const StatusIcon = ({ status }: { status: ChapterItem['status'] }) => {
 export const ChapterNode = ({ chapter, onClick }: ChapterNodeProps) => {
     // LOCKED 상태가 아닐 때만 클릭 가능
     const isClickable = chapter.status !== 'LOCKED';
+    const [showTooltip, setShowTooltip] = useState(false);
 
     return (
-        <button
-            className={`chapter-node chapter-node--${chapter.status.toLowerCase()}`}
-            onClick={() => isClickable && onClick(chapter)}
-            disabled={!isClickable}
-            type="button"
-        >
-            <div className="chapter-node__circle">
-                <StatusIcon status={chapter.status} />
-            </div>
-            <div className="chapter-node__info">
-                <span className="chapter-node__label">CHAPTER {chapter.baseChapterNo}</span>
-                <span className="chapter-node__title">{chapter.chapterTitle}</span>
-                {chapter.status === 'AVAILABLE' && chapter.progress && (
-                    <div className="chapter-node__progress-bar">
-                        <div className="chapter-node__progress-fill" style={{ width: '50%' }} />
-                    </div>
-                )}
-            </div>
-        </button>
+        <div className="chapter-node-wrapper">
+            <button
+                className={`chapter-node chapter-node--${chapter.status.toLowerCase()}`}
+                onClick={() => isClickable && onClick(chapter)}
+                disabled={!isClickable}
+                type="button"
+                onMouseEnter={() => isClickable && chapter.chapterSummary && setShowTooltip(true)}
+                onMouseLeave={() => setShowTooltip(false)}
+            >
+                <div className="chapter-node__circle">
+                    <StatusIcon status={chapter.status} />
+                </div>
+                <div className="chapter-node__info">
+                    <span className="chapter-node__label">CHAPTER {chapter.baseChapterNo}</span>
+                    <span className="chapter-node__title">{chapter.chapterTitle}</span>
+                    {chapter.status === 'AVAILABLE' && chapter.progress && (
+                        <div className="chapter-node__progress-bar">
+                            <div className="chapter-node__progress-fill" style={{ width: '50%' }} />
+                        </div>
+                    )}
+                </div>
+            </button>
+            {showTooltip && chapter.chapterSummary && (
+                <div className="chapter-node__tooltip">{chapter.chapterSummary}</div>
+            )}
+        </div>
     );
 };
