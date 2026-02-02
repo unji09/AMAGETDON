@@ -1,8 +1,8 @@
 // src/features/auth/hooks/useLogin.ts
 import { useState } from 'react'
-import { loginApi } from '../api/authApi'
-import type {LoginRequest, AuthLoginResponse} from "@/features/auth/types/auth.types.ts";
-import {AxiosError} from "axios";
+import { loginApi, logoutApi } from '../api/authApi'
+import type { LoginRequest, AuthLoginResponse } from '@/features/auth/types/auth.types'
+import { AxiosError } from 'axios'
 
 
 export const useLogin = () => {
@@ -55,8 +55,14 @@ export const useLogin = () => {
         }
     }
 
-    const logout = () => {
+    const logout = async () => {
         localStorage.removeItem('accessToken')
+        try {
+            // 백엔드에 로그아웃 요청 (RefreshToken 쿠키 삭제)
+            await logoutApi()
+        } catch {
+            // 로그아웃 API 실패해도 무시
+        }
     }
 
     return { login, logout, loading, error }

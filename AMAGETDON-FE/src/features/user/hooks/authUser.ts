@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { getMyInfo, type UserInfo } from '../api/userApi'
+import { logoutApi } from '@/features/auth/api/authApi'
 
 export const useAuthUser = () => {
     const [user, setUser] = useState<UserInfo | null>(null)
@@ -24,9 +25,14 @@ export const useAuthUser = () => {
         }
     }, [])
 
-    const clearUser = useCallback(() => {
+    const clearUser = useCallback(async () => {
         localStorage.removeItem('accessToken')
         setUser(null)
+        try {
+            await logoutApi()
+        } catch {
+            // 로그아웃 API 실패해도 무시
+        }
     }, [])
 
     useEffect(() => {
