@@ -110,17 +110,9 @@ export const getChatMessages = async (roomId: number): Promise<ChatMessage[]> =>
 // ============================================
 
 /**
- * OpenVidu 세션 생성
+ * OpenVidu 커넥션 토큰 발급
  */
-export const createOpenViduSession = async (): Promise<string> => {
-    const response = await apiClient.post<string>('/sessions', {});
-    return response.data;
-};
-
-/**
- * OpenVidu 커넥션 생성 (토큰 발급)
- */
-export const createOpenViduConnection = async (sessionId: string): Promise<string> => {
+export const getOpenViduToken = async (sessionId: string): Promise<string> => {
     const response = await apiClient.post<string>(`/sessions/${sessionId}/connections`, {});
     return response.data;
 };
