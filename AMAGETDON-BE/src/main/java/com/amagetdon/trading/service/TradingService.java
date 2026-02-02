@@ -1,5 +1,6 @@
 package com.amagetdon.trading.service;
 
+import com.amagetdon.achievement.service.AchievementService;
 import com.amagetdon.stock.entity.Stock;
 import com.amagetdon.stock.entity.StockPrice;
 import com.amagetdon.stock.repository.StockPriceRepository;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import static com.amagetdon.achievement.entity.AchievementIdCode.DIVERSIFY_EGGS;
 import static com.amagetdon.common.ErrorCode.*;
 
 @Service
@@ -31,6 +33,7 @@ public class TradingService {
     private final StockPriceRepository stockPriceRepository;
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
+    private final AchievementService achievementService;
 
     @Transactional
     public TradingResponse buyStock(Long userId, TradingRequest request) {
@@ -60,6 +63,11 @@ public class TradingService {
 
         // 거래 내역 저장
         transactionRepository.save(transaction);
+
+        if (type == TransactionType.BUY) {
+            long stockHoldingCount = accountRepository.countByStockHoldingIdUserId(userId);
+            achievementService.checkAndAwardAchievements(userId, stockHoldingCount, DIVERSIFY_EGGS);
+        }
 
         return TradingResponse.of(transaction, user.getBalance());
     }
