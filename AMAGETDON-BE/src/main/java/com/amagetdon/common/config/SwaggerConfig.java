@@ -25,11 +25,23 @@ public class SwaggerConfig {
                         .description("""
                                 ## AMAGETDON 주식 투자 교육 플랫폼 API
                                 
-                                ### 인증 방법 (TODO: JWT 도입 예정)
-                                현재는 `User-Id` 헤더로 임시 인증 중입니다.
+                                ### 인증 방법 (JWT 토큰 인증)
+                                모든 API는 JWT 토큰 기반 인증을 사용합니다.
                                 
-                                1. 각 API의 `User-Id` 헤더에 사용자 ID 입력
-                                2. JWT 도입 후: 우측 상단 **Authorize** 버튼으로 토큰 인증
+                                **인증 절차:**
+                                1. 로그인 API (`POST /auth/login`)를 통해 JWT 토큰 발급
+                                2. 우측 상단 **🔓 Authorize** 버튼 클릭
+                                3. Access Token을 입력 (Bearer 접두사 자동 추가됨)
+                                4. 인증 완료 후 모든 API 사용 가능
+                                
+                                **토큰 예시:**
+```
+                                eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTYzOTk4NzY1NH0...
+```
+                                
+                                **주의사항:**
+                                - 토큰 입력 시 `Bearer` 접두사는 제외하고 입력하세요
+                                - 토큰이 만료된 경우 재로그인이 필요합니다
                                 """)
                 )
                 .servers(List.of(
@@ -44,7 +56,7 @@ public class SwaggerConfig {
                                         .scheme("bearer")
                                         .bearerFormat("JWT")
                                         .in(SecurityScheme.In.HEADER)
-                                        .description("JWT Access Token을 입력하세요 (Bearer 제외)")
+                                        .description("JWT Access Token을 입력하세요 (Bearer 접두사 제외)")
                         )
                 )
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName));

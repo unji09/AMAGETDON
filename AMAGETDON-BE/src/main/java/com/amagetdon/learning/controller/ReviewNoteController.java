@@ -4,6 +4,7 @@ import com.amagetdon.learning.dto.reviewnote.ReviewNoteListResponse;
 import com.amagetdon.learning.dto.reviewnote.ReviewNoteSubmitRequest;
 import com.amagetdon.learning.dto.reviewnote.ReviewNoteSubmitResponse;
 import com.amagetdon.learning.service.ReviewNoteService;
+import com.amagetdon.common.security.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -29,7 +30,7 @@ public class ReviewNoteController {
     @Operation(
             summary = "오답노트 목록 조회",
             description = """
-                    사용자의 오답노트 목록을 챕터별로 그룹화하여 조회합니다.
+                    사용자의 오답노트 목록을 챕터별로 그룹화하여 조회합니다. JWT 토큰에서 사용자 정보를 자동으로 추출합니다.
                                 
                     - 챕터별로 그룹화된 오답 문제 리스트
                     - 객관식 문제는 선택지 포함
@@ -41,17 +42,15 @@ public class ReviewNoteController {
                     responseCode = "200",
                     description = "조회 성공",
                     content = @Content(schema = @Schema(implementation = ReviewNoteListResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자입니다"
             )
     })
     @GetMapping("/reviewNotes")
-    public ResponseEntity<ReviewNoteListResponse> getReviewNotes(
-            @Parameter(
-                    description = "사용자 ID (임시 인증용)",
-                    required = true,
-                    example = "1"
-            )
-            @RequestHeader("User-Id") Long userId
-    ) {
+    public ResponseEntity<ReviewNoteListResponse> getReviewNotes() {
+        Long userId = SecurityUtil.getCurrentUserId();
         ReviewNoteListResponse response = reviewNoteService.getReviewNotes(userId);
         return ResponseEntity.ok(response);
     }
@@ -59,7 +58,7 @@ public class ReviewNoteController {
     @Operation(
             summary = "오답노트 풀이 제출",
             description = """
-                    오답노트에 저장된 문제의 답안을 제출합니다.
+                    오답노트에 저장된 문제의 답안을 제출합니다. JWT 토큰에서 사용자 정보를 자동으로 추출합니다.
                                 
                     - 정답: 오답노트에서 자동 삭제
                     - 오답: 오답노트에 계속 유지
@@ -77,17 +76,14 @@ public class ReviewNoteController {
             @ApiResponse(
                     responseCode = "400",
                     description = "오답노트에 없는 문제이거나 잘못된 요청입니다"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자입니다"
             )
     })
     @PostMapping("/reviewNotes")
     public ResponseEntity<ReviewNoteSubmitResponse> submitReviewNote(
-            @Parameter(
-                    description = "사용자 ID (임시 인증용)",
-                    required = true,
-                    example = "1"
-            )
-            @RequestHeader("User-Id") Long userId,
-
             @RequestBody(
                     description = "오답노트 답안 제출 정보",
                     required = true,
@@ -121,6 +117,7 @@ public class ReviewNoteController {
             )
             @Valid @org.springframework.web.bind.annotation.RequestBody ReviewNoteSubmitRequest request
     ) {
+        Long userId = SecurityUtil.getCurrentUserId();
         ReviewNoteSubmitResponse response = reviewNoteService.submitReviewNote(userId, request);
         return ResponseEntity.ok(response);
     }
@@ -129,7 +126,7 @@ public class ReviewNoteController {
     @Operation(
             summary = "오답노트 삭제",
             description = """
-                    특정 오답노트를 삭제합니다.
+                    특정 오답노트를 삭제합니다. JWT 토큰에서 사용자 정보를 자동으로 추출합니다.
                                 
                     - 본인의 오답노트만 삭제 가능
                     - 삭제 후 204 No Content 반환
@@ -143,17 +140,14 @@ public class ReviewNoteController {
             @ApiResponse(
                     responseCode = "400",
                     description = "존재하지 않는 오답노트이거나 삭제 권한이 없습니다"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자입니다"
             )
     })
     @DeleteMapping("/reviewNotes/{reviewNoteId}")
     public ResponseEntity<Void> deleteReviewNote(
-            @Parameter(
-                    description = "사용자 ID (임시 인증용)",
-                    required = true,
-                    example = "1"
-            )
-            @RequestHeader("User-Id") Long userId,
-
             @Parameter(
                     description = "삭제할 오답노트 ID",
                     required = true,
@@ -161,6 +155,7 @@ public class ReviewNoteController {
             )
             @PathVariable Long reviewNoteId
     ) {
+        Long userId = SecurityUtil.getCurrentUserId();
         reviewNoteService.deleteReviewNote(userId, reviewNoteId);
         return ResponseEntity.noContent().build();
     }
