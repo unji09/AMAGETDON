@@ -63,6 +63,7 @@ public class RoomController {
         data.put("totalElements", roomsPage.getTotalElements());
         data.put("totalPages", roomsPage.getTotalPages());
         data.put("currentPage", roomsPage.getNumber());
+        data.put("pageSize",  roomsPage.getSize());
 
         response.put("data", data);
 
