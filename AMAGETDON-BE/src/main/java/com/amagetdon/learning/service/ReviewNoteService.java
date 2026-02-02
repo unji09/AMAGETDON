@@ -1,14 +1,14 @@
 package com.amagetdon.learning.service;
 
+import com.amagetdon.common.ErrorCode;
 import com.amagetdon.learning.dto.reviewnote.ReviewNoteDetail;
 import com.amagetdon.learning.dto.reviewnote.ReviewNoteListResponse;
 import com.amagetdon.learning.dto.reviewnote.ReviewNoteSubmitRequest;
 import com.amagetdon.learning.dto.reviewnote.ReviewNoteSubmitResponse;
-import com.amagetdon.learning.entity.Quiz;
-import com.amagetdon.learning.entity.QuizChoice;
-import com.amagetdon.learning.entity.QuizType;
-import com.amagetdon.learning.entity.ReviewNote;
+import com.amagetdon.learning.entity.*;
 import com.amagetdon.learning.repository.*;
+import com.amagetdon.user.entity.User;
+import com.amagetdon.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +28,7 @@ public class ReviewNoteService {
     private final DailyLearningRewardRepository rewardRepository;
     private final ChapterRepository chapterRepository;
     private final QuizRepository quizRepository;
+    private final UserRepository userRepository;
 
     /**
      * 오답노트 목록 조회 (챕터별 필터링)
@@ -81,13 +82,31 @@ public class ReviewNoteService {
 
         // 5. 오늘 첫 풀이 여부 확인 및 보상 지급
         Integer rewardAmount = 0;
-        boolean alreadyReceivedToday = rewardRepository
-                .existsByUserIdAndReviewRewardDate(userId, today);
 
-        if (!alreadyReceivedToday) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException(ErrorCode.USER_NOT_FOUND_SIMPLE.getMessage()));
+
+
+        DailyLearningReward reward = rewardRepository
+                .findByUserId(userId)
+                .orElse(null);
+
+        boolean alreadyReceivedToday = (reward != null &&
+                reward.getReviewRewardDate().equals(today));
+
+        if (isCorrect && !alreadyReceivedToday) {
             rewardAmount = 50_000;
-            // TODO(민규): User balance 업데이트 & 보상 기록 테이블 저장
-            // 보상 정책 테이블 생성 이후 진행
+
+
+            user.addBalance((long) rewardAmount);
+            userRepository.save(user);
+
+            if (reward == null) {
+                reward = new DailyLearningReward(userId);
+            } else {
+                reward.updateReviewRewardDate();
+            }
+            rewardRepository.save(reward);
         }
 
         // 6. 현재 잔액 계산 (임시)
