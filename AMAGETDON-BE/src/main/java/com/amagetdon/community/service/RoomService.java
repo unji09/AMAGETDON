@@ -27,8 +27,6 @@ import java.util.stream.Collectors;
 
 import static com.amagetdon.achievement.entity.AchievementIdCode.I_AM_GROOVE;
 
-import static com.amagetdon.achievement.entity.AchievementIdCode.I_AM_GROOVE;
-
 @Service
 @RequiredArgsConstructor
 public class RoomService {
@@ -38,10 +36,6 @@ public class RoomService {
     private final MemberRepository memberRepository;
     private final ChatMessageService chatMessageService;
     private final UserService userService;
-
-    // 업적 관련
-    private final AchievementService achievementService;
-    private final AchievementRedisRepository achievementRedisRepository;
 
     // 업적 관련
     private final AchievementService achievementService;
