@@ -1,5 +1,8 @@
 package com.amagetdon.learning.service;
 
+import com.amagetdon.achievement.entity.AchievementIdCode;
+import com.amagetdon.achievement.repository.AchievementRedisRepository;
+import com.amagetdon.achievement.service.AchievementService;
 import com.amagetdon.learning.dto.quiz.QuizResponse;
 import com.amagetdon.learning.dto.quiz.QuizSubmitRequest;
 import com.amagetdon.learning.dto.quiz.QuizSubmitResponse;
@@ -28,13 +31,17 @@ public class QuizService {
     private final ReviewNoteRepository reviewNoteRepository;
     private final DailyLearningRewardRepository rewardRepository;
 
-    // 새로 추가
     private final CachedQuizRepository cachedQuizRepository;
     private final CachedQuizChoiceRepository cachedQuizChoiceRepository;
     private final FastApiService fastApiService;
 
+    // 업적 관련
+    private final AchievementService achievementService;
+    private final AchievementRedisRepository achievementRedisRepository;
+    private final ProgressService progressService;
+
     private static final Integer DAILY_QUIZ_LIMIT = 100;
-    private static final Integer CACHED_QUIZ_BUFFER_SIZE = 100;  // TODO(민규): 배포시 1000으로 증가
+    private static final Integer CACHED_QUIZ_BUFFER_SIZE = 100;
 
     /**
      * 오늘의 퀴즈 1개 조회
@@ -97,9 +104,8 @@ public class QuizService {
         Optional<CachedQuiz> cachedQuizOpt = cachedQuizRepository.findRandomUnusedQuiz();
 
         if (cachedQuizOpt.isPresent()) {
-            // 미사용 퀴즈 있음 -> 즉시 반환
             CachedQuiz cachedQuiz = cachedQuizOpt.get();
-            cachedQuiz.markAsUsed();  // 사용 처리
+            cachedQuiz.markAsUsed();
             cachedQuizRepository.save(cachedQuiz);
 
             log.info("캐싱 퀴즈 사용: cachedQuizId={}, userId={}, sequence={}",
@@ -112,7 +118,6 @@ public class QuizService {
         Integer unusedCount = cachedQuizRepository.countByIsUsed(false);
 
         if (unusedCount >= CACHED_QUIZ_BUFFER_SIZE) {
-            // 100개 이상 -> 대기 안내
             throw new IllegalStateException("퀴즈 생성 중입니다. 잠시 후 다시 시도해주세요");
         }
 
@@ -126,7 +131,7 @@ public class QuizService {
 
         while (retryCount < maxRetries) {
             try {
-                Thread.sleep(1000);  // 1초 대기
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new RuntimeException("퀴즈 생성 중 오류가 발생했습니다");
@@ -154,12 +159,12 @@ public class QuizService {
     public QuizSubmitResponse submitQuiz(Long userId, QuizSubmitRequest request) {
         LocalDate today = LocalDate.now();
 
-        // 1. 현재 sequence 계산 (서버에서!)
+        // 1. 현재 sequence 계산
         Integer currentSequence = historyRepository
                 .findMaxSequenceByUserIdAndQuizDate(userId, today);
         Integer nextSequence = (currentSequence == null) ? 1 : currentSequence + 1;
 
-        // 2. 100개 이하만 처리 (100개 초과는 제출 불가)
+        // 2. 100개 이하만 처리
         if (nextSequence > DAILY_QUIZ_LIMIT) {
             throw new IllegalArgumentException("100개 초과 퀴즈는 제출할 수 없습니다");
         }
@@ -186,6 +191,9 @@ public class QuizService {
                 isCorrect
         );
         historyRepository.save(history);
+
+        // ✅ 업적 체크
+        checkQuizAchievements(userId, nextSequence, isCorrect);
 
         // 7. 틀렸으면 오답노트 저장
         boolean addedToReviewNote = false;
@@ -216,6 +224,55 @@ public class QuizService {
                 addedToReviewNote,
                 currentBalance
         );
+    }
+
+    /**
+     * 퀴즈 관련 업적 체크
+     */
+    private void checkQuizAchievements(Long userId, Integer quizSequence, boolean isCorrect) {
+        // 1. 개근왕 (오늘 첫 퀴즈 풀이 = 출석 체크)
+        if (quizSequence == 1) {
+            Long attendanceCount = achievementRedisRepository.increment(userId, "attendance_count");
+            achievementService.checkAndAwardAchievements(
+                    userId,
+                    attendanceCount,
+                    AchievementIdCode.ATTENDANCE_KING
+            );
+        }
+
+        // 2. 퀴즈에서 살아남기 (첫 퀴즈 풀이)
+        if (quizSequence == 1) {
+            achievementService.checkAndAwardAchievements(
+                    userId,
+                    1L,
+                    AchievementIdCode.QUIZ_SURVIVOR
+            );
+        }
+
+        // 3. 주린이 탈출 (학습 진행도 100% 달성 체크)
+        if (isCorrect) {
+            checkLearningCompletion(userId);
+        }
+    }
+
+    /**
+     * 학습 진행도 100% 달성 체크
+     */
+    private void checkLearningCompletion(Long userId) {
+        try {
+            var progress = progressService.getProgress(userId, null, false);
+
+            // 전체 챕터가 모두 완료되었는지 확인
+            if (progress.summary().completedChapters() == progress.summary().totalChapters ()) {
+                achievementService.checkAndAwardAchievements(
+                        userId,
+                        100L,
+                        AchievementIdCode.NEWBIE_ESCAPE
+                );
+            }
+        } catch (Exception e) {
+            log.warn("학습 진행도 업적 체크 실패: userId={}", userId, e);
+        }
     }
 
     private boolean checkAnswer(Quiz quiz, QuizSubmitRequest request) {
@@ -297,9 +354,6 @@ public class QuizService {
         );
     }
 
-    /**
-     * CachedQuiz를 QuizResponse로 변환
-     */
     private QuizResponse convertCachedQuizToResponse(
             CachedQuiz cachedQuiz,
             Integer quizSequence
@@ -325,10 +379,9 @@ public class QuizService {
                 choices
         );
 
-        // 100개 초과는 보상 없음
         return new QuizResponse(
                 quizSequence,
-                false,  // 보상 받지 않음
+                false,
                 quizDetail
         );
     }
