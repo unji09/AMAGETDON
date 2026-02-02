@@ -2,10 +2,16 @@ import { useState } from 'react';
 import { Layout, ContainerContent } from '@/components/layout';
 import GroupCard from '@/features/community/components/GroupCard';
 import GroupCreateModal from '@/features/community/components/GroupCreateModal';
-import type { RoomResponse, RoomCreateRequest } from '@/features/community/types/CommunityTypes';
+import JoinCodeModal from '@/features/community/components/JoinCodeModal';
+import type {
+    RoomResponse,
+    RoomCreateRequest,
+    MemberResponse
+} from '@/features/community/types/CommunityTypes';
 
 export const CommunityPage = () => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
 
     // 테스트용 더미 데이터
     const testRooms: RoomResponse[] = [
@@ -40,50 +46,121 @@ export const CommunityPage = () => {
         alert(`방 ${roomId}에 참여 요청!`);
     };
 
+    const handleJoinPrivate = async (joinCode: string): Promise<MemberResponse> => {
+        console.log('참여코드로 그룹 참여:', joinCode);
+
+        // TODO: 실제 API 호출로 교체
+        // const response = await joinPrivateRoom(joinCode);
+        // return response;
+
+        // 테스트용 더미 응답
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                alert(`참여코드 ${joinCode}로 그룹 참여 성공!`);
+                resolve({
+                    memberId: 999,
+                    roomId: 99,
+                    userId: 123,
+                    isActive: true,
+                });
+            }, 1000);
+        });
+    };
+
     const handleCreateRoom = async (data: RoomCreateRequest) => {
         console.log('그룹 생성 데이터:', data);
-        alert(`그룹 생성 완료!\n이름: ${data.name}\n인원: ${data.maxMemberCount}명\n공개: ${data.isPublic ? '공개' : '비밀'}\n${!data.isPublic ? '참여코드: ' + data.joinCode : ''}`);
+        alert(
+            `그룹 생성 완료!\n이름: ${data.name}\n인원: ${data.maxMemberCount}명\n공개: ${
+                data.isPublic ? '공개' : '비밀'
+            }\n${!data.isPublic ? '참여코드: ' + data.joinCode : ''}`
+        );
     };
 
     return (
         <Layout>
             <ContainerContent>
                 <div style={{ padding: '40px 0' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                        <h1 style={{ fontSize: '28px', margin: 0 }}>
-                            커뮤니티
-                        </h1>
-                        <button
-                            onClick={() => setIsModalOpen(true)}
-                            style={{
-                                padding: '12px 24px',
-                                background: '#203C2E',
-                                color: '#FFFFFF',
-                                border: 'none',
-                                borderRadius: '4px',
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                            }}
-                        >
-                            그룹 생성하기
-                        </button>
+                    {/* 헤더 */}
+                    <div
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '24px',
+                        }}
+                    >
+                        <h1 style={{ fontSize: '28px', margin: 0 }}>커뮤니티</h1>
+
+                        {/* 버튼 그룹 */}
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button
+                                onClick={() => setIsJoinModalOpen(true)}
+                                style={{
+                                    padding: '12px 24px',
+                                    background: '#FFFFFF',
+                                    color: '#203C2E',
+                                    border: '2px solid #203C2E',
+                                    borderRadius: '4px',
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = '#F8F8F8';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = '#FFFFFF';
+                                }}
+                            >
+                                참여코드 입력
+                            </button>
+                            <button
+                                onClick={() => setIsCreateModalOpen(true)}
+                                style={{
+                                    padding: '12px 24px',
+                                    background: '#203C2E',
+                                    color: '#FFFFFF',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = '#162B20';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = '#203C2E';
+                                }}
+                            >
+                                그룹 생성하기
+                            </button>
+                        </div>
                     </div>
 
+                    {/* 그룹 목록 */}
                     <div>
                         {testRooms.map((room) => (
                             <GroupCard key={room.roomId} room={room} onJoin={handleJoin} />
                         ))}
                     </div>
-
                 </div>
             </ContainerContent>
 
-            {/* 모달 */}
+            {/* 그룹 생성 모달 */}
             <GroupCreateModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
                 onCreate={handleCreateRoom}
+            />
+
+            {/* 참여코드 입력 모달 */}
+            <JoinCodeModal
+                isOpen={isJoinModalOpen}
+                onClose={() => setIsJoinModalOpen(false)}
+                onJoin={handleJoinPrivate}
             />
         </Layout>
     );
