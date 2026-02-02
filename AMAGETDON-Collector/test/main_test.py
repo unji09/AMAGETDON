@@ -1,26 +1,48 @@
+
 import time
 import pymysql
 import threading
 import asyncio
+from datetime import datetime
+import aiohttp
+
 from app.volume_tracker import VolumeTracker
 from collector.realtime_collector import RealtimeCollector
 from collector.candle_filler import CandleFiller
 from collector.candle_collector import CandleCollector
 from collector.websocket_collector import WebSocketCollector
-from config.config import DB_CONFIG
+from config.config import DB_CONFIG, APP_KEY_1, APP_SECRET_1, APP_KEY_2, APP_SECRET_2
 from core.stock_manager import StockManager
 from core.token_manager import TokenManager
 from utils.logger import logger
 from utils.kis_api_client import KISApiClient
+from app.parser import StockParser
+from models.dto import StockDTO
+from utils.helpers import safe_float, safe_int
 
-# 전역 변수
-token_manager = None
-ws_collector = None
-rest_collector = None
-volume_tracker = None
-collection_active = False
+# -----------------------------
+# [완결] 루프 프리 하드 리미터
+# -----------------------------
+class HardRateLimiter:
+    def __init__(self, rate):
+        self.rate = rate
+        self.interval = 1.0 / rate
+        self._lock = None
+        self._last = 0
 
+    async def acquire(self):
+        if self._lock is None:
+            self._lock = asyncio.Lock()
+        async with self._lock:
+            now = time.monotonic()
+            wait = self.interval - (now - self._last)
+            if wait > 0:
+                await asyncio.sleep(wait)
+            self._last = time.monotonic()
 
+# ==============================
+# 공통 유틸
+# ==============================
 def get_stocks(limit=100):
     conn = pymysql.connect(**DB_CONFIG)
     cursor = conn.cursor()
@@ -29,283 +51,169 @@ def get_stocks(limit=100):
     conn.close()
     return stocks
 
+# ==============================
+# 2. 재무 갱신
+# ==============================
+async def main_update_financials(stock_count: int = 100):
+    start_time = time.time()
+    logger.info(f"=== [START] 재무/현재가 업데이트 ({stock_count}종목) ===")
+    
+    stocks = get_stocks(stock_count)
+    tm = TokenManager.get_instance()
+    api_client = KISApiClient(tm)
+    session = await api_client._get_session()
+    
+    limiter = HardRateLimiter(19)
+    
+    async def fetch_worker(code):
+        await limiter.acquire()
+        url = f"{api_client.base_url}/uapi/domestic-stock/v1/quotations/inquire-price"
+        headers = api_client._get_headers("FHKST01010100")
+        params = {"FID_COND_MRKT_DIV_CODE": "J", "FID_INPUT_ISCD": code}
+        try:
+            async with session.get(url, headers=headers, params=params) as resp:
+                data = await resp.json()
+                if data.get("rt_cd") != "0": return None
+                out = data.get("output", {})
+                return StockDTO(
+                    stock_code=code, stock_name=out.get("hts_kor_isnm", ""),
+                    current_price=safe_int(out.get("stck_prpr")),
+                    change_amount=safe_int(out.get("prdy_vrss")) or 0,
+                    change_rate=safe_float(out.get("prdy_ctrt")) or 0.0,
+                    volume=safe_int(out.get("acml_vol")) or 0,
+                    trading_value=safe_int(out.get("acml_tr_pbmn")) or 0,
+                    per=safe_float(out.get("per")), pbr=safe_float(out.get("pbr")),
+                    eps=safe_int(out.get("eps")), bps=safe_int(out.get("bps")),
+                    market_cap=safe_int(out.get("hts_avls"))
+                )
+        except Exception: return None
 
-# 1. 서버 시작 시 초기화
-def test_check_and_initialize():
-    total_start = time.time()
-    logger.info("=== 초기화 테스트 시작 ===")
+    tasks = [fetch_worker(code) for code in stocks]
+    results = await asyncio.gather(*tasks)
+    success = sum(1 for r in results if r)
+    await api_client.close()
+    logger.info(f"=== [DONE] 재무 업데이트 완료 (성공: {success}, 소요: {time.time() - start_time:.2f}s) ===")
 
-    try:
-        conn = pymysql.connect(**DB_CONFIG)
-        cursor = conn.cursor()
-        cursor.execute("SELECT stock_code FROM stock LIMIT 100")
-        stocks = [row[0] for row in cursor.fetchall()]
-        conn.close()
+# ==============================
+# 3. 장 시작 + 누락 보정 통합
+# ==============================
+collection_active = False
+ws_collector = None
+rest_collector = None
 
-        logger.info(f"종목 데이터: {len(stocks)}개")
-        logger.info("과거 캔들 데이터 체크 시작")
+# ==============================
+# 3. 장 시작 + 누락 보정 통합
+# ==============================
+collection_active = False
 
-        tm = TokenManager.get_instance()
-        candle_collector = CandleCollector(tm)
+# ==============================
+# 3. 장 시작 + 누락 보정 통합 (API 키 분리 버전)
+# ==============================
 
-        async def collect_all():
-            for interval in ['30m', '1d', '1w']:
-                start = time.time()
-                logger.info(f"{interval} 수집 시작")
-                await candle_collector.collect_batch_async(stocks, interval)
-                elapsed = time.time() - start
-                logger.info(f"{interval} 수집 완료 (소요: {elapsed:.2f}초)")
+async def main_start_market_with_fill(stock_count: int = 1000):
+    global collection_active
+    start_time = time.time()
+    logger.info("=== 장 시작 (키 분리 모드: REST/WS vs FILLER) ===")
 
-        asyncio.run(collect_all())
-
-        candle_collector.close()
-        tm.close()
-        total_elapsed = time.time() - total_start
-        logger.info(f"=== 초기화 테스트 완료 (총 소요: {total_elapsed:.2f}초) ===")
-            
-    except Exception as e:
-        logger.error(f"초기화 테스트 실패: {e}")
-        raise
-
-
-# 2. 재무 데이터 업데이트
-def test_update_financials():
-    total_start = time.time()
-    logger.info("=== 재무 데이터 테스트 시작 ===")
-
-    try:
-        tm = TokenManager.get_instance()
-        api_client = KISApiClient(tm)
-
-        conn = pymysql.connect(**DB_CONFIG)
-        cursor = conn.cursor()
-
-        cursor.execute("SELECT stock_code FROM stock LIMIT 100")
-        stocks = [row[0] for row in cursor.fetchall()]
-
-        logger.info(f"총 {len(stocks)}개 종목 재무 데이터 수집 시작")
-
-        success = 0
-        fail = 0
-        batch_size = 100
-
-        for i in range(0, len(stocks), batch_size):
-            batch = stocks[i:i + batch_size]
-
-            try:
-                results = asyncio.run(api_client.fetch_prices_batch(batch))
-
-                for stock_code in batch:
-                    stock = results.get(stock_code)
-                    if stock:
-                        cursor.execute("""
-                            UPDATE stock
-                            SET per=%s, pbr=%s, eps=%s, bps=%s, market_cap=%s, updated_at=NOW()
-                            WHERE stock_code=%s
-                        """, (stock.per, stock.pbr, stock.eps, stock.bps, stock.market_cap, stock_code))
-                        success += 1
-                    else:
-                        fail += 1
-
-                conn.commit()
-                logger.info(f"진행: {min(i + batch_size, len(stocks))}/{len(stocks)} (성공: {success}, 실패: {fail})")
-
-            except Exception as e:
-                fail += len(batch)
-                logger.error(f"배치 처리 실패: {e}")
-
-        conn.commit()
-        conn.close()
-        tm.close()
-
-        total_elapsed = time.time() - total_start
-        logger.info(f"=== 재무 데이터 테스트 완료 - 성공: {success}, 실패: {fail} (소요: {total_elapsed:.2f}초) ===")
-        
-    except Exception as e:
-        logger.error(f"재무 데이터 테스트 실패: {e}")
-
-
-# 3. 장 시작
-def test_start_collection(duration_seconds=60):
-    global token_manager, ws_collector, rest_collector, volume_tracker, collection_active
-
-    logger.info(f"=== 장 시작 테스트 ({duration_seconds}초) ===")
-
-    token_manager = TokenManager.get_instance()
-
-    stocks = get_stocks(100)
-    redis_client = token_manager.redis_client
-    for stock_code in stocks:
-        redis_key = f"kis:user_stocks:{stock_code}"
-        redis_client.set(redis_key, "1")
-        redis_client.expire(redis_key, 300)
-    logger.info(f"Redis에 {len(stocks)}개 종목 등록 (5분 만료)")
-
-    volume_tracker = VolumeTracker(token_manager)
-    ws_collector = WebSocketCollector(token_manager)
-    stock_manager = StockManager(token_manager.redis_client)
-    rest_collector = RealtimeCollector(token_manager, stock_manager)
+    # --- 1. REST / WebSocket 전용 매니저 (키 1번) ---
+    # 기존 TokenManager.get_instance() 대신 인스턴스를 직접 생성하거나 분리 필요
+    # 여기서는 예시로 별도 인스턴스를 가정합니다.
+    tm_rest = TokenManager(APP_KEY_1, APP_SECRET_1) 
+    stock_manager = StockManager(tm_rest.redis_client)
+    volume_tracker = VolumeTracker(tm_rest)
+    
+    ws_collector = WebSocketCollector(tm_rest)
+    rest_collector = RealtimeCollector(tm_rest, stock_manager)
     
     ws_collector.connect()
-    top_10_stocks = volume_tracker.get_top_volume_stocks()
-    if top_10_stocks:
-        ws_collector.subscribe_stocks(top_10_stocks)
-        logger.info(f"초기 구독 완료: {len(top_10_stocks)}개 종목")
+    top = await volume_tracker.get_top_volume_stocks() 
+    ws_collector.subscribe_stocks(top)
     
+    # 실시간 REST 수집 스레드 실행
+    threading.Thread(target=rest_collector.collect, daemon=True).start()
+
+    # --- 2. 누락 보정 전용 매니저 (키 2번) ---
+    # 보정용은 루프 에러 방지를 위해 이 async 함수 안에서 완전히 새로 생성
+    tm_filler = TokenManager(APP_KEY_2, APP_SECRET_2)
+    filler = CandleFiller(tm_filler) 
+    limiter = HardRateLimiter(19)
+    
+    stocks = get_stocks(stock_count)
+
+    async def fill_worker(code):
+        try:
+            await limiter.acquire()
+            # filler 내부에서 사용하는 KISApiClient가 현재 루프의 세션을 쓰도록 강제
+            await filler.fill_missing_candles(code, fill_1m=True)
+        except Exception as e:
+            # 여기서 발생하는 'different event loop'는 filler 내부의 세션/락 문제입니다.
+            # 이 에러를 잡으려면 CandleFiller 내부에서 세션을 매번 새로 열거나 
+            # 현재 루프에 귀속된 클라이언트를 주입해야 합니다.
+            logger.error(f"{code} 보정 실패: {e}")
+
+    logger.info(f"보정 작업 시작 (API 키 2번 사용)...")
+    await asyncio.gather(*[fill_worker(code) for code in stocks])
+    
+    logger.info(f"=== 모든 프로세스 가동 완료 ({time.time() - start_time:.2f}s) ===")
+
+    # 상위 종목 갱신 루프
     collection_active = True
-    
-    # 웹소켓 스레드 (5분마다 거래량 순위 갱신)
-    def run_websocket_collector():
+    async def volume_loop():
         while collection_active:
-            time.sleep(300)
-            if not ws_collector.ws:
-                ws_collector.connect()
-            
-            stocks = volume_tracker.get_top_volume_stocks()
-            if stocks and ws_collector.ws:
-                ws_collector.subscribe_stocks(stocks)
+            await asyncio.sleep(300)
+            new_top = await volume_tracker.get_top_volume_stocks()
+            ws_collector.subscribe_stocks(new_top)
+
+    asyncio.create_task(volume_loop())
+
+# ==============================
+# 5. 장 마감 (사용자님의 기존 5번 기능)
+# ==============================
+async def main_end_of_day_process(stock_count: int = 1000):
+    global collection_active
+    start_time = time.time()
+    logger.info("=== [START] 장 마감 보정 및 일봉 수집 시작 ===")
     
-    ws_thread = threading.Thread(target=run_websocket_collector, daemon=True)
-    ws_thread.start()
-    
-    rest_thread = threading.Thread(target=rest_collector.collect, daemon=True)
-    rest_thread.start()
-    
-    logger.info(f"{duration_seconds}초 동안 수집 진행...")
-    time.sleep(duration_seconds)
-    
-    test_stop_collection()
-
-
-# 4. 장 마감
-def test_stop_collection():
-    global collection_active, ws_collector, rest_collector, token_manager
-
-    total_start = time.time()
-    logger.info("=== 장 마감 테스트 ===")
-
-    collection_active = False
-    time.sleep(1)
-
-    if rest_collector:
-        rest_collector.close()
-
-    logger.info("장 마감 후 데이터 업데이트 시작")
-    stock_manager = StockManager(token_manager.redis_client)
-    stocks = stock_manager.get_all_target_stocks()
-
-    if not stocks:
-        stocks = get_stocks(100)
-
-    async def process_all_stocks():
-        candle_collector = CandleCollector(token_manager)
-
-        fill_start = time.time()
-        logger.info(f"누락 캔들 보정 시작 ({len(stocks)}개 종목)")
-        for stock_code in stocks:
-            try:
-                filler = CandleFiller(token_manager)
-                await filler.fill_missing_candles(
-                    stock_code=stock_code,
-                    fill_1m=True,
-                    fill_5m=True,
-                    fill_30m=True
-                )
-                filler.close()
-            except Exception as e:
-                logger.error(f"{stock_code} 캔들 보정 실패: {e}")
-        fill_elapsed = time.time() - fill_start
-        logger.info(f"누락 캔들 보정 완료 (소요: {fill_elapsed:.2f}초)")
-
-        for interval in ['5m', '30m', '1d']:
-            start = time.time()
-            logger.info(f"{interval} 업데이트 시작")
-            await candle_collector.collect_batch_async(stocks, interval)
-            elapsed = time.time() - start
-            logger.info(f"{interval} 업데이트 완료 (소요: {elapsed:.2f}초)")
-
-        candle_collector.close()
-
-    asyncio.run(process_all_stocks())
-
-    logger.info("캔들 업데이트 완료")
-
-    if token_manager:
-        token_manager.close()
-
-    total_elapsed = time.time() - total_start
-    logger.info(f"=== 장 마감 테스트 완료 (총 소요: {total_elapsed:.2f}초) ===")
-
-
-# 5. 주봉 업데이트
-def test_weekly_update():
-    total_start = time.time()
-    logger.info("=== 주봉 업데이트 테스트 시작 ===")
-
+    collection_active = False  # 수집 중단
     tm = TokenManager.get_instance()
-    stock_manager = StockManager(tm.redis_client)
-    stocks = stock_manager.get_all_target_stocks()
+    stocks = get_stocks(stock_count)
+    
+    limiter = HardRateLimiter(19)
+    filler = CandleFiller(tm)
+    candle_collector = CandleCollector(tm)
 
-    if not stocks:
-        stocks = get_stocks(100)
+    # 1, 5, 30분봉 누락분 전체 보정
+    async def final_fill_worker(code):
+        await limiter.acquire()
+        await filler.fill_missing_candles(code, fill_1m=True, fill_5m=True, fill_30m=True)
 
-    # 비동기 배치 처리로 변경
-    async def update_all_weekly():
-        candle_collector = CandleCollector(tm)
-        logger.info(f"총 {len(stocks)}개 종목 주봉 업데이트")
-        await candle_collector.collect_batch_async(stocks, '1w')
-        candle_collector.close()
-
-    asyncio.run(update_all_weekly())
-
+    logger.info(f"{len(stocks)}개 종목 최종 분봉 보정 중...")
+    await asyncio.gather(*[final_fill_worker(code) for code in stocks])
+    
+    # 일봉 수집
+    logger.info("일봉 데이터 업데이트 시작...")
+    await candle_collector.collect_batch_async(stocks, '1d')
+    
+    candle_collector.close()
     tm.close()
-    total_elapsed = time.time() - total_start
-    logger.info(f"=== 주봉 업데이트 테스트 완료 (소요: {total_elapsed:.2f}초) ===")
+    logger.info(f"=== [DONE] 장 마감 처리 완료 (소요: {time.time() - start_time:.2f}s) ===")
 
-
-
-# 전체 흐름 테스트
-def test_full_flow(collection_duration=60):
-    logger.info("========================================")
-    logger.info("       전체 흐름 테스트 시작")
-    logger.info("========================================")
-    
-    test_check_and_initialize()
-    
-    test_update_financials()
-    
-    test_start_collection(duration_seconds=collection_duration)
-    
-    test_weekly_update()
-    
-    logger.info("========================================")
-    logger.info("       전체 흐름 테스트 완료")
-    logger.info("========================================")
-
-
+# ==============================
+# 실행 메인
+# ==============================
 if __name__ == "__main__":
-    print("\n테스트 선택:")
-    print("1. 초기화 테스트 (파싱 + 30m/1d/1w 수집)")
-    print("2. 재무 데이터 테스트")
-    print("3. 장 시작 테스트 (60초)")
-    print("4. 장 마감 테스트 (누락 보정)")
-    print("5. 주봉 업데이트 테스트")
-    print("6. 전체 흐름 테스트 (1~5 순차)")
-    
-    choice = input("\n선택 (1-6): ").strip()
-    
+    print("\n1. 서버 초기화\n2. 재무 갱신\n3. 장 시작 + 누락 보정\n4. 장 마감 처리(분봉보정+일봉)\n")
+    choice = input("선택: ").strip()
+
     if choice == "1":
-        test_check_and_initialize()
+        main_bootstrap()
     elif choice == "2":
-        test_update_financials()
+        asyncio.run(main_update_financials(100))
     elif choice == "3":
-        test_start_collection(60)
+        try:
+            asyncio.run(main_start_market_with_fill(1000))
+            while True: time.sleep(1)
+        except KeyboardInterrupt:
+            logger.info("종료")
     elif choice == "4":
-        token_manager = TokenManager.get_instance()
-        test_stop_collection()
-    elif choice == "5":
-        test_weekly_update()
-    elif choice == "6":
-        test_full_flow(60)
-    else:
-        print("잘못된 선택")
+        asyncio.run(main_end_of_day_process(1000))

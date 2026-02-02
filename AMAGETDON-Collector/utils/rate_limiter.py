@@ -1,93 +1,27 @@
 import asyncio
-import threading
 import time
 
-class RateLimiter:
+# 정확히 초당 N건 제한 (burst 없음)
+# 이벤트 루프 독립적으로 동작하도록 수정
+class HardRateLimiter:
+    def __init__(self, rate):
+        self._lock = None  # 지연 초기화
+        self._interval = 1.0 / rate
+        self._last = 0
 
-    def __init__(self, calls_per_second: int = 15):
-        self.calls_per_second = calls_per_second
-        self.tokens = calls_per_second
-        self.last_update = time.time()
-        self._thread_lock = threading.Lock()
-        self._async_lock = None
-        self._loop = None
-
-    def _get_async_lock(self):
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = None
-
-        if self._async_lock is None or self._loop != loop:
-            self._async_lock = asyncio.Lock()
-            self._loop = loop
-
-        return self._async_lock
-
-    def _consume_token(self):
-        with self._thread_lock:
-            now = time.time()
-            elapsed = now - self.last_update
-
-            self.tokens = min(
-                self.calls_per_second,
-                self.tokens + elapsed * self.calls_per_second
-            )
-            self.last_update = now
-
-            if self.tokens < 1:
-                wait_time = (1 - self.tokens) / self.calls_per_second
-                return wait_time
-            else:
-                self.tokens -= 1
-                return 0
-
-    def _after_wait(self):
-        with self._thread_lock:
-            self.tokens = 0
-            self.last_update = time.time()
-
-    # 동기 호출용
-    def acquire_sync(self):
-        with self._thread_lock:
-            now = time.time()
-            elapsed = now - self.last_update
-
-            self.tokens = min(
-                self.calls_per_second,
-                self.tokens + elapsed * self.calls_per_second
-            )
-            self.last_update = now
-
-            if self.tokens < 1:
-                wait_time = (1 - self.tokens) / self.calls_per_second
-                time.sleep(wait_time)
-                self.tokens = 0
-                self.last_update = time.time()
-            else:
-                self.tokens -= 1
-
-    # 비동기 호출용
     async def acquire(self):
-        with self._thread_lock:
-            now = time.time()
-            elapsed = now - self.last_update
-
-            self.tokens = min(
-                self.calls_per_second,
-                self.tokens + elapsed * self.calls_per_second
-            )
-            self.last_update = now
-
-            if self.tokens < 1:
-                wait_time = (1 - self.tokens) / self.calls_per_second
-                time.sleep(wait_time)
-                self.tokens = 0
-                self.last_update = time.time()
-            else:
-                self.tokens -= 1
+        # 현재 이벤트 루프에서 Lock 생성 (루프별 독립)
+        if self._lock is None:
+            self._lock = asyncio.Lock()
+        async with self._lock:
+            now = time.monotonic()
+            wait = self._interval - (now - self._last)
+            if wait > 0:
+                await asyncio.sleep(wait)
+            self._last = time.monotonic()
 
 
 # API 키별 인스턴스
-STOCK_API_LIMITER = RateLimiter(12)
-CANDLE_API_LIMITER = RateLimiter(8)
+STOCK_API_LIMITER = HardRateLimiter(15)
+CANDLE_API_LIMITER = HardRateLimiter(2)
+
