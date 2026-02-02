@@ -9,6 +9,7 @@ import OAuthKakaoCallback from "./pages/OAuthKakaoCallback";
 import { LearningPage } from '@/pages/LearningPage';
 import { ChapterDetailPage } from '@/pages/ChapterDetailPage';
 import { AchievementPage } from '@/pages/AchievementPage';
+import ChatRoomPage from '@/pages/ChatRoomPage';
 
 function App() {
     return (
@@ -20,6 +21,7 @@ function App() {
                     <Route path="/learning/:chapterId" element={<ChapterDetailPage />} />
                     <Route path="/achievement" element={<AchievementPage />} />
                     <Route path="/community" element={<CommunityPage />} />
+                    <Route path="/community/chat/:roomId" element={<ChatRoomPage />} />
                     <Route path="/ranking" element={<RankingPage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/oauth/kakao" element={<OAuthKakaoCallback />} />
