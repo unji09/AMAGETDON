@@ -8,6 +8,8 @@ import com.amagetdon.learning.dto.quiz.QuizSubmitRequest;
 import com.amagetdon.learning.dto.quiz.QuizSubmitResponse;
 import com.amagetdon.learning.entity.*;
 import com.amagetdon.learning.repository.*;
+import com.amagetdon.user.entity.User;
+import com.amagetdon.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,6 +32,7 @@ public class QuizService {
     private final DailyQuizHistoryRepository historyRepository;
     private final ReviewNoteRepository reviewNoteRepository;
     private final DailyLearningRewardRepository rewardRepository;
+    private final UserRepository userRepository;
 
     private final CachedQuizRepository cachedQuizRepository;
     private final CachedQuizChoiceRepository cachedQuizChoiceRepository;
@@ -211,8 +214,10 @@ public class QuizService {
         // 8. 보상 지급
         Integer rewardAmount = calculateRewardAmount(nextSequence);
 
-        // TODO(민규): User balance 업데이트
-        Long currentBalance = 3000000L + rewardAmount;
+        // User 조회 및 잔액 업데이트
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다"));
+        user.addBalance((long) rewardAmount);
 
         // 9. 정답 문자열 생성
         String correctAnswer = getCorrectAnswerString(quiz);
@@ -222,7 +227,7 @@ public class QuizService {
                 correctAnswer,
                 rewardAmount,
                 addedToReviewNote,
-                currentBalance
+                user.getBalance()  // 업데이트된 실제 잔액
         );
     }
 
@@ -263,7 +268,7 @@ public class QuizService {
             var progress = progressService.getProgress(userId, null, false);
 
             // 전체 챕터가 모두 완료되었는지 확인
-            if (progress.summary().completedChapters() == progress.summary().totalChapters ()) {
+            if (progress.summary().completedChapters() == progress.summary().totalChapters()) {
                 achievementService.checkAndAwardAchievements(
                         userId,
                         100L,
