@@ -7,6 +7,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class UpdateInvestmentTypeResponse {
-
+    Long userId;
     private InvestmentType updatedType;
 }

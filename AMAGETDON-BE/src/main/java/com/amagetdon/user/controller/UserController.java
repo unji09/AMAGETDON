@@ -70,7 +70,7 @@ public class UserController implements UserControllerSwagger {
         userService.updateInvestmentType(userId, request.getInvestmentType());
 
         return ResponseEntity.ok(
-                new UpdateInvestmentTypeResponse(true, request.getInvestmentType())
+                new UpdateInvestmentTypeResponse(userId, request.getInvestmentType())
         );
     }
 }
