@@ -62,11 +62,11 @@ public class UserController implements UserControllerSwagger {
         return ResponseEntity.ok(updatedTitle);
     }
 
-    @PatchMapping("/{userId}/investmentType")
+    @PatchMapping("/investmentType")
     public ResponseEntity<UpdateInvestmentTypeResponse> updateInvestmentType(
-            @PathVariable Long userId,
             @Valid @RequestBody UpdateInvestmentTypeRequest request
     ) {
+        Long userId = SecurityUtil.getCurrentUserId();
         userService.updateInvestmentType(userId, request.getInvestmentType());
 
         return ResponseEntity.ok(
