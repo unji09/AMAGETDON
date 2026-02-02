@@ -50,18 +50,18 @@ public class UserService {
 
     public void withdraw(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND_SIMPLE.getMessage()));
         userRepository.delete(user);
     }
 
     public User getUserInfo(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND_SIMPLE.getMessage()));
     }
 
     public User updateUserInfo(Long userId, User updatedInfo) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND_SIMPLE.getMessage()));
 
         @Email
         String email = choose(user.getEmail(), updatedInfo.getEmail());
@@ -79,13 +79,13 @@ public class UserService {
 
     public void updatePassword(String email, String newPassword) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND_SIMPLE.getMessage()));
         user.updatePassword(passwordEncoder.encode(newPassword));
     }
 
     public String updateCurrentTitle(Long userId, String newTitle) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND_SIMPLE.getMessage()));
         user.updateCurrentTitle(newTitle);
         return user.getCurrentTitle();
     }
