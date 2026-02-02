@@ -65,7 +65,7 @@ public class UserService {
 
         @Email
         String email = choose(user.getEmail(), updatedInfo.getEmail());
-        if(!email.equals(user.getEmail())) existsByEmail(email);
+        if(email!=null &&!email.equals(user.getEmail())) existsByEmail(email);
 
         String password = updatedInfo.getPassword() == null ? user.getPassword() : passwordEncoder.encode(updatedInfo.getPassword());
 

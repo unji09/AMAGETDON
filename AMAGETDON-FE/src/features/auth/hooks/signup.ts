@@ -2,18 +2,26 @@
 import { useState } from 'react'
 import { AxiosError } from 'axios'
 import { signupApi } from '../api/authApi'
-import type {SignupRequest} from "@/features/auth/types/auth.types.ts";
-
+import type { SignupRequest, AuthLoginResponse } from "@/features/auth/types/auth.types.ts"
 
 export const useSignup = () => {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
-    const signup = async (data: SignupRequest): Promise<void> => {
+    const signup = async (data: SignupRequest): Promise<AuthLoginResponse> => {
         try {
             setLoading(true)
             setError(null)
-            await signupApi(data)
+
+            const response = await signupApi(data)
+            const authData = response.data
+
+            // 토큰 저장 (자동 로그인)
+            if (authData.accessToken) {
+                localStorage.setItem('accessToken', authData.accessToken)
+            }
+
+            return authData
         } catch (e: unknown) {
             if (e instanceof AxiosError) {
                 setError(

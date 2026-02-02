@@ -102,6 +102,21 @@
     color: #203C2E;
 }
 
+.header-login-btn {
+    font-size: 14px;
+    font-weight: 500;
+    color: #FFFFFF;
+    background-color: #203C2E;
+    padding: 8px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.header-login-btn:hover {
+    background-color: #2a4f3c;
+}
+
 /* 반응형 */
 @media (max-width: 768px) {
     .header-nav {

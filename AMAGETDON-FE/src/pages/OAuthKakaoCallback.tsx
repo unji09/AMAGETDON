@@ -1,7 +1,9 @@
 import { useEffect, useRef } from "react";
-import { kakaoOAuthLogin } from "@/features/auth/api/oauthApi"; // 네가 만든 API 함수
+import { useNavigate } from "react-router-dom";
+import { kakaoOAuthLogin } from "@/features/auth/api/oauthApi";
 
 export default function OAuthKakaoCallback() {
+    const navigate = useNavigate();
     const calledRef = useRef(false);
 
     useEffect(() => {
@@ -13,11 +15,32 @@ export default function OAuthKakaoCallback() {
         if (calledRef.current) return;
         calledRef.current = true;
 
-        kakaoOAuthLogin(code);
-    }, []);
+        const handleKakaoLogin = async () => {
+            try {
+                const data = await kakaoOAuthLogin(code);
+
+                // 토큰 저장
+                if (data.accessToken) {
+                    localStorage.setItem("accessToken", data.accessToken);
+                }
+
+                // 첫 로그인이면 설문조사로, 아니면 홈으로
+                if (data.firstLogin) {
+                    navigate("/survey", { replace: true });
+                } else {
+                    navigate("/", { replace: true });
+                }
+            } catch {
+                alert("카카오 로그인에 실패했습니다.");
+                navigate("/login", { replace: true });
+            }
+        };
+
+        handleKakaoLogin();
+    }, [navigate]);
 
     return (
-        <div style={{ padding: "40px" }}>
+        <div style={{ padding: "40px", textAlign: "center" }}>
             <h1>카카오 로그인 처리 중...</h1>
             <p>잠시만 기다려 주세요.</p>
         </div>

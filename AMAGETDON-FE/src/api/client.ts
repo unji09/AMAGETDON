@@ -34,30 +34,6 @@ apiClient.interceptors.request.use(
     }
 );
 
-// Response 인터셉터: 에러 처리
-apiClient.interceptors.response.use(
-    (response) => {
-        return response;
-    },
-    async (error: AxiosError) => {
-        // 401 에러: 토큰 만료 또는 인증 실패
-        if (error.response?.status === 401) {
-            localStorage.removeItem('accessToken');
-            window.location.href = '/login';
-        }
-
-        // 403 에러: 권한 없음
-        if (error.response?.status === 403) {
-            alert('접근 권한이 없습니다.');
-        }
-
-        // 500 에러: 서버 에러
-        if (error.response?.status === 500) {
-            alert('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
-        }
-
-        return Promise.reject(error);
-    }
-);
+// Response 인터셉터는 interceptor.ts에서 처리
 
 export default apiClient;

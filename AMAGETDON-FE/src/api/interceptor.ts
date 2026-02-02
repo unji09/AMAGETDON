@@ -10,10 +10,21 @@ const processQueue = () => {
     failedQueue = []
 }
 
+// 401 자동 처리 제외 경로
+const AUTH_ENDPOINTS = ['/auth/login', '/auth/signup', '/auth/refresh']
+
+const isAuthEndpoint = (url?: string) =>
+    AUTH_ENDPOINTS.some(endpoint => url?.includes(endpoint))
+
 apiClient.interceptors.response.use(
     response => response,
     async (error: AxiosError) => {
         const originalRequest: any = error.config
+
+        // 로그인/회원가입 요청은 401 자동 처리 제외 (에러를 그대로 반환)
+        if (isAuthEndpoint(originalRequest?.url)) {
+            return Promise.reject(error)
+        }
 
         if (
             error.response?.status === 401 &&
@@ -30,11 +41,11 @@ apiClient.interceptors.response.use(
             isRefreshing = true
 
             try {
-                await apiClient.post('/api/v1/auth/refresh')
+                await apiClient.post('/auth/refresh')
                 processQueue()
                 return apiClient(originalRequest)
             } catch (refreshError) {
-                // 🔥 refreshToken도 만료됨
+                localStorage.removeItem('accessToken')
                 window.location.href = '/login'
                 return Promise.reject(refreshError)
             } finally {
