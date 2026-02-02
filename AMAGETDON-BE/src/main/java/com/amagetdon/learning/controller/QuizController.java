@@ -4,8 +4,8 @@ import com.amagetdon.learning.dto.quiz.QuizResponse;
 import com.amagetdon.learning.dto.quiz.QuizSubmitRequest;
 import com.amagetdon.learning.dto.quiz.QuizSubmitResponse;
 import com.amagetdon.learning.service.QuizService;
+import com.amagetdon.common.security.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -28,7 +28,7 @@ public class QuizController {
 
     @Operation(
             summary = "오늘의 퀴즈 조회",
-            description = "오늘 풀 수 있는 랜덤 퀴즈 1개를 조회합니다. 이미 푼 문제는 제외됩니다."
+            description = "오늘 풀 수 있는 랜덤 퀴즈 1개를 조회합니다. 이미 푼 문제는 제외됩니다. JWT 토큰에서 사용자 정보를 자동으로 추출합니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -39,17 +39,15 @@ public class QuizController {
             @ApiResponse(
                     responseCode = "400",
                     description = "더 이상 풀 수 있는 퀴즈가 없습니다"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자입니다"
             )
     })
     @GetMapping("/daily")
-    public ResponseEntity<QuizResponse> getDailyQuiz(
-            @Parameter(
-                    description = "사용자 ID (임시 인증용)",
-                    required = true,
-                    example = "1"
-            )
-            @RequestHeader("User-Id") Long userId
-    ) {
+    public ResponseEntity<QuizResponse> getDailyQuiz() {
+        Long userId = SecurityUtil.getCurrentUserId();
         QuizResponse response = quizService.getDailyQuiz(userId);
         return ResponseEntity.ok(response);
     }
@@ -57,7 +55,7 @@ public class QuizController {
     @Operation(
             summary = "퀴즈 답안 제출",
             description = """
-            오늘의 퀴즈 답안을 제출합니다.
+            오늘의 퀴즈 답안을 제출합니다. JWT 토큰에서 사용자 정보를 자동으로 추출합니다.
             
             - 정답: 보상 지급 (1번: 100,000원, 2-100번: 1,000원)
             - 오답: 오답노트에 자동 저장
@@ -74,17 +72,14 @@ public class QuizController {
             @ApiResponse(
                     responseCode = "400",
                     description = "이미 푼 문제이거나 오늘의 퀴즈를 모두 완료했습니다"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자입니다"
             )
     })
     @PostMapping("/daily")
     public ResponseEntity<QuizSubmitResponse> submitDailyQuiz(
-            @Parameter(
-                    description = "사용자 ID (임시 인증용)",
-                    required = true,
-                    example = "1"
-            )
-            @RequestHeader("User-Id") Long userId,
-
             @RequestBody(
                     description = "퀴즈 답안 제출 정보",
                     required = true,
@@ -118,6 +113,7 @@ public class QuizController {
             )
             @Valid @org.springframework.web.bind.annotation.RequestBody QuizSubmitRequest request
     ) {
+        Long userId = SecurityUtil.getCurrentUserId();
         QuizSubmitResponse response = quizService.submitQuiz(userId, request);
         return ResponseEntity.ok(response);
     }
