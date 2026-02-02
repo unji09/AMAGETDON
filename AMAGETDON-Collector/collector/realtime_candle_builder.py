@@ -124,6 +124,7 @@ class RealtimeCandleBuilder:
         except Exception as e:
             logger.error(f"5분봉 생성 실패: {e}")
 
+    #30분봉 집계
     def _create_30min_candle_from_db(self, stock_code: str, start_time: datetime):
         try:
             self.connect_db()

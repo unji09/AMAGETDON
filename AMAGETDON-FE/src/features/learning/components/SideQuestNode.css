@@ -1,3 +1,7 @@
+.side-quest-wrapper {
+    position: relative;
+}
+
 .side-quest {
     display: flex;
     align-items: center;
@@ -8,19 +12,34 @@
     cursor: pointer;
     text-align: left;
     position: relative;
-    transition: transform 0.2s ease;
+    opacity: 0;
+    transform: translateX(-12px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.side-quest.node-visible {
+    opacity: 1;
+    transform: translateX(0);
 }
 
 .side-quest:hover:not(:disabled) {
     transform: scale(1.03);
 }
 
+.side-quest.node-visible:hover:not(:disabled) {
+    transform: translateX(0) scale(1.03);
+}
+
 .side-quest:disabled {
     cursor: default;
+    opacity: 0;
+}
+
+.side-quest:disabled.node-visible {
     opacity: 0.5;
 }
 
-/* 세로 줄기(left:28px)에서 동그라미까지 이어지는 가로선 */
+/* 세로 줄기에서 동그라미까지 이어지는 가로선 */
 .side-quest__connector {
     position: absolute;
     right: 100%;
@@ -39,9 +58,13 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    font-size: 16px;
     background: var(--color-white);
     border: 2px solid #ccc;
+    transition: transform 0.3s ease;
+}
+
+.side-quest:hover:not(:disabled) .side-quest__circle {
+    transform: scale(1.1);
 }
 
 .side-quest--completed .side-quest__circle {
@@ -79,4 +102,36 @@
 
 .side-quest--locked .side-quest__title {
     color: #aaa;
+}
+
+.side-quest__tooltip {
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    transform: translateY(-50%);
+    margin-left: 12px;
+    padding: var(--spacing-2) var(--spacing-3);
+    background: var(--color-white);
+    color: var(--color-dark-gray);
+    font-size: var(--font-size-xs);
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    width: max-content;
+    max-width: 220px;
+    line-height: 1.4;
+    z-index: 10;
+    animation: sideTooltipFadeIn 0.2s ease;
+    pointer-events: none;
+}
+
+@keyframes sideTooltipFadeIn {
+    from { opacity: 0; transform: translateY(-50%) translateX(-4px); }
+    to { opacity: 1; transform: translateY(-50%) translateX(0); }
+}
+
+@media (max-width: 768px) {
+    .side-quest__tooltip {
+        display: none;
+    }
 }

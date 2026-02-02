@@ -7,3 +7,4 @@ redis==5.0.0
 websocket-client==1.6.4
 apscheduler
 pytz
+aiohttp==3.9.0

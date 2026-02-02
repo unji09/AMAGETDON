@@ -1,3 +1,7 @@
+.chapter-node-wrapper {
+    position: relative;
+}
+
 .chapter-node {
     display: flex;
     align-items: center;
@@ -8,15 +12,31 @@
     cursor: pointer;
     text-align: left;
     transition: transform 0.2s ease;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.5s ease, transform 0.5s ease, box-shadow 0.2s ease;
+}
+
+.chapter-node.node-visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .chapter-node:hover:not(:disabled) {
     transform: scale(1.03);
 }
 
+.chapter-node.node-visible:hover:not(:disabled) {
+    transform: translateY(0) scale(1.03);
+}
+
 .chapter-node:disabled {
     cursor: default;
-    opacity: 0.6;
+    opacity: 0;
+}
+
+.chapter-node:disabled.node-visible {
+    opacity: 1;
 }
 
 .chapter-node__circle {
@@ -27,8 +47,11 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    font-size: 22px;
-    transition: box-shadow 0.2s ease;
+    transition: box-shadow 0.2s ease, transform 0.3s ease;
+}
+
+.chapter-node:hover:not(:disabled) .chapter-node__circle {
+    transform: scale(1.1);
 }
 
 .chapter-node--completed .chapter-node__circle {
@@ -44,16 +67,8 @@
 }
 
 .chapter-node--locked .chapter-node__circle {
-    background: #d0d0d0;
+    background: #e0e0e0;
     color: #888;
-}
-
-.chapter-node__icon {
-    line-height: 1;
-}
-
-.chapter-node__icon--locked {
-    font-size: 18px;
 }
 
 .chapter-node__info {
@@ -93,4 +108,36 @@
     height: 100%;
     background: var(--color-main-green);
     border-radius: 2px;
+}
+
+.chapter-node__tooltip {
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    transform: translateY(-50%);
+    margin-left: 12px;
+    padding: var(--spacing-2) var(--spacing-3);
+    background: var(--color-white);
+    color: var(--color-dark-gray);
+    font-size: var(--font-size-xs);
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    width: max-content;
+    max-width: 240px;
+    line-height: 1.4;
+    z-index: 10;
+    animation: tooltipFadeIn 0.2s ease;
+    pointer-events: none;
+}
+
+@keyframes tooltipFadeIn {
+    from { opacity: 0; transform: translateY(-50%) translateX(-4px); }
+    to { opacity: 1; transform: translateY(-50%) translateX(0); }
+}
+
+@media (max-width: 768px) {
+    .chapter-node__tooltip {
+        display: none;
+    }
 }

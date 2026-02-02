@@ -9,4 +9,6 @@ public interface WatchlistRepository extends JpaRepository<Watchlist, Long> {
     Page<Watchlist> findByUserUserId(Long userId, Pageable pageable);
 
     boolean existsByUserUserIdAndStockStockCode(Long userId, String stockCode);
+
+    long countByUserUserId(Long userId);
 }

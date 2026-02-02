@@ -13,29 +13,27 @@ class VolumeTracker:
         self.top_stocks_key = REDIS_KEYS['top_10_stocks']
         self.conn = None
         self.api_client = KISApiClient(token_manager)
+
+    async def close(self):
+        """세션 정리"""
+        await self.api_client.close()
     
     def connect_db(self):
         self.conn = get_db_connection(self.conn)
 
     #거래량 top 조회
-    def get_top_volume_stocks(self) -> List[str]:
+    async def get_top_volume_stocks(self) -> List[str]:
         try:
-            cached = self.redis_client.lrange(self.top_stocks_key, 0, -1)
-            if cached:
-                stock_codes = list(cached)
-                logger.debug(f"Redis에서 TOP 10 가져오기: {len(stock_codes)}개")
-                return stock_codes
-                
             logger.info("거래량 TOP 10 조회 시작")
-            stock_codes = self.api_client.fetch_from_api()
-            
+            stock_codes = await self.api_client.fetch_from_api()
+
             filtered = self._filter_existing_stocks(stock_codes)
 
             if filtered:
                 self.redis_client.delete(self.top_stocks_key)
                 self.redis_client.rpush(self.top_stocks_key, *filtered)
                 logger.info(f"TOP 10 조회 완료: {len(filtered)}개")
-                return filtered  
+                return filtered
             else:
                 logger.warning("DB에 등록된 종목 아님")
                 return []
