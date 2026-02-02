@@ -127,7 +127,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleEntityNotFoundException(EntityNotFoundException e) {
         log.warn(e.getMessage());
-        return new ErrorResponse(ErrorCode.RESOURCE_NOT_FOUND.getMessage());
+        return new ErrorResponse(e.getMessage());
     }
 
     // OpenVidu 세션이 존재하지 않거나(404), 세션에 접속한 참가자가 없어(406) 신호를 보낼 수 없는 경우를 처리
