@@ -51,9 +51,7 @@ public class UserController implements UserControllerSwagger {
     @PutMapping("/me/title")
     public ResponseEntity<String> updateUserTitle(@RequestBody UpdateUserTitleRequest request) {
         Long userId = SecurityUtil.getCurrentUserId();
-        User user = userService.getUserInfo(userId);
-        user.updateCurrentTitle(request.newTitle());
-
-        return ResponseEntity.ok(user.getCurrentTitle());
+        String updatedTitle = userService.updateCurrentTitle(userId, request.newTitle());
+        return ResponseEntity.ok(updatedTitle);
     }
 }
