@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Layout, ContainerContent } from '@/components/layout';
 import GroupCard from '@/features/community/components/GroupCard';
 import GroupCreateModal from '@/features/community/components/GroupCreateModal';
@@ -22,6 +23,8 @@ import type {
 } from '@/features/community/types/CommunityTypes';
 
 export const CommunityPage = () => {
+    const navigate = useNavigate();
+
     // 상태 관리
     const [rooms, setRooms] = useState<RoomResponse[]>([]);
     const [myRoom, setMyRoom] = useState<RoomResponse | null>(null);
@@ -95,7 +98,10 @@ export const CommunityPage = () => {
         try {
             await joinPublicRoom(roomId);
             showToast('그룹에 참여했습니다!', 'success');
-            await loadData();
+
+            // 채팅방으로 이동
+            navigate(`/community/chat/${roomId}`);
+
         } catch (error: unknown) {
             console.error('참여 실패:', error);
             const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || '그룹 참여에 실패했습니다';
@@ -109,7 +115,10 @@ export const CommunityPage = () => {
             const response = await joinPrivateRoom({ joinCode });
             showToast('그룹에 참여했습니다!', 'success');
             setIsJoinModalOpen(false);
-            await loadData();
+
+            // 채팅방으로 이동
+            navigate(`/community/chat/${response.roomId}`);
+
             return response;
         } catch (error: unknown) {
             console.error('참여 실패:', error);
@@ -127,7 +136,7 @@ export const CommunityPage = () => {
     // 내 그룹으로 이동
     const goToMyRoom = () => {
         if (myRoom) {
-            window.location.href = `/community/room/${myRoom.roomId}`;
+            navigate(`/community/chat/${myRoom.roomId}`);
         }
     };
 
