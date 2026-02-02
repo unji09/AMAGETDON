@@ -1,48 +1,47 @@
 package com.amagetdon.watchlist.dto.response;
 
-import com.amagetdon.stock.entity.MarketType;
 import com.amagetdon.stock.entity.Stock;
 import com.amagetdon.watchlist.entity.Watchlist;
 import org.springframework.data.domain.Page;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 public record WatchlistResponse(
-        int currentPage,
-        int totalPages,
-        long totalElements,
+        int page,
         int size,
-        List<WatchlistStockItem> stocks
+        long totalElements,
+        List<WatchlistItem> items
 ) {
-    public static WatchlistResponse from(Page<Watchlist> page) {
-        List<WatchlistStockItem> stocks = page.getContent().stream()
-                .map(WatchlistStockItem::from)
-                .toList();
-
+    public static WatchlistResponse from(Page<Watchlist> watchlistPage, List<WatchlistItem> items) {
         return new WatchlistResponse(
-                page.getNumber(),
-                page.getTotalPages(),
-                page.getTotalElements(),
-                page.getSize(),
-                stocks
+                watchlistPage.getNumber(),
+                watchlistPage.getSize(),
+                watchlistPage.getTotalElements(),
+                items
         );
     }
 
-    public record WatchlistStockItem(
+    public record WatchlistItem(
             Long watchlistId,
             String stockCode,
             String stockName,
-            MarketType marketType,
+            String marketType,
+            Integer currentPrice,
+            BigDecimal changeRate,
             LocalDateTime createdAt
     ) {
-        public static WatchlistStockItem from(Watchlist watchlist) {
+        public static WatchlistItem from(Watchlist watchlist, Integer currentPrice, BigDecimal changeRate) {
             Stock stock = watchlist.getStock();
-            return new WatchlistStockItem(
+
+            return new WatchlistItem(
                     watchlist.getWatchlistId(),
                     stock.getStockCode(),
                     stock.getStockName(),
-                    stock.getMarketType(),
+                    stock.getMarketType().name(),
+                    currentPrice,
+                    changeRate,
                     watchlist.getCreatedAt()
             );
         }
