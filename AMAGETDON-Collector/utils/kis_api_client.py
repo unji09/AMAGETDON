@@ -1,13 +1,13 @@
 import os
-import time
-import requests
+import asyncio
+import aiohttp
 from typing import List, Optional, Set
 from datetime import datetime, timedelta
 from core.token_manager import TokenManager
 from utils.logger import logger
-from utils.market_hours import is_market_open
 from models.dto import StockDTO
 from utils.helpers import safe_int, safe_float
+from utils.rate_limiter import STOCK_API_LIMITER, CANDLE_API_LIMITER
 
 class KISApiClient:
 
@@ -19,6 +19,23 @@ class KISApiClient:
         self.stock_api_secret = os.getenv("STOCK_API_SECRET")
         self.candle_api_key = os.getenv("CANDLE_API_KEY")
         self.candle_api_secret = os.getenv("CANDLE_API_SECRET")
+
+        # 단일 세션 유지 - connection pool 재사용
+        self._session: aiohttp.ClientSession = None
+
+    async def _get_session(self) -> aiohttp.ClientSession:
+        """세션이 없거나 닫혀있으면 새로 생성, 아니면 기존 세션 반환"""
+        if self._session is None or self._session.closed:
+            connector = aiohttp.TCPConnector(limit=5)  # 동시 연결 5개 제한
+            timeout = aiohttp.ClientTimeout(total=30)  # 30초 타임아웃
+            self._session = aiohttp.ClientSession(connector=connector, timeout=timeout)
+        return self._session
+
+    async def close(self):
+        """세션 정리 - 애플리케이션 종료 시 호출"""
+        if self._session and not self._session.closed:
+            await self._session.close()
+            self._session = None
     
     def _get_headers(self, tr_id: str, use_candle_api: bool = False) -> dict:
         if use_candle_api:
@@ -40,8 +57,9 @@ class KISApiClient:
         }
     
     #일별분봉조회 api
-    def fetch_minute_candles_by_date(
+    async def fetch_minute_candles_by_date_async(
         self,
+        session: aiohttp.ClientSession,
         stock_code: str,
         target_date: str,
         start_time: str = "090000",
@@ -50,22 +68,15 @@ class KISApiClient:
     ) -> dict:
         
         url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/inquire-time-dailychartprice"
-        headers = self._get_headers("FHKST03010230", use_candle_api=True)
-        
-        params = {
-            "FID_COND_MRKT_DIV_CODE": "J",
-            "FID_INPUT_ISCD": stock_code,
-            "FID_INPUT_HOUR_1": end_time,
-            "FID_INPUT_DATE_1": target_date,
-            "FID_PW_DATA_INCU_YN": "Y",  
-            "FID_FAKE_TICK_INCU_YN": " "
-        }
         
         candles = {}
         current_time = end_time
         max_pages = 50
 
         for page in range(max_pages):
+            await CANDLE_API_LIMITER.acquire()
+            
+            headers = self._get_headers("FHKST03010230", use_candle_api=True)
             params = {
                 "FID_COND_MRKT_DIV_CODE": "J",
                 "FID_INPUT_ISCD": stock_code,
@@ -76,7 +87,14 @@ class KISApiClient:
             }
             
             try:
-                data = self._request_with_retry(url, headers, params, "FHKST03010230", use_candle_api=True)
+                async with session.get(url, headers=headers, params=params) as response:
+                    data = await response.json()
+
+                if data.get("rt_cd") != "0" and "token" in data.get("msg1", "").lower():
+                    self.token_manager.refresh_token("candle")
+                    headers = self._get_headers("FHKST03010230", use_candle_api=True)
+                    async with session.get(url, headers=headers, params=params) as retry_response:
+                        data = await retry_response.json()
                 
                 if data.get("rt_cd") != "0":
                     logger.error(f"일별분봉 API 오류: {data.get('msg1')}")
@@ -85,7 +103,7 @@ class KISApiClient:
                 outputs = data.get("output2", [])
                 if not outputs:
                     break
-                
+
                 oldest_time = None
                 for item in outputs:
                     date_str = item.get('stck_bsop_date', '')
@@ -127,7 +145,7 @@ class KISApiClient:
                     oldest_dt = datetime.strptime(oldest_time, '%H%M%S')
                     next_time = (oldest_dt - timedelta(minutes=1)).strftime('%H%M%S')
                     current_time = next_time
-                    time.sleep(0.1)
+                    await asyncio.sleep(0.15)
                 else:
                     break
                     
@@ -136,15 +154,32 @@ class KISApiClient:
                 break
 
         return candles
-    
-    #일봉/주봉 조회
-    def fetch_daily_candles(
-        self, 
+
+    #일별분봉조회 배치 처리
+    async def fetch_minute_candles_batch(
+        self,
+        requests: List[tuple],
+    ) -> dict:
+        results = {}
+        session = await self._get_session()
+
+        for code, date in requests:
+            result = await self.fetch_minute_candles_by_date_async(session, code, date)
+            if result:
+                results[(code, date)] = result
+
+        return results
+
+    #일봉/주봉 조회 api
+    async def fetch_daily_candles_async(
+        self,
+        session: aiohttp.ClientSession,
         stock_code: str, 
         start_date: str, 
         end_date: str,
         period_code: str = 'D'
     ) -> List[dict]:
+        await CANDLE_API_LIMITER.acquire()
         
         url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice"
         headers = self._get_headers("FHKST03010100", use_candle_api=True)
@@ -154,6 +189,9 @@ class KISApiClient:
         max_pages = 10 if period_code == 'D' else 5
         
         for page in range(max_pages):
+            if page > 0:
+                await CANDLE_API_LIMITER.acquire()
+            
             params = {
                 "FID_COND_MRKT_DIV_CODE": "J",
                 "FID_INPUT_ISCD": stock_code,
@@ -167,7 +205,14 @@ class KISApiClient:
                 headers["tr_cont"] = tr_cont
             
             try:
-                data = self._request_with_retry(url, headers, params, "FHKST03010100", use_candle_api=True)
+                async with session.get(url, headers=headers, params=params) as response:
+                    data = await response.json()
+
+                if data.get("rt_cd") != "0" and "token" in data.get("msg1", "").lower():
+                    self.token_manager.refresh_token("candle")
+                    headers = self._get_headers("FHKST03010100", use_candle_api=True)
+                    async with session.get(url, headers=headers, params=params) as retry_response:
+                        data = await retry_response.json()
                 
                 if data.get("rt_cd") != "0":
                     logger.error(f"일봉/주봉 API 오류: {data.get('msg1')}")
@@ -206,86 +251,129 @@ class KISApiClient:
                 break
         
         return candles
-    
-    #주식기본정보조회 api
-    def fetch_stock_basic_info(self, stock_code: str) -> dict:
+
+    #종목기본정보조회 api
+    async def fetch_stock_basic_info_async(self, session: aiohttp.ClientSession, stock_code: str) -> dict:
+        await STOCK_API_LIMITER.acquire()
+
         url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/search-stock-info"
         headers = self._get_headers("CTPF1002R")
-        
         params = {
             "PRDT_TYPE_CD": "300",
             "PDNO": stock_code
         }
         
         try:
-            data = self._request_with_retry(url, headers, params, "CTPF1002R")
-            
-            if data.get("rt_cd") != "0":
-                return None
-            
-            output = data.get("output", {})
-            
-            return {
-                'stock_code': stock_code,
-                'sector_small_code': output.get('std_idst_clsf_cd')
-            }
-            
+            async with session.get(url, headers=headers, params=params) as response:
+                data = await response.json()
+
+                if data.get("rt_cd") != "0" and "token" in data.get("msg1", "").lower():
+                    self.token_manager.refresh_token("stock")
+                    headers = self._get_headers("CTPF1002R")
+                    async with session.get(url, headers=headers, params=params) as retry_response:
+                        data = await retry_response.json()
+                
+                if data.get("rt_cd") != "0":
+                    logger.error(f"종목 정보 조회 실패 ({stock_code}): rt_cd={data.get('rt_cd')}, msg={data.get('msg1')}")
+                    return None
+                
+                output = data.get("output", {})
+                return {
+                    'stock_code': stock_code,
+                    'sector_small_code': output.get('std_idst_clsf_cd')
+                }
         except Exception as e:
             logger.error(f"종목 정보 조회 실패 ({stock_code}): {e}")
             return None
-    
-    def fetch_price(self, stock_code: str) -> Optional[StockDTO]:
+
+    # HardRateLimiter 사용 - 순차 처리로 정확히 초당 N건 제한
+    async def fetch_stock_basic_info_batch(self, stock_codes: list) -> dict:
+        results = {}
+        session = await self._get_session()
+
+        for code in stock_codes:
+            result = await self.fetch_stock_basic_info_async(session, code)
+            if result:
+                results[code] = result
+
+        return results
+ 
+    #현재가시세 조회
+    async def fetch_price_async(self, session: aiohttp.ClientSession, stock_code: str) -> Optional[StockDTO]:
+        await STOCK_API_LIMITER.acquire()
+
         try:
             url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/inquire-price"
             headers = self._get_headers("FHKST01010100")
-
             params = {
                 "FID_COND_MRKT_DIV_CODE": "J",
                 "FID_INPUT_ISCD": stock_code
             }
-
-            data = self._request_with_retry(url, headers, params, "FHKST01010100")
-
-            if data.get("rt_cd") != "0":
-                return None
-
-            output = data.get("output", {})
-
-            if not output:
-                return None
             
-            current_price = safe_int(output.get("stck_prpr"))
-            if current_price is None:
-                return None
+            async with session.get(url, headers=headers, params=params) as response:
+                data = await response.json()
 
-            return StockDTO(
-                stock_code=stock_code,
-                stock_name=output.get("hts_kor_isnm", ""),
-                current_price=current_price,
-                change_amount=safe_int(output.get("prdy_vrss")) or 0,
-                change_rate=safe_float(output.get("prdy_ctrt")) or 0.0,
-                volume=safe_int(output.get("acml_vol")) or 0,
-                trading_value=safe_int(output.get("acml_tr_pbmn")) or 0,
-                per=safe_float(output.get("per")),
-                pbr=safe_float(output.get("pbr")),
-                eps=safe_int(output.get("eps")),
-                bps=safe_int(output.get("bps")),
-                market_cap=safe_int(output.get("hts_avls"))
-            )
+                if data.get("rt_cd") != "0" and "token" in data.get("msg1", "").lower():
+                    logger.info("토큰 만료 - 갱신 후 재시도")
+                    self.token_manager.refresh_token("stock")
+                    headers = self._get_headers("FHKST01010100")
 
+                    async with session.get(url, headers=headers, params=params) as retry_response:
+                        data = await retry_response.json()
+                
+                if data.get("rt_cd") != "0":
+                    logger.warning(f"{stock_code} API 실패: {data.get('msg1')}")
+                    return None
+
+                output = data.get("output", {})
+                if not output:
+                    return None
+                
+                current_price = safe_int(output.get("stck_prpr"))
+                if current_price is None:
+                    return None
+                
+                return StockDTO(
+                    stock_code=stock_code,
+                    stock_name=output.get("hts_kor_isnm", ""),
+                    current_price=current_price,
+                    change_amount=safe_int(output.get("prdy_vrss")) or 0,
+                    change_rate=safe_float(output.get("prdy_ctrt")) or 0.0,
+                    volume=safe_int(output.get("acml_vol")) or 0,
+                    trading_value=safe_int(output.get("acml_tr_pbmn")) or 0,
+                    per=safe_float(output.get("per")),
+                    pbr=safe_float(output.get("pbr")),
+                    eps=safe_int(output.get("eps")),
+                    bps=safe_int(output.get("bps")),
+                    market_cap=safe_int(output.get("hts_avls"))
+                )
         except Exception as e:
-            logger.error(f"{stock_code} 호출 실패: {e}")
+            logger.error(f"{stock_code} 비동기 호출 실패: {e}")
             return None
+
+    # HardRateLimiter 사용 - 순차 처리로 정확히 초당 N건 제한
+    async def fetch_prices_batch(self, stock_codes: list) -> dict:
+        results = {}
+        session = await self._get_session()
+
+        for code in stock_codes:
+            result = await self.fetch_price_async(session, code)
+            if result:
+                results[code] = result
+
+        return results
         
     #거래량순위
-    def fetch_from_api(self) -> List[str]:
+    async def fetch_from_api(self) -> List[str]:
+        await CANDLE_API_LIMITER.acquire()
+
         url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/volume-rank"
-        
+
         headers = self._get_headers("FHPST01710000", use_candle_api=True)
 
         params = {
-            "FID_COND_MRKT_DIV_CODE": "J",      
-            "FID_COND_SCR_DIV_CODE": "20171",  
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_COND_SCR_DIV_CODE": "20171",
             "FID_INPUT_ISCD": "0000",
             "FID_DIV_CLS_CODE": "0",
             "FID_BLNG_CLS_CODE": "0",
@@ -298,8 +386,17 @@ class KISApiClient:
         }
 
         try:
-            data = self._request_with_retry(url, headers, params, "FHPST01710000", use_candle_api=True)
-            
+            session = await self._get_session()
+            async with session.get(url, headers=headers, params=params) as response:
+                data = await response.json()
+
+            if data.get("rt_cd") != "0" and "token" in data.get("msg1", "").lower():
+                logger.info("토큰 만료 - 갱신 후 재시도")
+                self.token_manager.refresh_token("candle")
+                headers = self._get_headers("FHPST01710000", use_candle_api=True)
+                async with session.get(url, headers=headers, params=params) as retry_response:
+                    data = await retry_response.json()
+
             if data.get("rt_cd") == "0":
                 outputs = data.get("output", [])
                 stock_codes = [item['mksc_shrn_iscd'] for item in outputs]
@@ -308,21 +405,7 @@ class KISApiClient:
             else:
                 logger.error(f"API 오류: rt_cd={data.get('rt_cd')}, msg1={data.get('msg1')}")
                 return []
-                
+
         except Exception as e:
             logger.error(f"API 호출 실패: {e}")
             return []
-        
-    #토큰 갱신
-    def _request_with_retry(self, url, headers, params, tr_id, use_candle_api=False):
-        response = requests.get(url, headers=headers, params=params, timeout=10)
-        data = response.json()
-        
-        if data.get("rt_cd") != "0" and "token" in data.get("msg1", "").lower():
-            logger.info("토큰 만료 - 갱신 후 재시도")
-            self.token_manager.refresh_token()
-            headers = self._get_headers(tr_id, use_candle_api)
-            response = requests.get(url, headers=headers, params=params, timeout=10)
-            data = response.json()
-        
-        return data
