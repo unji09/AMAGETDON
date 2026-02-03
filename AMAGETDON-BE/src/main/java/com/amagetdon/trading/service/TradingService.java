@@ -55,13 +55,6 @@ public class TradingService {
         return executeTrade(userId, request, TransactionType.SELL);
     }
 
-    private void validateMarketHours() {
-        LocalTime now = LocalTime.now();
-        if (now.isBefore(MARKET_OPEN) || now.isAfter(MARKET_CLOSE)) {
-            throw new IllegalStateException(MARKET_CLOSED.getMessage());
-        }
-    }
-
     private TradingResponse executeTrade(Long userId, TradingRequest request, TransactionType type) {
         // 장 시간 확인
         validateMarketHours();
@@ -88,6 +81,13 @@ public class TradingService {
         checkAchievements(userId, user, stock, type);
 
         return TradingResponse.of(transaction, user.getBalance());
+    }
+
+    private void validateMarketHours() {
+        LocalTime now = LocalTime.now();
+        if (now.isBefore(MARKET_OPEN) || now.isAfter(MARKET_CLOSE)) {
+            throw new IllegalStateException(MARKET_CLOSED.getMessage());
+        }
     }
 
     private void processBuy(User user, Stock stock, TradingRequest request, Integer currentPrice, Long netAmount) {
