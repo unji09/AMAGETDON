@@ -165,6 +165,43 @@ async def test_weekly_update():
     await weekly_update()
 
 
+# 7. 일봉 수집 (현재가 초기화 포함)
+async def test_daily_candle():
+    start_time = time.time()
+    logger.info("일봉 수집 시작 (현재가 초기화 포함)")
+
+    tm = TokenManager.get_instance()
+
+    conn = pymysql.connect(**DB_CONFIG)
+    cursor = conn.cursor()
+    cursor.execute("SELECT stock_code FROM stock")
+    stocks = [row[0] for row in cursor.fetchall()]
+    conn.close()
+
+    if not stocks:
+        logger.warning("대상 종목이 없습니다.")
+        tm.close()
+        return
+
+    logger.info(f"전체 종목: {len(stocks)}개")
+
+    candle_collector = CandleCollector(tm)
+    result = await candle_collector.collect_batch_parallel(
+        stock_codes=stocks,
+        interval_type='1d',
+        rate_limit=18,
+        batch_size=100
+    )
+    retries = result.get('total_retries', 0)
+    logger.info(f"일봉 수집: {result['success_count']}성공, {result['fail_count']}실패, {retries}재시도, {result['elapsed_time']:.1f}초")
+
+    candle_collector.close()
+    tm.close()
+
+    elapsed = time.time() - start_time
+    logger.info(f"일봉 수집 완료: {elapsed:.1f}초")
+
+
 # 6. 유저 조회 종목 100개 저장
 def setup_user_stocks():
     logger.info("조회 종목 100개 저장 시작")
@@ -215,6 +252,7 @@ def print_menu():
     print("  4. 장 마감 (누락 보정 + 일봉 수집)")
     print("  5. 주봉 업데이트")
     print("  6. 유저 조회 종목 100개 저장")
+    print("  7. 일봉 수집 (현재가 초기화)")
     print("  0. 종료")
     print("=" * 50)
 
@@ -249,6 +287,8 @@ if __name__ == "__main__":
         asyncio.run(test_weekly_update())
     elif choice == "6":
         setup_user_stocks()
+    elif choice == "7":
+        asyncio.run(test_daily_candle())
     elif choice == "0":
         print("종료")
     else:
