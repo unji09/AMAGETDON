@@ -106,7 +106,7 @@ async def test_current_price(stock_count: int = 100):
     fail_count = 0
 
     try:
-        connector = aiohttp.TCPConnector(limit=20)
+        connector = aiohttp.TCPConnector(limit=18)
         timeout = aiohttp.ClientTimeout(total=300)
         session = aiohttp.ClientSession(connector=connector, timeout=timeout)
 

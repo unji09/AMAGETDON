@@ -4,10 +4,12 @@ import csv
 import time
 import asyncio
 import aiohttp
+from datetime import datetime
 from config.config import DB_CONFIG
 from utils.logger import logger
 from utils.kis_api_client import KISApiClient
-from utils.rate_limiter import HardRateLimiter
+from utils.rate_limiter import HardRateLimiter, BatchRetryStats
+from utils.db import delete_stocks
 from core.token_manager import TokenManager
 
 class StockParser:
@@ -189,13 +191,17 @@ class StockParser:
         start_time = time.time()
         success_count = 0
         fail_count = 0
+        total_retries = 0
+        stopped_stocks = []
         batch_size = 100
         total_batches = (len(stock_codes) + batch_size - 1) // batch_size
 
         #업종 코드 조회
         async def fetch_sector_code(session, stock_code):
-            sector_code = await api_client.fetch_sector_code_direct(session, stock_code, limiter)
-            return stock_code, sector_code
+            result, retry_count = await api_client.fetch_sector_code_direct(
+                session, stock_code, limiter, return_retry_count=True
+            )
+            return stock_code, result, retry_count
 
         connector = aiohttp.TCPConnector(limit=18)
         timeout = aiohttp.ClientTimeout(total=600)
@@ -203,7 +209,7 @@ class StockParser:
 
         try:
             for batch_idx in range(total_batches):
-                batch_start_time = time.time()
+                batch_stats = BatchRetryStats()
                 batch_start = batch_idx * batch_size
                 batch_end = min(batch_start + batch_size, len(stock_codes))
                 batch_codes = stock_codes[batch_start:batch_end]
@@ -211,10 +217,27 @@ class StockParser:
                 tasks = [fetch_sector_code(session, code) for code in batch_codes]
                 batch_results = await asyncio.gather(*tasks)
 
-                batch_success = 0
-                batch_fail = 0
-                for stock_code, sector_code in batch_results:
-                    if sector_code:
+                for stock_code, result, retry_count in batch_results:
+                    if result:
+                        sector_code = result['sector_code']
+                        tr_stop_yn = result['tr_stop_yn']
+                        scts_abol_dt = result.get('scts_mket_lstg_abol_dt', '')
+                        kosdaq_abol_dt = result.get('kosdaq_mket_lstg_abol_dt', '')
+
+                        # 거래 정지 종목 처리
+                        if tr_stop_yn == 'Y':
+                            stopped_stocks.append(stock_code)
+                            logger.info(f"{stock_code}: 거래 정지 종목 - 삭제 대상")
+                            continue
+
+                        # 상장폐지일 확인
+                        today = datetime.now().strftime('%Y%m%d')
+                        abol_dt = scts_abol_dt or kosdaq_abol_dt
+                        if abol_dt and abol_dt <= today:
+                            stopped_stocks.append(stock_code)
+                            logger.info(f"{stock_code}: 상장폐지 종목 (폐지일: {abol_dt}) - 삭제 대상")
+                            continue
+
                         if sector_code in db_sector_codes:
                             cursor.execute("""
                                 UPDATE stock
@@ -222,26 +245,32 @@ class StockParser:
                                 WHERE stock_code = %s
                             """, (sector_code, stock_code))
                             success_count += 1
-                            batch_success += 1
+                            batch_stats.record_success(retry_count)
+                            total_retries += retry_count
                         else:
                             fail_count += 1
-                            batch_fail += 1
-                            logger.debug(f"{stock_code}: 업종 '{sector_code}' DB에 없음")
+                            batch_stats.record_fail()
+                            logger.warning(f"{stock_code}: 업종 '{sector_code}' DB에 없음")
                     else:
                         fail_count += 1
-                        batch_fail += 1
+                        batch_stats.record_fail()
+                        logger.warning(f"{stock_code}: 업종 코드 API 조회 실패")
 
                 self.conn.commit()
 
-                batch_elapsed = time.time() - batch_start_time
-                logger.info(f"업종 코드 배치 {batch_idx + 1}/{total_batches}: {batch_success}성공, {batch_fail}실패, {batch_elapsed:.1f}초")
+                batch_stats.log_summary(f"업종 코드 배치 {batch_idx + 1}/{total_batches}")
 
         finally:
             await session.close()
             await api_client.close()
 
+        # 거래 정지 종목 삭제
+        if stopped_stocks:
+            delete_stocks(self.conn, stopped_stocks)
+            logger.info(f"거래 정지 종목 {len(stopped_stocks)}개 삭제 완료")
+
         elapsed = time.time() - start_time
-        logger.info(f"업종 코드 수집 완료: {success_count}성공, {fail_count}실패, {elapsed:.1f}초")
+        logger.info(f"업종 코드 수집 완료: {success_count}성공, {fail_count}실패, {len(stopped_stocks)}거래정지, {total_retries}재시도, {elapsed:.1f}초")
 
         token_manager.close()
 

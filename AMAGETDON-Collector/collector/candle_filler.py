@@ -6,9 +6,9 @@ from typing import List, Optional, Dict
 from core.token_manager import TokenManager
 from models.dto import CandleDTO
 from utils.logger import logger
-from utils.db import get_db_connection, save_candles
+from utils.db import get_db_connection, save_candles, get_latest_candle
 from utils.kis_api_client import KISApiClient
-from utils.rate_limiter import HardRateLimiter
+from utils.rate_limiter import HardRateLimiter, BatchRetryStats
 
 class CandleFiller:
     
@@ -73,7 +73,8 @@ class CandleFiller:
         if start_time >= end_time:
             return 0
 
-        async with aiohttp.ClientSession() as session:
+        connector = aiohttp.TCPConnector(limit=18)
+        async with aiohttp.ClientSession(connector=connector) as session:
             candles_dict = await self.api_client.fetch_minute_candles_by_date_async(
                 session=session,
                 stock_code=stock_code,
@@ -141,10 +142,24 @@ class CandleFiller:
                 )
                 candles_to_save.append(candle_5m)
             else:
-                no_data_count += 1
+                # 1분봉이 없으면 가장 최근 5분봉 복사
+                latest = get_latest_candle(self.conn, stock_code, '5m')
+                if latest:
+                    candle_5m = CandleDTO(
+                        stock_code=stock_code,
+                        interval_type='5m',
+                        candle_time=slot_time,
+                        open_price=latest['close_price'],
+                        high_price=latest['close_price'],
+                        low_price=latest['close_price'],
+                        close_price=latest['close_price'],
+                        volume=0
+                    )
+                    candles_to_save.append(candle_5m)
+                    no_data_count += 1
 
         if no_data_count > 0:
-            logger.debug(f"{stock_code} 5분봉: 1분봉 없어서 {no_data_count}개 슬롯 스킵")
+            logger.debug(f"{stock_code} 5분봉: 1분봉 없어서 {no_data_count}개 슬롯 최근 캔들로 대체")
 
         if candles_to_save:
             save_candles(self.conn, candles_to_save)
@@ -182,10 +197,24 @@ class CandleFiller:
                 )
                 candles_to_save.append(candle_30m)
             else:
-                no_data_count += 1
+                # 5분봉이 없으면 가장 최근 30분봉 복사
+                latest = get_latest_candle(self.conn, stock_code, '30m')
+                if latest:
+                    candle_30m = CandleDTO(
+                        stock_code=stock_code,
+                        interval_type='30m',
+                        candle_time=slot_time,
+                        open_price=latest['close_price'],
+                        high_price=latest['close_price'],
+                        low_price=latest['close_price'],
+                        close_price=latest['close_price'],
+                        volume=0
+                    )
+                    candles_to_save.append(candle_30m)
+                    no_data_count += 1
 
         if no_data_count > 0:
-            logger.debug(f"{stock_code} 30분봉: 5분봉 없어서 {no_data_count}개 슬롯 스킵")
+            logger.debug(f"{stock_code} 30분봉: 5분봉 없어서 {no_data_count}개 슬롯 최근 캔들로 대체")
 
         if candles_to_save:
             save_candles(self.conn, candles_to_save)
@@ -212,7 +241,7 @@ class CandleFiller:
     def _find_missing_5min_slots(self, stock_code: str, target_date: date) -> List[datetime]:
         self.connect_db()
         cursor = self.conn.cursor()
-        
+
         query = """
         SELECT candle_time
         FROM chart_candles
@@ -222,16 +251,27 @@ class CandleFiller:
         """
         cursor.execute(query, (stock_code, target_date))
         existing_5m = {row[0] for row in cursor.fetchall()}
-        
+
+        now = datetime.now()
+        today = now.date()
+
         expected_5m = []
         start = datetime(target_date.year, target_date.month, target_date.day, 9, 0)
-        end = datetime(target_date.year, target_date.month, target_date.day, 15, 30)
-        
+
+        # 오늘이면 현재 시간까지만, 과거면 15:25까지
+        if target_date == today:
+            if now.hour < 9:
+                return []  # 장 시작 전
+            # 현재 시간 기준 마지막 완료된 5분봉 슬롯
+            end = now.replace(second=0, microsecond=0)
+        else:
+            end = datetime(target_date.year, target_date.month, target_date.day, 15, 25)
+
         current = start
-        while current < end:
+        while current <= end:
             expected_5m.append(current)
             current += timedelta(minutes=5)
-        
+
         missing = [slot for slot in expected_5m if slot not in existing_5m]
         return missing
     
@@ -239,7 +279,7 @@ class CandleFiller:
     def _find_missing_30min_slots(self, stock_code: str, target_date: date) -> List[datetime]:
         self.connect_db()
         cursor = self.conn.cursor()
-        
+
         query = """
         SELECT candle_time
         FROM chart_candles
@@ -249,16 +289,27 @@ class CandleFiller:
         """
         cursor.execute(query, (stock_code, target_date))
         existing_30m = {row[0] for row in cursor.fetchall()}
-        
+
+        now = datetime.now()
+        today = now.date()
+
         expected_30m = []
         start = datetime(target_date.year, target_date.month, target_date.day, 9, 0)
-        end = datetime(target_date.year, target_date.month, target_date.day, 15, 30)
-        
+
+        # 오늘이면 현재 시간까지만, 과거면 15:00까지
+        if target_date == today:
+            if now.hour < 9:
+                return []  # 장 시작 전
+            # 현재 시간 기준 마지막 완료된 30분봉 슬롯
+            end = now.replace(second=0, microsecond=0)
+        else:
+            end = datetime(target_date.year, target_date.month, target_date.day, 15, 0)
+
         current = start
-        while current < end:
+        while current <= end:
             expected_30m.append(current)
             current += timedelta(minutes=30)
-        
+
         missing = [slot for slot in expected_30m if slot not in existing_30m]
         return missing
     
@@ -358,6 +409,7 @@ class CandleFiller:
 
         success_count = 0
         fail_count = 0
+        total_retries = 0
 
         total_batches = (len(stock_codes) + batch_size - 1) // batch_size
 
@@ -373,35 +425,36 @@ class CandleFiller:
                     fill_30m=fill_30m
                 )
                 filler.close()
-                return {'success': 1, 'fail': 0}
+                return {'success': 1, 'fail': 0, 'retries': 0}
 
             except Exception as e:
                 logger.error(f"{stock_code} 보정 실패: {e}")
-                return {'success': 0, 'fail': 1}
+                return {'success': 0, 'fail': 1, 'retries': 0}
 
         for batch_idx in range(total_batches):
             batch_start = batch_idx * batch_size
             batch_end = min(batch_start + batch_size, len(stock_codes))
             batch_codes = stock_codes[batch_start:batch_end]
 
-            batch_start_time = time.time()
+            batch_stats = BatchRetryStats()
             tasks = [fill_worker(code) for code in batch_codes]
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
-            batch_success = 0
-            batch_fail = 0
             for result in results:
                 if isinstance(result, Exception):
                     fail_count += 1
-                    batch_fail += 1
+                    batch_stats.record_fail()
                 elif result:
-                    success_count += result.get('success', 0)
-                    fail_count += result.get('fail', 0)
-                    batch_success += result.get('success', 0)
-                    batch_fail += result.get('fail', 0)
+                    retries = result.get('retries', 0)
+                    if result.get('success', 0) > 0:
+                        success_count += result.get('success', 0)
+                        batch_stats.record_success(retries)
+                    else:
+                        fail_count += result.get('fail', 0)
+                        batch_stats.record_fail()
+                    total_retries += retries
 
-            batch_elapsed = time.time() - batch_start_time
-            logger.info(f"누락 보정 배치 {batch_idx + 1}/{total_batches}: {batch_success}성공, {batch_fail}실패, {batch_elapsed:.1f}초")
+            batch_stats.log_summary(f"누락 보정 배치 {batch_idx + 1}/{total_batches}")
 
         elapsed = time.time() - start_time
         api_calls = limiter.get_call_count()
@@ -409,6 +462,7 @@ class CandleFiller:
         return {
             'success_count': success_count,
             'fail_count': fail_count,
+            'total_retries': total_retries,
             'elapsed_time': elapsed,
             'api_calls': api_calls,
             'req_per_sec': api_calls / elapsed if elapsed > 0 else 0
