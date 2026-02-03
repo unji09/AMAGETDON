@@ -88,7 +88,7 @@ async def test_stock_basic_info_fast():
 
     try:
         # 동시 연결 20개 허용하는 세션 생성
-        connector = aiohttp.TCPConnector(limit=20)
+        connector = aiohttp.TCPConnector(limit=18)
         timeout = aiohttp.ClientTimeout(total=300)
         session = aiohttp.ClientSession(connector=connector, timeout=timeout)
 

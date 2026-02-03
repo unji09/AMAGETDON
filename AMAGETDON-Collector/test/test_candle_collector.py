@@ -372,95 +372,84 @@ async def test_candle_parallel(interval_type: str, stock_count: int = 100, rate_
     total_candles = 0
 
     try:
-        connector = aiohttp.TCPConnector(limit=20)
+        connector = aiohttp.TCPConnector(limit=18)
         timeout = aiohttp.ClientTimeout(total=600)
         session = aiohttp.ClientSession(connector=connector, timeout=timeout)
 
         if interval_type in ['1d', '1w']:
-            # 일봉/주봉: 모든 태스크를 한번에 생성하고 리미터가 속도 제어
-            tasks = [fetch_daily_candle_task(session, api_client, code, interval_type, limiter) for code in stocks]
+            # 일봉/주봉: 종목별로 병렬 호출 (동시 실행 제한)
+            CONCURRENT_LIMIT = 10
+            semaphore = asyncio.Semaphore(CONCURRENT_LIMIT)
+
+            async def limited_fetch_daily(code):
+                async with semaphore:
+                    return await fetch_daily_candle_task(session, api_client, code, interval_type, limiter)
+
+            tasks = [limited_fetch_daily(code) for code in stocks]
             all_results = await asyncio.gather(*tasks)
 
-            api_elapsed = (datetime.now() - start_time).total_seconds()
-            print(f"[DEBUG] API 호출 완료: {api_elapsed:.2f}초")
-
-            # 모든 캔들을 하나의 리스트로 모음
-            all_candles_to_save = []
+            # DB 저장
+            db_conn = get_db_connection(None)
             for stock_code, candles in all_results:
                 if candles:
-                    all_candles_to_save.extend(candles)
-                    print(f"✓ {stock_code}: {len(candles)}개 캔들")
+                    save_candles(db_conn, candles)
+                    print(f"✓ {stock_code}: {len(candles)}개 캔들 저장")
                     success_count += 1
                     total_candles += len(candles)
                 else:
                     print(f"✗ {stock_code}: 데이터 없음")
                     fail_count += 1
-
-            # DB 저장 - 한 번에 모든 캔들 저장 (1회 commit)
-            db_start = datetime.now()
-            db_conn = get_db_connection(None)
-            if all_candles_to_save:
-                save_candles(db_conn, all_candles_to_save)
-                print(f"[DEBUG] 총 {len(all_candles_to_save)}개 캔들 일괄 저장")
             db_conn.close()
-            db_elapsed = (datetime.now() - db_start).total_seconds()
-            print(f"[DEBUG] DB 저장 완료: {db_elapsed:.2f}초")
 
         else:
-            # 분봉: 종목별로 수집 + 즉시 저장
+            # 분봉: 종목 x 일자 조합을 배치로 처리
             minute_unit = 30 if interval_type == '30m' else 5
-            db_lock = asyncio.Lock()
 
-            async def fetch_and_save_minute_candles(stock_code):
-                """종목 하나의 분봉 수집 후 즉시 DB 저장"""
-                nonlocal success_count, fail_count, total_candles
+            # 모든 (종목, 날짜) 조합 생성
+            requests = []
+            for stock_code in stocks:
+                for i in range(days):
+                    target_date = (datetime.now() - timedelta(days=i)).date()
+                    target_date_str = target_date.strftime('%Y%m%d')
+                    requests.append((stock_code, target_date_str))
 
-                try:
-                    # 해당 종목의 모든 날짜 분봉 수집
-                    stock_all_candles = {}
-                    for i in range(days):
-                        target_date = (datetime.now() - timedelta(days=i)).date()
-                        target_date_str = target_date.strftime('%Y%m%d')
+            print(f"총 요청 수: {len(requests)}건 (종목x일자, 페이징은 별도)")
 
-                        candles_dict = await fetch_minute_candles_with_limiter(
-                            session, api_client, stock_code, target_date_str, limiter
-                        )
-                        if candles_dict:
-                            stock_all_candles.update(candles_dict)
+            # 동시 실행 제한 (세션 연결 수 제한)
+            CONCURRENT_LIMIT = 10
+            semaphore = asyncio.Semaphore(CONCURRENT_LIMIT)
 
-                    if not stock_all_candles:
-                        print(f"✗ {stock_code}: 데이터 없음")
-                        fail_count += 1
-                        return stock_code, False
+            async def limited_fetch(code, date_str):
+                async with semaphore:
+                    return await fetch_minute_candle_task(session, api_client, code, date_str, limiter)
 
-                    # 분봉 집계
-                    candles = aggregate_candles(stock_code, interval_type, stock_all_candles, minute_unit)
-                    if not candles:
+            tasks = [limited_fetch(code, date_str) for code, date_str in requests]
+            results = await asyncio.gather(*tasks)
+
+            # 종목별로 결과 집계
+            stock_candles = {code: {} for code in stocks}
+            for stock_code, date_str, candles_dict in results:
+                if candles_dict:
+                    stock_candles[stock_code].update(candles_dict)
+
+            # 집계 및 저장
+            db_conn = get_db_connection(None)
+            for stock_code in stocks:
+                all_candles = stock_candles[stock_code]
+                if all_candles:
+                    candles = aggregate_candles(stock_code, interval_type, all_candles, minute_unit)
+                    if candles:
+                        save_candles(db_conn, candles)
+                        print(f"✓ {stock_code}: {len(candles)}개 캔들 저장")
+                        success_count += 1
+                        total_candles += len(candles)
+                    else:
                         print(f"✗ {stock_code}: 집계 실패")
                         fail_count += 1
-                        return stock_code, False
-
-                    # 즉시 DB 저장
-                    async with db_lock:
-                        db_conn = get_db_connection(None)
-                        save_candles(db_conn, candles)
-                        db_conn.close()
-
-                    print(f"✓ {stock_code}: {len(candles)}개 캔들")
-                    success_count += 1
-                    total_candles += len(candles)
-                    return stock_code, True
-
-                except Exception as e:
-                    print(f"✗ {stock_code}: 에러 - {e}")
+                else:
+                    print(f"✗ {stock_code}: 데이터 없음")
                     fail_count += 1
-                    return stock_code, False
-
-            print(f"총 요청 수: {len(stocks) * days}건 (종목x일자, 페이징은 별도)")
-
-            # 종목별 태스크 생성 및 실행
-            tasks = [fetch_and_save_minute_candles(code) for code in stocks]
-            await asyncio.gather(*tasks)
+            db_conn.close()
 
     except Exception as e:
         print(f"에러 발생: {e}")

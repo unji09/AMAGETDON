@@ -75,8 +75,9 @@ async def check_and_initialize(rate_limit: int = 18):
             )
 
             total_api_calls += result['api_calls']
+            retries = result.get('total_retries', 0)
             logger.info(f"  - {interval} 완료: {result['success_count']}성공, {result['fail_count']}실패, "
-                       f"{result['total_candles']}캔들, {result['elapsed_time']:.2f}초, "
+                       f"{retries}재시도, {result['total_candles']}캔들, {result['elapsed_time']:.2f}초, "
                        f"{result['req_per_sec']:.1f} req/s")
 
         candle_collector.close()
@@ -94,7 +95,7 @@ async def check_and_initialize(rate_limit: int = 18):
 
 #REST 수집(5초마다) + 새 유저 종목 분봉 보정 + 분봉 생성
 async def run_rest_collection_loop():
-    from utils.rate_limiter import HardRateLimiter
+    from utils.rate_limiter import HardRateLimiter, BatchRetryStats
     from utils.db import get_db_connection, save_stock_price
     from config.config import REDIS_KEYS
 
@@ -111,8 +112,10 @@ async def run_rest_collection_loop():
     prev_user_stocks = set()
 
     async def fetch_price(stock_code):
-        dto = await api_client.fetch_price_direct(session, stock_code, limiter)
-        return stock_code, dto
+        dto, retry_count = await api_client.fetch_price_direct(
+            session, stock_code, limiter, return_retry_count=True
+        )
+        return stock_code, dto, retry_count
 
     logger.info("REST 수집 루프 시작")
 
@@ -135,19 +138,18 @@ async def run_rest_collection_loop():
             rest_stocks = list(user_stocks - top30)
 
             if rest_stocks:
+                batch_stats = BatchRetryStats()
                 tasks = [fetch_price(code) for code in rest_stocks]
                 results = await asyncio.gather(*tasks)
 
-                success = 0
-                fail = 0
                 now = datetime.now()
-                for stock_code, dto in results:
+                for stock_code, dto, retry_count in results:
                     if dto:
                         try:
                             conn = get_db_connection(None)
                             save_stock_price(conn, dto)
                             conn.close()
-                            success += 1
+                            batch_stats.record_success(retry_count)
 
                             # 분봉 생성을 위해 틱 데이터 추가
                             rest_candle_builder.on_tick(stock_code, {
@@ -157,12 +159,11 @@ async def run_rest_collection_loop():
                             })
                         except Exception as e:
                             logger.error(f"REST DB 저장 실패 ({stock_code}): {e}")
-                            fail += 1
+                            batch_stats.record_fail()
                     else:
-                        fail += 1
+                        batch_stats.record_fail()
 
-                elapsed = time.time() - loop_start
-                logger.info(f"REST 수집: {success}성공, {fail}실패, {elapsed:.1f}초")
+                batch_stats.log_summary("REST 수집")
 
             elapsed = time.time() - loop_start
             if elapsed < 5:
@@ -182,9 +183,11 @@ async def run_rest_collection_loop():
     logger.info("REST 수집 루프 종료")
 
 
-# 거래량 순위 조회(5분마다) + 웹소켓 종목 누락 보정
+# 거래량 순위 조회(5분마다) + 새로 추가된 웹소켓 종목만 누락 보정
 async def run_volume_rank_loop():
     global collection_active, token_manager, ws_collector, volume_tracker
+
+    prev_top_stocks = set()
 
     while collection_active:
         try:
@@ -196,8 +199,12 @@ async def run_volume_rank_loop():
                 ws_collector.subscribe_stocks(top_stocks)
                 logger.info(f"거래량 TOP 구독 갱신: {len(top_stocks)}개")
 
-                # 웹소켓 구독 종목 누락 분봉 보정 (오늘 날짜만)
-                await fill_ws_missing_candles(top_stocks, token_manager)
+                # 새로 추가된 웹소켓 종목만 누락 보정
+                top_stocks_set = set(top_stocks)
+                new_ws_stocks = list(top_stocks_set - prev_top_stocks)
+                if new_ws_stocks:
+                    await fill_ws_missing_candles(new_ws_stocks, token_manager)
+                prev_top_stocks = top_stocks_set
 
             elapsed = time.time() - loop_start
             wait_time = 300 - elapsed
@@ -348,9 +355,11 @@ async def stop_collection(rate_limit: int = 18):
         stock_codes=stocks,
         interval_type='1d',
         rate_limit=18,
-        batch_size=100
+        batch_size=100,
+        days=1  # 장 마감 시 오늘 하루치만
     )
-    logger.info(f"일봉 수집: {result['success_count']}성공, {result['fail_count']}실패, {result['elapsed_time']:.1f}초")
+    retries = result.get('total_retries', 0)
+    logger.info(f"일봉 수집: {result['success_count']}성공, {result['fail_count']}실패, {retries}재시도, {result['elapsed_time']:.1f}초")
     candle_collector.close()
 
     total_elapsed = time.time() - start_time
@@ -384,17 +393,19 @@ async def weekly_update():
         stock_codes=stocks,
         interval_type='1w',
         rate_limit=18,
-        batch_size=100
+        batch_size=100,
+        days=7  # 주봉 업데이트 시 이번 주 하나만
     )
     candle_collector.close()
     tm.close()
 
     elapsed = time.time() - start_time
-    logger.info(f"주봉 업데이트 완료: {result['success_count']}성공, {result['fail_count']}실패, {elapsed:.1f}초")
+    retries = result.get('total_retries', 0)
+    logger.info(f"주봉 업데이트 완료: {result['success_count']}성공, {result['fail_count']}실패, {retries}재시도, {elapsed:.1f}초")
 
 #재무 데이터 업데이트
 async def update_financials(rate_limit: int = 18, batch_size: int = 100):
-    from utils.rate_limiter import HardRateLimiter
+    from utils.rate_limiter import HardRateLimiter, BatchRetryStats
 
     start_time = time.time()
     logger.info("재무 데이터 업데이트 시작")
@@ -426,8 +437,10 @@ async def update_financials(rate_limit: int = 18, batch_size: int = 100):
         fail_count = 0
 
         async def fetch_financial(session, stock_code):
-            data = await api_client.fetch_financial_direct(session, stock_code, limiter)
-            return stock_code, data
+            data, retry_count = await api_client.fetch_financial_direct(
+                session, stock_code, limiter, return_retry_count=True
+            )
+            return stock_code, data, retry_count
 
         try:
             connector = aiohttp.TCPConnector(limit=18)
@@ -435,7 +448,7 @@ async def update_financials(rate_limit: int = 18, batch_size: int = 100):
             session = aiohttp.ClientSession(connector=connector, timeout=timeout)
 
             for batch_idx in range(total_batches):
-                batch_start_time = time.time()
+                batch_stats = BatchRetryStats()
                 batch_start = batch_idx * batch_size
                 batch_end = min(batch_start + batch_size, len(stocks))
                 batch_codes = stocks[batch_start:batch_end]
@@ -446,28 +459,24 @@ async def update_financials(rate_limit: int = 18, batch_size: int = 100):
                 db_conn = pymysql.connect(**DB_CONFIG)
                 db_cursor = db_conn.cursor()
 
-                batch_success = 0
-                batch_fail = 0
-
-                for stock_code, data in batch_results:
+                for stock_code, data, retry_count in batch_results:
                     if data:
                         db_cursor.execute("""
                             UPDATE stock
                             SET per=%s, pbr=%s, eps=%s, bps=%s, market_cap=%s, updated_at=NOW()
                             WHERE stock_code=%s
                         """, (data['per'], data['pbr'], data['eps'], data['bps'], data['market_cap'], stock_code))
-                        batch_success += 1
+                        batch_stats.record_success(retry_count)
                     else:
-                        batch_fail += 1
+                        batch_stats.record_fail()
 
                 db_conn.commit()
                 db_conn.close()
 
-                success_count += batch_success
-                fail_count += batch_fail
+                success_count += batch_stats.success_count
+                fail_count += batch_stats.fail_count
 
-                batch_elapsed = time.time() - batch_start_time
-                logger.info(f"재무 배치 {batch_idx + 1}/{total_batches}: {batch_success}성공, {batch_fail}실패, {batch_elapsed:.1f}초")
+                batch_stats.log_summary(f"재무 배치 {batch_idx + 1}/{total_batches}")
 
         except Exception as e:
             logger.error(f"에러 발생: {e}")
@@ -487,7 +496,7 @@ async def update_financials(rate_limit: int = 18, batch_size: int = 100):
 async def main():
     logger.info("실시간 시세 수집 스케줄러 시작")
 
-    # await check_and_initialize()
+    await check_and_initialize()
 
     now = datetime.now()
     if now.hour > 8 or (now.hour == 8 and now.minute >= 40):

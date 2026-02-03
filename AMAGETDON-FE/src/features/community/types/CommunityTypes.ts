@@ -19,11 +19,11 @@ export interface JoinPrivateRoomRequest {
 export interface RoomResponse {
     roomId: number;
     name: string;
+    openviduSessionId: string;
     currentMemberCount: number;
     maxMemberCount: number;
     isPublic: boolean;
     joinCode?: string;
-    openviduSessionId?: string;
     createdAt: string;
 }
 

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Button, Input, Card } from '@/components/common'
 import { useLogin } from '../hooks/login'
-import { KakaoLoginButton } from './KakaoLoginButton'
+import {KakaoLoginButton} from "@/features/auth";
 import './LoginForm.css'
 
 const ErrorIcon = () => (
@@ -47,11 +47,15 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export const LoginForm = () => {
     const navigate = useNavigate()
+    const [searchParams, setSearchParams] = useSearchParams()
     const { login, loading, error } = useLogin()
 
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [touched, setTouched] = useState(false)
+    const [sessionExpiredMsg] = useState(
+        () => searchParams.get('expired') === 'true'
+    )
 
     const isEmailValid = EMAIL_REGEX.test(email)
     const isValid = isEmailValid && password.trim() !== ''
@@ -60,8 +64,16 @@ export const LoginForm = () => {
         const token = localStorage.getItem('accessToken')
         if (token) {
             navigate('/', { replace: true })
+            return
         }
-    }, [navigate])
+
+        // URL에서 expired 파라미터 제거 (알림은 이미 초기값으로 설정됨)
+        if (searchParams.get('expired')) {
+            const newParams = new URLSearchParams(searchParams)
+            newParams.delete('expired')
+            setSearchParams(newParams, { replace: true })
+        }
+    }, [navigate, searchParams, setSearchParams])
 
     const handleSubmit = async () => {
         setTouched(true)
@@ -89,6 +101,15 @@ export const LoginForm = () => {
             </div>
             <Card className="auth-card">
                 <h2 className="auth-card-title">로그인</h2>
+
+                {sessionExpiredMsg && (
+                    <div className="auth-warning-box">
+                        <WarningIcon />
+                        <p className="auth-warning-message">
+                            세션이 만료되어 로그아웃되었습니다. 다시 로그인해주세요.
+                        </p>
+                    </div>
+                )}
 
                 {errorDetails && (
                     <div className="auth-error-box">
