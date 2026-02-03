@@ -1,12 +1,14 @@
 import apiClient from "@/api/client.ts";
 
 export type InvestmentType = 'AGGRESSIVE' | 'NEUTRAL' | 'STABLE'
+export type LoginType = 'LOCAL' | 'KAKAO'
 
 export interface UserInfo {
     userId: number
-    email: string
+    email: string | null
     nickname: string
     investmentType: InvestmentType | null
+    loginType: LoginType
     currentTitle: string | null
     totalPoints: number
     balance: number

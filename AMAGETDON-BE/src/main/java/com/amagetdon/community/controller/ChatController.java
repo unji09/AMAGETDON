@@ -7,7 +7,6 @@ import com.amagetdon.community.dto.request.ChatMessageRequestDto;
 import com.amagetdon.community.entity.Room;
 import com.amagetdon.community.repository.RoomRepository;
 import com.amagetdon.community.service.ChatMessageService;
-import io.openvidu.java.client.OpenVidu;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -26,7 +25,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ChatController {
 
-    private final OpenVidu openVidu;
     private final ChatMessageService chatMessageService;
     private final RoomRepository roomRepository;
 
@@ -39,36 +37,12 @@ public class ChatController {
     private final RestTemplate restTemplate = new RestTemplate();
 
     @PostMapping("/send")
-    public ResponseEntity<Void> sendMessage(@RequestBody ChatMessageRequestDto request){
+    public ResponseEntity<Void> sendMessage(@RequestBody ChatMessageRequestDto request) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
 
-//        Long userId = SecurityUtil.getCurrentUserId();
-//        if(userId == null){
-//            return ResponseEntity.status(401).build();
-//        }
-//
-//        // 세션 확인
-//        if(openVidu.getActiveSession(request.openviduSessionId()) == null){
-//            return ResponseEntity.notFound().build();
-//        }
-
-            System.out.println("Request: " + request);  // ✅ 추가!
-
-            Long userId = SecurityUtil.getCurrentUserId();
-            System.out.println("userId: " + userId);  // ✅ 추가!
-            if(userId == null){
-                return ResponseEntity.status(401).build();
-            }
-
-//            // 세션 확인
-//            System.out.println("Checking session: " + request.openviduSessionId());  // ✅ 추가!
-//            if(openVidu.getActiveSession(request.openviduSessionId()) == null){
-//                System.out.println("⚠️ Session not found!");  // ✅ 추가!
-//                return ResponseEntity.notFound().build();
-//            }
-
-        System.out.println("✅ Proceeding without session check");
-
-        // 방 찾기
         Room room = roomRepository.findByOpenviduSessionId(request.openviduSessionId())
                 .orElseThrow(() -> new IllegalArgumentException(ErrorCode.ROOM_NOT_FOUND.getMessage()));
 
@@ -96,40 +70,17 @@ public class ChatController {
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
             restTemplate.postForEntity(url, entity, Void.class);
-
-            System.out.println("✅ OpenVidu signal sent successfully");
         } catch (Exception e) {
-            System.err.println("⚠️ OpenVidu signal failed (ignored): " + e.getMessage());
+            // OpenVidu signal 실패는 무시 (메시지는 이미 DB에 저장됨)
         }
-
-//        // 오픈비두 서버 REST API 엔드포인트 설정
-//        String baseUrl = openViduUrl.endsWith("/") ? openViduUrl : openViduUrl + "/";
-//        String url = baseUrl + "openvidu/api/signal";
-//
-//        // HTTP Header 설정 (Basic Auth 인증 필요함)
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.setContentType(MediaType.APPLICATION_JSON);
-//        headers.setBasicAuth("OPENVIDUAPP", openViduSecret); // OPENVIDU 표준 인증 방식
-//
-//        // 전송할 데이터 구성
-//        Map<String, Object> body = new HashMap<>();
-//        body.put("session", request.openviduSessionId());
-//        body.put("data", request.message());
-//        body.put("type", request.type());
-//
-//        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-//
-//        restTemplate.postForEntity(url, entity, Void.class);
 
         return ResponseEntity.ok().build();
     }
 
-    // 채팅 조회
     @GetMapping("/messages/{roomId}")
     public ResponseEntity<Map<String, Object>> getMessages(@PathVariable Long roomId) {
-
         Long userId = SecurityUtil.getCurrentUserId();
-        if(userId == null) {
+        if (userId == null) {
             return ResponseEntity.status(401).build();
         }
 
