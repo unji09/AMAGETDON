@@ -1,0 +1,144 @@
+.my-holdings {
+    background: var(--color-white);
+    border-radius: 12px;
+    padding: var(--spacing-5);
+}
+
+.my-holdings__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-4);
+}
+
+.my-holdings__title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+}
+
+.my-holdings__more-link {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    border: none;
+    background: none;
+    color: #888;
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+.my-holdings__more-link:hover {
+    color: var(--color-main-green);
+}
+
+.my-holdings__empty {
+    text-align: center;
+    color: #999;
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-6) 0;
+}
+
+.my-holdings__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+}
+
+.my-holdings__item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-3);
+    border: 1px solid #f0f0f0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.my-holdings__item:hover {
+    background: var(--color-background);
+    border-color: #ddd;
+}
+
+.my-holdings__item-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.my-holdings__item-name {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+}
+
+.my-holdings__item-qty {
+    font-size: var(--font-size-xs);
+    color: #999;
+}
+
+.my-holdings__item-right {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-3);
+}
+
+.my-holdings__item-values {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.my-holdings__item-rate {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.my-holdings__item-rate--up {
+    color: var(--color-chart-up);
+    background: rgba(220, 0, 0, 0.06);
+}
+
+.my-holdings__item-rate--down {
+    color: var(--color-chart-down);
+    background: rgba(0, 70, 180, 0.06);
+}
+
+.my-holdings__item-value {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-dark-gray);
+}
+
+.my-holdings__fav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border: none;
+    background: none;
+    color: #ddd;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.my-holdings__fav-btn:hover {
+    color: var(--color-chart-up);
+    transform: scale(1.2);
+}
+
+.my-holdings__fav-btn--active {
+    color: var(--color-chart-up);
+}
+
+.my-holdings__fav-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}

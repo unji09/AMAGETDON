@@ -1,0 +1,131 @@
+.popular-stocks {
+    background: var(--color-white);
+    border-radius: 12px;
+    padding: var(--spacing-5) var(--spacing-6);
+    animation: tableFadeIn 0.6s ease-out;
+}
+
+@keyframes tableFadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.popular-stocks__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-4);
+}
+
+.popular-stocks__title {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+}
+
+.popular-stocks__table-wrapper {
+    overflow-x: auto;
+}
+
+.popular-stocks__table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.popular-stocks__th {
+    padding: var(--spacing-3) var(--spacing-2);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-main-green);
+    text-align: left;
+    border-bottom: 2px solid var(--color-pale-green);
+}
+
+.popular-stocks__th--rank { width: 50px; }
+.popular-stocks__th--price,
+.popular-stocks__th--volume,
+.popular-stocks__th--rate { text-align: right; }
+
+.popular-stocks__row {
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.popular-stocks__row:hover {
+    background: var(--color-background);
+}
+
+.popular-stocks__td {
+    padding: var(--spacing-3) var(--spacing-2);
+    font-size: var(--font-size-sm);
+    color: var(--color-dark-gray);
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.popular-stocks__td--rank {
+    font-weight: var(--font-weight-semibold);
+    color: #888;
+    width: 50px;
+}
+
+.popular-stocks__td--name {
+    font-weight: var(--font-weight-bold);
+}
+
+.popular-stocks__td--price,
+.popular-stocks__td--volume,
+.popular-stocks__td--rate {
+    text-align: right;
+}
+
+.popular-stocks__td--up {
+    color: var(--color-chart-up);
+    font-weight: var(--font-weight-semibold);
+}
+
+.popular-stocks__td--down {
+    color: var(--color-chart-down);
+    font-weight: var(--font-weight-semibold);
+}
+
+/* 하트 버튼 */
+.popular-stocks__th--fav { width: 40px; }
+.popular-stocks__td--fav { text-align: center; }
+
+.popular-stocks__fav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border: none;
+    background: none;
+    color: #ddd;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.popular-stocks__fav-btn:hover {
+    color: var(--color-chart-up);
+    transform: scale(1.2);
+}
+
+.popular-stocks__fav-btn--active {
+    color: var(--color-chart-up);
+}
+
+.popular-stocks__fav-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+@media (max-width: 768px) {
+    .popular-stocks {
+        padding: var(--spacing-4);
+    }
+
+    .popular-stocks__th--volume,
+    .popular-stocks__td--volume {
+        display: none;
+    }
+}

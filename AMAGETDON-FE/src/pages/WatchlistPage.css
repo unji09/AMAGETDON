@@ -1,0 +1,205 @@
+.watchlist-page__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-top: var(--spacing-6);
+    margin-bottom: var(--spacing-6);
+}
+
+.watchlist-page__title-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+}
+
+.watchlist-page__back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    background: var(--color-white);
+    color: #666;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.watchlist-page__back-btn:hover {
+    border-color: var(--color-main-green);
+    color: var(--color-main-green);
+}
+
+.watchlist-page__up {
+    color: var(--color-chart-up);
+    font-weight: var(--font-weight-semibold);
+}
+
+.watchlist-page__down {
+    color: var(--color-chart-down);
+    font-weight: var(--font-weight-semibold);
+}
+
+.watchlist-page__right {
+    text-align: right !important;
+}
+
+.watchlist-page__title {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+    margin: 0;
+}
+
+.watchlist-page__subtitle {
+    font-size: var(--font-size-sm);
+    color: #888;
+    margin: var(--spacing-1) 0 0;
+}
+
+.watchlist-page__actions {
+    display: flex;
+    gap: var(--spacing-2);
+}
+
+.watchlist-page__icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    background: var(--color-white);
+    color: #666;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.watchlist-page__icon-btn:hover {
+    border-color: var(--color-main-green);
+    color: var(--color-main-green);
+}
+
+.watchlist-page__content {
+    background: var(--color-white);
+    border-radius: 12px;
+    padding: var(--spacing-5);
+}
+
+.watchlist-page__table-wrapper {
+    overflow-x: auto;
+}
+
+.watchlist-page__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-sm);
+}
+
+.watchlist-page__table th {
+    padding: var(--spacing-3);
+    text-align: left;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-main-green);
+    border-bottom: 2px solid var(--color-pale-green);
+    white-space: nowrap;
+}
+
+.watchlist-page__table td {
+    padding: var(--spacing-3);
+    border-bottom: 1px solid #f0f0f0;
+    white-space: nowrap;
+}
+
+.watchlist-page__center {
+    text-align: center !important;
+}
+
+.watchlist-page__row {
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.watchlist-page__row:hover {
+    background: var(--color-background);
+}
+
+.watchlist-page__stock-name {
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+}
+
+.watchlist-page__stock-code {
+    font-size: var(--font-size-xs);
+    color: #999;
+}
+
+.watchlist-page__badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+}
+
+.watchlist-page__badge--kospi {
+    background: rgba(32, 60, 46, 0.1);
+    color: var(--color-main-green);
+}
+
+.watchlist-page__badge--kosdaq {
+    background: rgba(220, 0, 0, 0.08);
+    color: var(--color-chart-up);
+}
+
+.watchlist-page__date {
+    color: #888;
+}
+
+.watchlist-page__remove-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border: none;
+    background: none;
+    color: #e74c3c;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+.watchlist-page__remove-btn:hover {
+    transform: scale(1.2);
+}
+
+.watchlist-page__remove-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.watchlist-page__empty {
+    text-align: center;
+    padding: var(--spacing-8) 0 !important;
+    color: #999;
+}
+
+.watchlist-page__total {
+    text-align: center;
+    font-size: var(--font-size-sm);
+    color: #999;
+    margin-top: var(--spacing-4);
+}
+
+@media (max-width: 768px) {
+    .watchlist-page__table {
+        font-size: var(--font-size-xs);
+    }
+
+    .watchlist-page__table th,
+    .watchlist-page__table td {
+        padding: var(--spacing-2);
+    }
+}

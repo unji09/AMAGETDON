@@ -1,0 +1,188 @@
+.holdings-page__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-top: var(--spacing-6);
+    margin-bottom: var(--spacing-6);
+}
+
+.holdings-page__title-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+}
+
+.holdings-page__back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    background: var(--color-white);
+    color: #666;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.holdings-page__back-btn:hover {
+    border-color: var(--color-main-green);
+    color: var(--color-main-green);
+}
+
+.holdings-page__title {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+    margin: 0;
+}
+
+.holdings-page__subtitle {
+    font-size: var(--font-size-sm);
+    color: #888;
+    margin: var(--spacing-1) 0 0;
+}
+
+.holdings-page__actions {
+    display: flex;
+    gap: var(--spacing-2);
+}
+
+.holdings-page__icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    background: var(--color-white);
+    color: #666;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.holdings-page__icon-btn:hover {
+    border-color: var(--color-main-green);
+    color: var(--color-main-green);
+}
+
+.holdings-page__content {
+    background: var(--color-white);
+    border-radius: 12px;
+    padding: var(--spacing-5);
+}
+
+.holdings-page__table-wrapper {
+    overflow-x: auto;
+}
+
+.holdings-page__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-sm);
+}
+
+.holdings-page__table th {
+    padding: var(--spacing-3);
+    text-align: left;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-main-green);
+    border-bottom: 2px solid var(--color-pale-green);
+    white-space: nowrap;
+}
+
+.holdings-page__table td {
+    padding: var(--spacing-3);
+    border-bottom: 1px solid #f0f0f0;
+    white-space: nowrap;
+}
+
+.holdings-page__right {
+    text-align: right !important;
+}
+
+.holdings-page__row {
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.holdings-page__row:hover {
+    background: var(--color-background);
+}
+
+.holdings-page__stock-name {
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+}
+
+.holdings-page__stock-code {
+    font-size: var(--font-size-xs);
+    color: #999;
+}
+
+.holdings-page__up {
+    color: var(--color-chart-up);
+    font-weight: var(--font-weight-semibold);
+}
+
+.holdings-page__down {
+    color: var(--color-chart-down);
+    font-weight: var(--font-weight-semibold);
+}
+
+.holdings-page__empty {
+    text-align: center;
+    padding: var(--spacing-8) 0 !important;
+    color: #999;
+}
+
+.holdings-page__total {
+    text-align: center;
+    font-size: var(--font-size-sm);
+    color: #999;
+    margin-top: var(--spacing-4);
+}
+
+.holdings-page__center {
+    text-align: center !important;
+}
+
+.holdings-page__fav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border: none;
+    background: none;
+    color: #ddd;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.holdings-page__fav-btn:hover {
+    color: var(--color-chart-up);
+    transform: scale(1.2);
+}
+
+.holdings-page__fav-btn--active {
+    color: var(--color-chart-up);
+}
+
+.holdings-page__fav-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+@media (max-width: 768px) {
+    .holdings-page__table {
+        font-size: var(--font-size-xs);
+    }
+
+    .holdings-page__table th,
+    .holdings-page__table td {
+        padding: var(--spacing-2);
+    }
+}
