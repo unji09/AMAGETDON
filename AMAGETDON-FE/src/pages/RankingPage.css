@@ -1,0 +1,170 @@
+/**
+ * RankingPage 스타일
+ * S14P11A207-188
+ *
+ * 파일 위치: src/pages/RankingPage.css
+ */
+
+.ranking-page {
+    min-height: calc(100vh - 70px);
+    background-color: #F5F5F5;
+}
+
+/* 페이지 헤더 */
+.ranking-page-header {
+    background-color: #203C2E;
+    padding: 32px 24px;
+}
+
+.ranking-page-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #FFFFFF;
+    margin: 0 0 8px 0;
+}
+
+.ranking-page-desc {
+    font-size: 15px;
+    color: #C7D8B7;
+    margin: 0;
+}
+
+/* 탭 네비게이션 */
+.ranking-tabs {
+    display: flex;
+    background-color: #FFFFFF;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.ranking-tab {
+    flex: 1;
+    padding: 16px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #6B7280;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ranking-tab:hover {
+    color: #1A1A1A;
+    background-color: #FAFAFA;
+}
+
+.ranking-tab.active {
+    color: #203C2E;
+    border-bottom-color: #203C2E;
+}
+
+/* 내 랭킹 배너 */
+.my-ranking-banner {
+    background-color: #FFF5F5;
+    padding: 16px 24px;
+    border-bottom: 1px solid #F0F0F0;
+}
+
+.banner-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6B7280;
+    margin-bottom: 8px;
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.banner-rank {
+    font-size: 18px;
+    font-weight: 700;
+    color: #DC0000;
+    min-width: 80px;
+}
+
+.banner-nickname {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1A1A1A;
+}
+
+.banner-badge {
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #FFFFFF;
+    background-color: #DC0000;
+    border-radius: 2px;
+}
+
+.banner-score {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 700;
+    text-align: right;
+}
+
+/* 점수 색상 */
+.score-positive {
+    color: #DC0000;
+}
+
+.score-negative {
+    color: #0046B4;
+}
+
+.score-learning {
+    color: #2563EB;
+}
+
+/* 랭킹 콘텐츠 */
+.ranking-page-content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .ranking-page-header {
+        padding: 24px 16px;
+    }
+
+    .ranking-page-title {
+        font-size: 24px;
+    }
+
+    .ranking-page-desc {
+        font-size: 14px;
+    }
+
+    .ranking-tab {
+        padding: 14px 16px;
+        font-size: 14px;
+    }
+
+    .my-ranking-banner {
+        padding: 14px 16px;
+    }
+
+    .banner-content {
+        gap: 8px;
+    }
+
+    .banner-rank {
+        font-size: 16px;
+        min-width: 60px;
+    }
+
+    .banner-nickname {
+        font-size: 14px;
+    }
+
+    .banner-score {
+        font-size: 14px;
+    }
+}
