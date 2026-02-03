@@ -62,5 +62,11 @@ public class Room {
         return this.currentMemberCount != null && this.currentMemberCount <= 0;
     }
 
-
+    /**
+     * ✅ OpenVidu Session ID 업데이트
+     * 세션이 재생성되었을 때 DB에도 새 Session ID를 반영
+     */
+    public void updateOpenViduSessionId(String newSessionId) {
+        this.openviduSessionId = newSessionId;
+    }
 }
