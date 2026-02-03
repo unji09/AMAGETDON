@@ -63,12 +63,12 @@ public enum ErrorCode {
     STOCK_INFO_NOT_FOUND("주식 정보를 찾을 수 없습니다."),
     NO_OWNED_STOCK("보유한 주식이 없습니다."),
     INSUFFICIENT_STOCK_QUANTITY("보유 수량이 부족합니다."),
+    MARKET_CLOSED("장 시간이 아닙니다. 거래 가능 시간: 09:00 ~ 15:30"),
 
     // Ranking
     RANKING_AGGREGATION_FAILED("랭킹 집계 중 오류가 발생했습니다."),
     USER_PROFIT_CALCULATION_FAILED("유저 수익 계산에 실패했습니다. UserId: %d"),
     LEARNING_RANKING_NOT_FOUND("학습 랭킹 정보를 찾을 수 없습니다."),
-
 
     // Watchlist
     WATCHLIST_ALREADY_EXISTS("이미 관심 종목으로 등록된 종목입니다."),
@@ -77,12 +77,16 @@ public enum ErrorCode {
     WATCHLIST_NOT_FOUND("관심 종목을 찾을 수 없습니다."),
     WATCHLIST_ACCESS_DENIED("본인의 관심 종목만 삭제할 수 있습니다."),
 
-    //Chart
+    // Chart
     WRONG_PERIOD("잘못된 기간입니다."),
 
-    //Stock
-    KEYWORD_TOO_SHORT("검색어는 2글자 이상 입력해주세요.")
-    ;
+    // Stock
+    KEYWORD_TOO_SHORT("검색어는 2글자 이상 입력해주세요."),
+
+    // ReviewNote
+    REVIEW_NOTE_NOT_FOUND("오답노트를 찾을 수 없습니다."),
+    REVIEW_NOTE_ACCESS_DENIED("본인의 오답노트만 삭제할 수 있습니다.");
+
 
     private final String message;
 

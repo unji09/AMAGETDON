@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalTime;
 
 import static com.amagetdon.achievement.entity.AchievementIdCode.*;
 import static com.amagetdon.common.ErrorCode.*;
@@ -29,6 +30,13 @@ import static com.amagetdon.common.ErrorCode.*;
 @Service
 @RequiredArgsConstructor
 public class TradingService {
+    private static final LocalTime MARKET_OPEN = LocalTime.of(9, 0);
+    private static final LocalTime MARKET_CLOSE = LocalTime.of(15, 30);
+    private static final int ONE_MINUTE = 1;
+    private static final String BIO_SECTOR_CODE = "0321";
+    private static final String METAL_SECTOR_CODE = "0324";
+    private static final String SEMICONDUCTOR_SECTOR_CODE = "032601";
+
     private final UserRepository userRepository;
     private final StockRepository stockRepository;
     private final StockPriceRepository stockPriceRepository;
@@ -48,6 +56,9 @@ public class TradingService {
     }
 
     private TradingResponse executeTrade(Long userId, TradingRequest request, TransactionType type) {
+        // 장 시간 확인
+        validateMarketHours();
+
         // 사용자 및 주식 정보 조회
         User user = findUser(userId);
         Stock stock = findStock(request.stockCode());
@@ -70,6 +81,13 @@ public class TradingService {
         checkAchievements(userId, user, stock, type);
 
         return TradingResponse.of(transaction, user.getBalance());
+    }
+
+    private void validateMarketHours() {
+        LocalTime now = LocalTime.now();
+        if (now.isBefore(MARKET_OPEN) || now.isAfter(MARKET_CLOSE)) {
+            throw new IllegalStateException(MARKET_CLOSED.getMessage());
+        }
     }
 
     private void processBuy(User user, Stock stock, TradingRequest request, Integer currentPrice, Long netAmount) {
@@ -181,32 +199,41 @@ public class TradingService {
     }
 
     private void checkTimingAchievements(Long userId) {
-        if (achievementRedisRepository.setFlagIfAbsent(userId, "is_early_bought")) {
-            achievementService.checkAndAwardAchievements(userId, 1L, OPEN_RUN);
+        LocalTime now = LocalTime.now();
+
+        // OPEN_RUN: 9:00 ~ 9:01
+        if (isTimeBetween(now, MARKET_OPEN, MARKET_OPEN.plusMinutes(ONE_MINUTE))) {
+            if (achievementRedisRepository.setFlagIfAbsent(userId, "is_early_bought")) {
+                achievementService.checkAndAwardAchievements(userId, 1L, OPEN_RUN);
+            }
         }
 
-        if (achievementRedisRepository.setFlagIfAbsent(userId, "is_late_bought")) {
-            achievementService.checkAndAwardAchievements(userId, 1L, BUZZER_BEATER);
+        // BUZZER_BEATER: 15:29 ~ 15:30
+        if (isTimeBetween(now, MARKET_CLOSE.minusMinutes(ONE_MINUTE), MARKET_CLOSE)) {
+            if (achievementRedisRepository.setFlagIfAbsent(userId, "is_late_bought")) {
+                achievementService.checkAndAwardAchievements(userId, 1L, BUZZER_BEATER);
+            }
         }
+    }
+
+    private boolean isTimeBetween(LocalTime current, LocalTime start, LocalTime end) {
+        return !current.isBefore(start) && !current.isAfter(end);
     }
 
     private void checkSectorAchievements(Long userId, Stock stock) {
         String sectorCode = stock.getSector().getSectorCode();
 
-        // 바이오/의료 (0321xx)
-        if (sectorCode.startsWith("0321")) {
+        if (sectorCode.startsWith(BIO_SECTOR_CODE)) {
             long bioCount = achievementRedisRepository.increment(userId, "bio_count");
             achievementService.checkAndAwardAchievements(userId, bioCount, PHARMACIST);
         }
 
-        // 철강 (0324xx)
-        if (sectorCode.startsWith("0324")) {
+        if (sectorCode.startsWith(METAL_SECTOR_CODE)) {
             long steelCount = achievementRedisRepository.increment(userId, "steel_count");
             achievementService.checkAndAwardAchievements(userId, steelCount, IRON_MAN);
         }
 
-        // 반도체 (032601)
-        if (sectorCode.equals("032601")) {
+        if (sectorCode.equals(SEMICONDUCTOR_SECTOR_CODE)) {
             long chipCount = achievementRedisRepository.increment(userId, "chip_count");
             achievementService.checkAndAwardAchievements(userId, chipCount, KOREA_CHIP);
         }
