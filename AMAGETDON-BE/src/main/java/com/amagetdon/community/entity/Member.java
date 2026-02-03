@@ -7,14 +7,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
-
 @Entity
 @Table(name = "members",
-uniqueConstraints = {
-        @UniqueConstraint(
-                name = "uk_member_user_active",
-                columnNames = {"userId", "isActive"})},
-indexes = {@Index(name = "idx_member_room_user_active", columnList = "roomId, userId, isActive")})
+        indexes = {@Index(name = "idx_member_room_user_active", columnList = "roomId, userId, isActive")})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -40,10 +35,4 @@ public class Member {
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime joinedAt;
-
-    // 그룹 멤버가 맞는지 아닌지 활성화 하기 위해
-    public void deactivate() {
-        this.isActive = false;
-    }
-
 }

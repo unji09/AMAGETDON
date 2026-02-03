@@ -24,7 +24,6 @@ public class Room {
     @Column(nullable = false)
     private Long ownerId;
 
-    //그룹명
     @Column(nullable = false, length = 50)
     private String name;
 
@@ -44,7 +43,7 @@ public class Room {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(length = 100, nullable = true)
+    @Column(length = 100)
     private String openviduSessionId;
 
     public void incrementCurrentMemberCount() {
@@ -52,15 +51,16 @@ public class Room {
     }
 
     public void decrementCurrentMemberCount() {
-        if(this.currentMemberCount > 0) {
+        if (this.currentMemberCount > 0) {
             this.currentMemberCount--;
         }
     }
 
-    // 0명이 되면 방이 삭제 되는 로직이 필요하여 추가
     public boolean isEmpty() {
         return this.currentMemberCount != null && this.currentMemberCount <= 0;
     }
 
-
+    public void updateOpenViduSessionId(String newSessionId) {
+        this.openviduSessionId = newSessionId;
+    }
 }

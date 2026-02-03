@@ -22,11 +22,9 @@ const apiClient: AxiosInstance = axios.create({
 apiClient.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
         const token = localStorage.getItem('accessToken');
-
         if (token && config.headers) {
             config.headers.Authorization = `Bearer ${token}`;
         }
-
         return config;
     },
     (error: AxiosError) => {
