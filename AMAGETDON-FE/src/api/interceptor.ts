@@ -42,9 +42,15 @@ const handleLogout = async () => {
     window.location.href = '/login'
 }
 
+console.log('[Interceptor] 등록됨')
+
 apiClient.interceptors.response.use(
-    response => response,
+    response => {
+        console.log('[Interceptor] 응답 성공:', response.config.url, response.status)
+        return response
+    },
     async (error: AxiosError) => {
+        console.log('[Interceptor] 응답 에러:', error.config?.url, error.response?.status)
         const originalRequest = error.config as typeof error.config & { _retry?: boolean }
 
         // 로그인/회원가입/토큰갱신/로그아웃 요청은 401 자동 처리 제외
@@ -53,6 +59,7 @@ apiClient.interceptors.response.use(
         }
 
         if (error.response?.status === 401 && !originalRequest?._retry) {
+            console.log('[Interceptor] 401 감지, refresh 시도...', originalRequest?.url)
             originalRequest._retry = true
 
             // 이미 갱신 중이면 큐에 추가
@@ -66,7 +73,9 @@ apiClient.interceptors.response.use(
 
             try {
                 // RefreshToken은 HttpOnly 쿠키로 자동 전송 (withCredentials: true)
+                console.log('[Interceptor] /auth/refresh 호출 시작')
                 const response = await apiClient.post<RefreshResponse>('/auth/refresh')
+                console.log('[Interceptor] refresh 성공:', response.data)
 
                 // 새 AccessToken 저장
                 const { accessToken } = response.data
@@ -82,6 +91,7 @@ apiClient.interceptors.response.use(
                 return apiClient(originalRequest)
 
             } catch (refreshError) {
+                console.log('[Interceptor] refresh 실패:', refreshError)
                 // 갱신 실패 시 대기 중인 요청들도 reject
                 processQueue(refreshError)
                 // 로그아웃 처리

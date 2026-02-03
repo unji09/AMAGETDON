@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
-import { getMyInfo, type UserInfo } from '../api/userApi'
-import { logoutApi } from '@/features/auth/api/authApi'
+import { getMyInfo, type UserInfo } from '../../../api/userApi.ts'
+import { logoutApi } from '@/api/authApi.ts'
 
 export const useAuthUser = () => {
     const [user, setUser] = useState<UserInfo | null>(null)

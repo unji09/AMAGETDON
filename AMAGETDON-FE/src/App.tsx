@@ -4,7 +4,6 @@ import { HomePage } from '@/pages/HomePage';
 import { CommunityPage } from '@/pages/CommunityPage';
 import { RankingPage } from '@/pages/RankingPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
-import { LoginPage } from "@/pages/LoginPage.tsx";
 import LoginPage from "@/pages/LoginPage.tsx";
 import OAuthKakaoCallback from "./pages/OAuthKakaoCallback";
 import { LearningPage } from '@/pages/LearningPage';

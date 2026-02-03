@@ -1,6 +1,6 @@
 // src/features/auth/hooks/usePasswordReset.ts
 import { useState } from 'react'
-import { requestPasswordReset } from '../api/passwordApi'
+import { requestPasswordReset } from '../../../api/passwordApi.ts'
 
 export const usePasswordReset = () => {
     const [loading, setLoading] = useState(false)

@@ -1,7 +1,7 @@
 // src/features/auth/hooks/useSignup.ts
 import { useState } from 'react'
 import { AxiosError } from 'axios'
-import { signupApi } from '../api/authApi'
+import { signupApi } from '../../../api/authApi.ts'
 import type { SignupRequest, AuthLoginResponse } from "@/features/auth/types/auth.types.ts"
 
 export const useSignup = () => {

@@ -84,17 +84,17 @@ public class AuthController {
                 .body("회원 탈퇴가 완료되었습니다.");
     }
 
-    @PostMapping("/refresh")
-    public ResponseEntity<?> refresh(@CookieValue(value = "refreshToken", required = false) String refreshToken) {
-        if (refreshToken == null || refreshToken.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("리프레시 토큰이 없습니다.");
-        }
+        @PostMapping("/refresh")
+        public ResponseEntity<?> refresh(@CookieValue(value = "refreshToken", required = false) String refreshToken) {
+            if (refreshToken == null || refreshToken.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("리프레시 토큰이 없습니다.");
+            }
 
-        TokenResponse tokenResponse = authService.refresh(refreshToken);
+            TokenResponse tokenResponse = authService.refresh(refreshToken);
 
-        ResponseCookie newRefreshTokenCookie = refreshTokenService.createRefreshTokenCookie(tokenResponse.refreshToken());
+            ResponseCookie newRefreshTokenCookie = refreshTokenService.createRefreshTokenCookie(tokenResponse.refreshToken());
 
-        return ResponseEntity.ok()
+            return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, newRefreshTokenCookie.toString())
                 .body(AuthLoginResponse.builder()
                 .accessToken(tokenResponse.accessToken())

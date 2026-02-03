@@ -1,5 +1,5 @@
 import apiClient from "@/api/client.ts";
-import type {LoginRequest, SignupRequest, AuthLoginResponse} from '../types/auth.types'
+import type {LoginRequest, SignupRequest, AuthLoginResponse} from '../features/auth/types/auth.types.ts'
 
 export const loginApi = (data: LoginRequest) =>
     apiClient.post<AuthLoginResponse>('/auth/login', data)

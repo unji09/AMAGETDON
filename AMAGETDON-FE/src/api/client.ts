@@ -5,8 +5,8 @@
 import axios from 'axios';
 import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
-// API Base URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
+// API Base URL - 개발환경에서는 Vite 프록시 사용 (same-origin으로 쿠키 전송)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 // Axios 인스턴스 생성
 const apiClient: AxiosInstance = axios.create({

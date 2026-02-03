@@ -1,6 +1,6 @@
 // src/features/auth/hooks/useLogin.ts
 import { useState } from 'react'
-import { loginApi, logoutApi } from '../api/authApi'
+import { loginApi, logoutApi } from '../../../api/authApi.ts'
 import type { LoginRequest, AuthLoginResponse } from '@/features/auth/types/auth.types'
 import { AxiosError } from 'axios'
 

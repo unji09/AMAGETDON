@@ -66,6 +66,7 @@ public class AuthService {
     }
 
     public TokenResponse refresh(String refreshTokenFromCookie) {
+        System.out.println("여기는 오니?");
         // 1. Refresh Token 검증 및 유저 ID 추출 (검증 실패 시 여기서 예외 발생)
         String userIdStr = refreshTokenService.validateAndExtractUserId(refreshTokenFromCookie);
         Long userId = Long.parseLong(userIdStr);
