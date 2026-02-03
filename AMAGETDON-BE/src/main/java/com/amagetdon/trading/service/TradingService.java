@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalTime;
 
 import static com.amagetdon.achievement.entity.AchievementIdCode.*;
 import static com.amagetdon.common.ErrorCode.*;
@@ -181,13 +182,25 @@ public class TradingService {
     }
 
     private void checkTimingAchievements(Long userId) {
-        if (achievementRedisRepository.setFlagIfAbsent(userId, "is_early_bought")) {
-            achievementService.checkAndAwardAchievements(userId, 1L, OPEN_RUN);
+        LocalTime now = LocalTime.now();
+
+        // OPEN_RUN
+        if (isTimeBetween(now, LocalTime.of(9, 0), LocalTime.of(9, 1))) {
+            if (achievementRedisRepository.setFlagIfAbsent(userId, "is_early_bought")) {
+                achievementService.checkAndAwardAchievements(userId, 1L, OPEN_RUN);
+            }
         }
 
-        if (achievementRedisRepository.setFlagIfAbsent(userId, "is_late_bought")) {
-            achievementService.checkAndAwardAchievements(userId, 1L, BUZZER_BEATER);
+        // BUZZER_BEATER
+        if (isTimeBetween(now, LocalTime.of(15, 29), LocalTime.of(15, 30))) {
+            if (achievementRedisRepository.setFlagIfAbsent(userId, "is_late_bought")) {
+                achievementService.checkAndAwardAchievements(userId, 1L, BUZZER_BEATER);
+            }
         }
+    }
+
+    private boolean isTimeBetween(LocalTime current, LocalTime start, LocalTime end) {
+        return !current.isBefore(start) && !current.isAfter(end);
     }
 
     private void checkSectorAchievements(Long userId, Stock stock) {
