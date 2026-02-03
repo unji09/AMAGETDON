@@ -1,5 +1,5 @@
 import { Button } from '@/components/common';
-import { Party } from 'lucide-react';
+import { PartyPopper } from 'lucide-react';
 import './QuizCelebration.css';
 
 interface QuizCelebrationProps {
