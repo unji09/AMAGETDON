@@ -224,6 +224,7 @@
     background: linear-gradient(135deg, #ffd93d 0%, #f9c80e 100%);
     border: none;
     border-radius: 12px;
+    transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
     font-size: 16px;
     font-weight: 700;
     color: #282828;
@@ -240,7 +241,8 @@
 
 .home-cta-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(249, 200, 14, 0.4);
+    filter: brightness(1.15);
+    box-shadow: 0 8px 28px rgba(249, 200, 14, 0.55);
 }
 
 /* Stats Grid */

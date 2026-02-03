@@ -14,6 +14,7 @@ import SignupPage from "@/pages/SignupPage.tsx";
 import PasswordResetPage from "@/pages/PasswordResetPage.tsx";
 import MyInfoPage from "@/pages/MyInfoPage.tsx";
 import SurveyPage from "@/pages/SurveyPage.tsx";
+import { DailyQuizPage } from '@/features/learning/components/quiz/DailyQuizPage';
 import '@/api/interceptor'
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
                     <Route path="/password-reset" element={<PasswordResetPage />} />
                     <Route path="/mypage" element={<MyInfoPage />} />
                     <Route path="/survey" element={<SurveyPage />} />
+                    <Route path="/daily-quiz" element={<DailyQuizPage />} />
                     <Route path="*" element={<NotFoundPage />} />
                 </Routes>
             </BrowserRouter>

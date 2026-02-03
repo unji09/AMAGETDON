@@ -7,11 +7,14 @@ export const HomeContent = () => {
     const {
         userData,
         achievements,
+        progressData,
         loading,
         quizStreak,
         navigateToMyInfo,
         navigateToRanking,
         navigateToAchievement,
+        navigateToDailyQuiz,
+        navigateToLearning,
     } = useHome()
 
     if (loading || !userData) {
@@ -67,9 +70,9 @@ export const HomeContent = () => {
                     <div className="home-stats-balance">
                         {formatBalance(userData.balance)} <span className="home-stats-unit">GM</span>
                     </div>
-                    <div className="home-stats-change negative">
-                        <span>↓</span> -23.7%
-                    </div>
+                    {/*<div className="home-stats-change negative">*/}
+                    {/*    <span>↓</span> -23.7%*/}
+                    {/*</div>*/}
                 </div>
             </div>
 
@@ -90,7 +93,10 @@ export const HomeContent = () => {
                     </div>
                 </div>
 
-                <button className="home-cta-button cta-button">
+                <button
+                    className="home-cta-button cta-button"
+                    onClick={navigateToDailyQuiz}
+                >
                     🔥 무한 퀴즈 지옥 입장하기 →
                 </button>
             </div>
@@ -98,24 +104,34 @@ export const HomeContent = () => {
             {/* Stats Grid */}
             <div className="home-stats-grid">
                 {/* 커리큘럼 Card */}
-                <div className="home-curriculum-card card-hover">
+                <div
+                    className="home-curriculum-card card-hover"
+                    onClick={navigateToLearning}
+                    style={{ cursor: 'pointer' }}
+                >
                     <div className="home-card-header">
                         <div className="home-card-title">
                             <span>📚</span>
                             <h4>커리큘럼</h4>
                         </div>
-                        <span className="home-achievement-badge">90% 달성</span>
+                        <span className="home-achievement-badge">
+                            {progressData ? `${progressData.percentage}% 달성` : '로딩중...'}
+                        </span>
                     </div>
 
                     <div className="home-curriculum-content">
                         <div className="home-curriculum-icon">📊</div>
                         <div className="home-curriculum-info">
-                            <div className="home-curriculum-name">주식 기초 다지기</div>
-                            <div className="home-curriculum-chapter">Chapter 2 / 10</div>
+                            <div className="home-curriculum-name">
+                                {progressData?.nextChapter?.chapterTitle ?? '모든 학습 완료!'}
+                            </div>
+                            <div className="home-curriculum-chapter">
+                                Chapter {progressData?.completedChapters ?? 0} / {progressData?.totalChapters ?? 0}
+                            </div>
                             <div className="home-progress-bar">
                                 <div
                                     className="home-progress-fill progress-fill"
-                                    style={{ width: '20%' }}
+                                    style={{ width: `${progressData?.percentage ?? 0}%` }}
                                 />
                             </div>
                         </div>
