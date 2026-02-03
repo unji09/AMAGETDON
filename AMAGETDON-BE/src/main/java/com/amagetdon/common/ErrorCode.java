@@ -23,6 +23,7 @@ public enum ErrorCode {
     // User
     USER_NOT_FOUND("회원을 찾을 수 없습니다. UserId: %d"),
     USER_NOT_FOUND_SIMPLE("회원을 찾을 수 없습니다."),
+    INSUFFICIENT_BALANCE("잔액이 부족합니다."),
 
     // Token
     TOKEN_EXPIRED("토큰이 만료되었습니다. 새로운 토큰을 재발급 받으세요."),
@@ -64,6 +65,7 @@ public enum ErrorCode {
     NO_OWNED_STOCK("보유한 주식이 없습니다."),
     INSUFFICIENT_STOCK_QUANTITY("보유 수량이 부족합니다."),
     MARKET_CLOSED("장 시간이 아닙니다. 거래 가능 시간: 09:00 ~ 15:30"),
+    INVALID_QUANTITY("거래 수량은 1 이상이어야 합니다."),
 
     // Ranking
     RANKING_AGGREGATION_FAILED("랭킹 집계 중 오류가 발생했습니다."),
@@ -76,6 +78,7 @@ public enum ErrorCode {
     STOCK_CODE_REQUIRED("종목 코드는 필수입니다."),
     WATCHLIST_NOT_FOUND("관심 종목을 찾을 수 없습니다."),
     WATCHLIST_ACCESS_DENIED("본인의 관심 종목만 삭제할 수 있습니다."),
+    INVALID_STOCK_CODE_FORMAT("잘못된 주식 코드 형식입니다. 6자리 숫자를 입력해주세요."),
 
     // Chart
     WRONG_PERIOD("잘못된 기간입니다."),

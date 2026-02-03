@@ -19,6 +19,7 @@ import com.amagetdon.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -33,6 +34,7 @@ public class TradingService {
     private static final LocalTime MARKET_OPEN = LocalTime.of(9, 0);
     private static final LocalTime MARKET_CLOSE = LocalTime.of(15, 30);
     private static final int ONE_MINUTE = 1;
+    private static final int MIN_QUANTITY = 1;
     private static final String BIO_SECTOR_CODE = "0321";
     private static final String METAL_SECTOR_CODE = "0324";
     private static final String SEMICONDUCTOR_SECTOR_CODE = "032601";
@@ -56,8 +58,10 @@ public class TradingService {
     }
 
     private TradingResponse executeTrade(Long userId, TradingRequest request, TransactionType type) {
-        // 장 시간 확인
+        // 기본 검증
         validateMarketHours();
+        validateQuantity(request.quantity());
+        validateStockCode(request.stockCode());
 
         // 사용자 및 주식 정보 조회
         User user = findUser(userId);
@@ -87,6 +91,22 @@ public class TradingService {
         LocalTime now = LocalTime.now();
         if (now.isBefore(MARKET_OPEN) || now.isAfter(MARKET_CLOSE)) {
             throw new IllegalStateException(MARKET_CLOSED.getMessage());
+        }
+    }
+
+    private void validateQuantity(Integer quantity) {
+        if (quantity == null || quantity < MIN_QUANTITY) {
+            throw new IllegalArgumentException(INVALID_QUANTITY.getMessage());
+        }
+    }
+
+    private void validateStockCode(String stockCode) {
+        if (!StringUtils.hasText(stockCode)) {
+            throw new IllegalArgumentException(INVALID_INPUT.getMessage());
+        }
+
+        if (!stockCode.matches("\\d{6}")) {
+            throw new IllegalArgumentException(INVALID_STOCK_CODE_FORMAT.getMessage());
         }
     }
 

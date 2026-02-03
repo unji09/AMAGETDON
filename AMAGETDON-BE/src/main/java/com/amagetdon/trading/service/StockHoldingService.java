@@ -67,14 +67,14 @@ public class StockHoldingService {
     }
 
     private StockHoldingItemResponse convertToItem(StockHolding holding) {
-        StockPrice latestPrice = getLatestStockPrice(holding);
+        StockPrice latestPrice = getCurrentPrice(holding);
         Integer currentPrice = Integer.parseInt(latestPrice.getCurrentPrice());
         BigDecimal changeRate = latestPrice.getChangeRate();
 
         return StockHoldingItemResponse.from(holding, currentPrice, changeRate);
     }
 
-    private StockPrice getLatestStockPrice(StockHolding holding) {
+    private StockPrice getCurrentPrice(StockHolding holding) {
         return stockPriceRepository
                 .findTopByStockOrderByCreatedAtDesc(holding.getStock())
                 .orElseThrow(() -> new IllegalStateException(PRICE_NOT_AVAILABLE.getMessage()));
