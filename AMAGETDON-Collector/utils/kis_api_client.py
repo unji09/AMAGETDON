@@ -714,27 +714,77 @@ class KISApiClient:
         return results
         
     #거래량순위
-    async def fetch_from_api(self, max_retries: int = 3) -> List[str]:
+    # async def fetch_condition_list(self, max_retries: int = 3) -> List[dict]:
+    #     """종목조건검색 목록 조회 - 등록된 조건식 seq 목록 반환"""
+        
+    #     async def _fetch():
+    #         await self.limiter.acquire()
+
+    #         url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/psearch-title"
+            
+    #         headers = self._get_headers("HHKST03910200", use_candle_api=True)
+    #         headers["custtype"] = "P"
+            
+    #         params = {
+    #             "user_id": os.getenv("KIS_HTS_ID", "")
+    #         }
+
+    #         session = await self._get_session()
+    #         async with session.get(url, headers=headers, params=params) as response:
+    #             data = await response.json()
+
+    #         if data.get("rt_cd") != "0" and "token" in data.get("msg1", "").lower():
+    #             logger.info("토큰 만료 - 갱신 후 재시도")
+    #             self.token_manager.refresh_token("candle")
+    #             headers_new = self._get_headers("HHKST03910200", use_candle_api=True)
+    #             headers_new["custtype"] = "P"
+    #             async with session.get(url, headers=headers_new, params=params) as retry_response:
+    #                 data = await retry_response.json()
+
+    #         if is_api_error(data):
+    #             raise ConnectionError(f"API 오류: rt_cd={data.get('rt_cd')}, msg={data.get('msg1')}")
+
+    #         if data.get("rt_cd") == "0":
+    #             outputs = data.get("output2", [])
+    #             conditions = [
+    #                 {"seq": item.get("seq"), "name": item.get("condition_nm")}
+    #                 for item in outputs
+    #             ]
+    #             logger.info(f"종목조건검색 목록 조회 성공: {len(conditions)}개")
+    #             return conditions
+    #         else:
+    #             logger.error(f"종목조건검색 목록 조회 실패: {data.get('msg1')}")
+    #             return []
+
+    #     result, retry_count = await retry_on_failure(
+    #         _fetch,
+    #         max_retries=max_retries,
+    #         context="종목조건검색 목록 조회"
+    #     )
+    #     return result if result else []
+
+    #종목조건검색조회 (5분마다 호출, 외부 limiter 지원)
+    async def fetch_condition_search(
+        self,
+        seq: str,
+        limiter: Optional['HardRateLimiter'] = None,
+        max_retries: int = 3
+    ) -> List[str]:
+        """종목조건검색 조회 - 조건에 맞는 종목 코드 목록 반환 (최대 100개)"""
+        
+        use_limiter = limiter or self.limiter
 
         async def _fetch():
-            await self.limiter.acquire()
+            await use_limiter.acquire()
 
-            url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/volume-rank"
-
-            headers = self._get_headers("FHPST01710000", use_candle_api=True)
-
+            url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/psearch-result"
+            
+            headers = self._get_headers("HHKST03900400", use_candle_api=True)
+            headers["custtype"] = "P"
+            
             params = {
-                "FID_COND_MRKT_DIV_CODE": "J",
-                "FID_COND_SCR_DIV_CODE": "20171",
-                "FID_INPUT_ISCD": "0000",
-                "FID_DIV_CLS_CODE": "0",
-                "FID_BLNG_CLS_CODE": "0",
-                "FID_TRGT_CLS_CODE": "111111111",
-                "FID_TRGT_EXLS_CLS_CODE": "0001110111",
-                "FID_INPUT_PRICE_1": "",
-                "FID_INPUT_PRICE_2": "",
-                "FID_VOL_CNT": "",
-                "FID_INPUT_DATE_1": ""
+                "user_id": os.getenv("KIS_HTS_ID", ""),
+                "seq": "0"
             }
 
             session = await self._get_session()
@@ -744,7 +794,8 @@ class KISApiClient:
             if data.get("rt_cd") != "0" and "token" in data.get("msg1", "").lower():
                 logger.info("토큰 만료 - 갱신 후 재시도")
                 self.token_manager.refresh_token("candle")
-                headers_new = self._get_headers("FHPST01710000", use_candle_api=True)
+                headers_new = self._get_headers("HHKST03910300", use_candle_api=True)
+                headers_new["custtype"] = "P"
                 async with session.get(url, headers=headers_new, params=params) as retry_response:
                     data = await retry_response.json()
 
@@ -752,16 +803,18 @@ class KISApiClient:
                 raise ConnectionError(f"API 오류: rt_cd={data.get('rt_cd')}, msg={data.get('msg1')}")
 
             if data.get("rt_cd") == "0":
-                outputs = data.get("output", [])
-                stock_codes = [item['mksc_shrn_iscd'] for item in outputs]
-                logger.info(f"거래량 순위 조회 성공: {len(stock_codes)}개")
+                outputs = data.get("output2", [])
+                # 순서 유지하면서 종목코드만 추출
+                stock_codes = [item.get("code") for item in outputs if item.get("code")]
+                logger.info(f"종목조건검색 조회 성공: {len(stock_codes)}개")
                 return stock_codes
             else:
+                logger.error(f"종목조건검색 조회 실패: {data.get('msg1')}")
                 return []
 
         result, retry_count = await retry_on_failure(
             _fetch,
             max_retries=max_retries,
-            context="거래량 순위 조회"
+            context=f"종목조건검색 조회 (seq={seq})"
         )
         return result if result else []

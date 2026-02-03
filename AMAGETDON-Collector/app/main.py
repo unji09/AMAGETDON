@@ -18,6 +18,7 @@ from utils.logger import logger
 from utils.market_hours import is_market_open
 from utils.kis_api_client import KISApiClient
 from collector.realtime_candle_builder import RealtimeCandleBuilder
+from utils.rate_limiter import HardRateLimiter
 
 token_manager = None
 ws_collector = None
@@ -27,6 +28,7 @@ rest_candle_builder = None
 collection_active = False
 rest_loop_task = None
 candle_loop_task = None
+shared_limiter = None 
 
 #서버 시작 시 초기화(종목/업종 파싱, 30분봉/일봉/주봉 수집)
 async def check_and_initialize(rate_limit: int = 18):
@@ -99,10 +101,13 @@ async def run_rest_collection_loop():
     from utils.db import get_db_connection, save_stock_price
     from config.config import REDIS_KEYS
 
-    global collection_active, token_manager, rest_candle_builder
+    global collection_active, token_manager, rest_candle_builder, shared_limiter
 
     api_client = KISApiClient(token_manager)
-    limiter = HardRateLimiter(18)
+    
+    # 공유 limiter 사용 (전역 shared_limiter)
+    limiter = shared_limiter
+    
     rest_candle_builder = RealtimeCandleBuilder()
 
     connector = aiohttp.TCPConnector(limit=18)
@@ -264,7 +269,7 @@ async def fill_new_user_stocks(new_stocks: list, token_manager):
 
 #주식 시장 시작 호출(websocket/rest 수집 시작)
 async def start_collection():
-    global token_manager, ws_collector, volume_tracker
+    global token_manager, ws_collector, volume_tracker, shared_limiter
     global collection_active, rest_loop_task, candle_loop_task
 
     if collection_active:
@@ -274,10 +279,17 @@ async def start_collection():
     logger.info("장 시작")
 
     token_manager = TokenManager.get_instance()
-    volume_tracker = VolumeTracker(token_manager)
+    
+    # 공유 rate limiter 생성 (1초에 18건, 여유있게)
+    shared_limiter = HardRateLimiter(18)
+    
+    # volume_tracker에 공유 limiter 전달
+    volume_tracker = VolumeTracker(token_manager, shared_limiter=shared_limiter)
+    
     ws_collector = WebSocketCollector(token_manager)
-
     ws_collector.connect()
+    
+    # 초기 종목조건검색 조회
     top_10_stocks = await volume_tracker.get_top_volume_stocks()
     if top_10_stocks:
         ws_collector.subscribe_stocks(top_10_stocks)
@@ -286,7 +298,6 @@ async def start_collection():
     collection_active = True
 
     rest_loop_task = asyncio.create_task(run_rest_collection_loop())
-
     candle_loop_task = asyncio.create_task(run_volume_rank_loop())
 
 #주식 시장 마감 호출(전체 종목 누락 업데이트)
