@@ -1,6 +1,7 @@
 import { Loading, Card, Button } from '@/components/common'
 import { ProfileField } from './ProfileField'
-import { MailIcon, LockIcon, UserIcon, TrendIcon, EyeIcon, EyeOffIcon } from './icons/ProfileIcons'
+import {EyeIcon, EyeOffIcon, LockIcon, MailIcon, UserIcon} from "lucide-react";
+import {TrendIcon} from "@/features/user";
 import { useMyInfo } from '@/features/user/hooks/useMyInfo'
 import './MyInfoForm.css'
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Button, Input, Card } from '@/components/common'
 import { useLogin } from '../hooks/login'
-import { KakaoLoginButton } from './KakaoLoginButton'
+import {KakaoLoginButton} from "@/features/auth";
 import './LoginForm.css'
 
 const ErrorIcon = () => (
