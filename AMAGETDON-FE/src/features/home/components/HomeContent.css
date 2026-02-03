@@ -224,7 +224,6 @@
     background: linear-gradient(135deg, #ffd93d 0%, #f9c80e 100%);
     border: none;
     border-radius: 12px;
-    transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
     font-size: 16px;
     font-weight: 700;
     color: #282828;
@@ -234,7 +233,6 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    transition: transform 0.2s, box-shadow 0.2s;
     position: relative;
     z-index: 1;
     transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
