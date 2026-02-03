@@ -7,11 +7,14 @@ export const HomeContent = () => {
     const {
         userData,
         achievements,
+        progressData,
         loading,
         quizStreak,
         navigateToMyInfo,
         navigateToRanking,
         navigateToAchievement,
+        navigateToDailyQuiz,
+        navigateToLearning,
     } = useHome()
 
     if (loading || !userData) {
@@ -67,9 +70,9 @@ export const HomeContent = () => {
                     <div className="home-stats-balance">
                         {formatBalance(userData.balance)} <span className="home-stats-unit">GM</span>
                     </div>
-                    <div className="home-stats-change negative">
-                        <span>↓</span> -23.7%
-                    </div>
+                    {/*<div className="home-stats-change negative">*/}
+                    {/*    <span>↓</span> -23.7%*/}
+                    {/*</div>*/}
                 </div>
             </div>
 
@@ -81,7 +84,7 @@ export const HomeContent = () => {
                 <div className="home-streak-content">
                     <h3 className="home-streak-title">
                         너 학습했니?<br />
-                        학습해야 돈 벌 수 있다
+                        학습해야 돈 벌 수 있단다
                     </h3>
 
                     <div className="home-streak-stats">
@@ -90,7 +93,10 @@ export const HomeContent = () => {
                     </div>
                 </div>
 
-                <button className="home-cta-button cta-button">
+                <button
+                    className="home-cta-button cta-button"
+                    onClick={navigateToDailyQuiz}
+                >
                     🔥 무한 퀴즈 지옥 입장하기 →
                 </button>
             </div>
@@ -98,24 +104,34 @@ export const HomeContent = () => {
             {/* Stats Grid */}
             <div className="home-stats-grid">
                 {/* 커리큘럼 Card */}
-                <div className="home-curriculum-card card-hover">
+                <div
+                    className="home-curriculum-card card-hover"
+                    onClick={navigateToLearning}
+                    style={{ cursor: 'pointer' }}
+                >
                     <div className="home-card-header">
                         <div className="home-card-title">
                             <span>📚</span>
                             <h4>커리큘럼</h4>
                         </div>
-                        <span className="home-achievement-badge">90% 달성</span>
+                        <span className="home-achievement-badge">
+                            {progressData ? `${progressData.percentage}% 달성` : '로딩중...'}
+                        </span>
                     </div>
 
                     <div className="home-curriculum-content">
                         <div className="home-curriculum-icon">📊</div>
                         <div className="home-curriculum-info">
-                            <div className="home-curriculum-name">주식 기초 다지기</div>
-                            <div className="home-curriculum-chapter">Chapter 2 / 10</div>
+                            <div className="home-curriculum-name">
+                                {progressData?.nextChapter?.chapterTitle ?? '모든 학습 완료!'}
+                            </div>
+                            <div className="home-curriculum-chapter">
+                                Chapter {progressData?.completedChapters ?? 0} / {progressData?.totalChapters ?? 0}
+                            </div>
                             <div className="home-progress-bar">
                                 <div
                                     className="home-progress-fill progress-fill"
-                                    style={{ '--progress-width': '20%', width: '20%' } as React.CSSProperties}
+                                    style={{ width: `${progressData?.percentage ?? 0}%` }}
                                 />
                             </div>
                         </div>
@@ -161,8 +177,8 @@ export const HomeContent = () => {
                     {achievements.slice(0, 7).map((achievement) => (
                         <div
                             key={achievement.achievementId}
-                            className={`home-achievement-item achievement-badge ${!achievement.isAchieved ? 'locked' : ''} tooltip`}
-                            data-tooltip={achievement.achievementName}
+                            className={`home-achievement-item achievement-badge ${!achievement.isAchieved ? 'locked' : 'tooltip'}`}
+                            {...(achievement.isAchieved && { 'data-tooltip': achievement.achievementName })}
                         >
                             {achievement.isAchieved && achievement.achievementIcon ? (
                                 <img

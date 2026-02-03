@@ -233,14 +233,15 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    transition: transform 0.2s, box-shadow 0.2s;
     position: relative;
     z-index: 1;
+    transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
 }
 
 .home-cta-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(249, 200, 14, 0.4);
+    filter: brightness(1.15);
+    box-shadow: 0 8px 28px rgba(249, 200, 14, 0.55);
 }
 
 /* Stats Grid */
@@ -540,17 +541,18 @@
 }
 
 /* Progress Bar Animation */
-@keyframes progressFill {
-    from {
-        width: 0;
-    }
-    to {
-        width: var(--progress-width, 100%);
-    }
-}
-
 .progress-fill {
     animation: progressFill 1.5s ease-out 0.5s backwards;
+    transform-origin: left;
+}
+
+@keyframes progressFill {
+    from {
+        transform: scaleX(0);
+    }
+    to {
+        transform: scaleX(1);
+    }
 }
 
 /* Streak Number Animation */
