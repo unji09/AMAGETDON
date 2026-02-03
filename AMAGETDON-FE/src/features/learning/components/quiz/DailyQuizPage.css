@@ -1,0 +1,77 @@
+/**
+ * DailyQuizPage 컴포넌트 스타일
+ */
+
+.daily-quiz-page {
+    min-height: 100vh;
+    background-color: #F8F8F8;
+    padding: var(--spacing-4);
+}
+
+.daily-quiz-page__content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: var(--spacing-4) 0;
+}
+
+/* 로딩 상태 */
+.daily-quiz-page__loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-medium);
+    color: #666;
+}
+
+/* 에러 상태 */
+.daily-quiz-page__error {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-4);
+    min-height: 400px;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    color: #C94A3A;
+}
+
+.daily-quiz-page__retry-btn {
+    padding: var(--spacing-2) var(--spacing-4);
+    background-color: #203C2E;
+    color: var(--color-white);
+    border: none;
+    border-radius: 8px;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.daily-quiz-page__retry-btn:hover {
+    background-color: #2a5240;
+}
+
+/* 퀴즈 없음 */
+.daily-quiz-page__empty {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-medium);
+    color: #666;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .daily-quiz-page {
+        padding: var(--spacing-3);
+    }
+
+    .daily-quiz-page__content {
+        padding: var(--spacing-3) 0;
+    }
+}
