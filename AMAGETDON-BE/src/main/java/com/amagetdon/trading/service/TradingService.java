@@ -32,6 +32,10 @@ import static com.amagetdon.common.ErrorCode.*;
 public class TradingService {
     private static final LocalTime MARKET_OPEN = LocalTime.of(9, 0);
     private static final LocalTime MARKET_CLOSE = LocalTime.of(15, 30);
+    private static final int ONE_MINUTE = 1;
+    private static final String BIO_SECTOR_CODE = "0321";
+    private static final String METAL_SECTOR_CODE = "0324";
+    private static final String SEMICONDUCTOR_SECTOR_CODE = "032601";
 
     private final UserRepository userRepository;
     private final StockRepository stockRepository;
@@ -197,14 +201,14 @@ public class TradingService {
         LocalTime now = LocalTime.now();
 
         // OPEN_RUN: 9:00 ~ 9:01
-        if (isTimeBetween(now, LocalTime.of(9, 0), LocalTime.of(9, 1))) {
+        if (isTimeBetween(now, MARKET_OPEN, MARKET_OPEN.plusMinutes(ONE_MINUTE))) {
             if (achievementRedisRepository.setFlagIfAbsent(userId, "is_early_bought")) {
                 achievementService.checkAndAwardAchievements(userId, 1L, OPEN_RUN);
             }
         }
 
         // BUZZER_BEATER: 15:29 ~ 15:30
-        if (isTimeBetween(now, LocalTime.of(15, 29), LocalTime.of(15, 30))) {
+        if (isTimeBetween(now, MARKET_CLOSE.minusMinutes(ONE_MINUTE), MARKET_CLOSE)) {
             if (achievementRedisRepository.setFlagIfAbsent(userId, "is_late_bought")) {
                 achievementService.checkAndAwardAchievements(userId, 1L, BUZZER_BEATER);
             }
@@ -218,20 +222,17 @@ public class TradingService {
     private void checkSectorAchievements(Long userId, Stock stock) {
         String sectorCode = stock.getSector().getSectorCode();
 
-        // 바이오/의료 (0321xx)
-        if (sectorCode.startsWith("0321")) {
+        if (sectorCode.startsWith(BIO_SECTOR_CODE)) {
             long bioCount = achievementRedisRepository.increment(userId, "bio_count");
             achievementService.checkAndAwardAchievements(userId, bioCount, PHARMACIST);
         }
 
-        // 철강 (0324xx)
-        if (sectorCode.startsWith("0324")) {
+        if (sectorCode.startsWith(METAL_SECTOR_CODE)) {
             long steelCount = achievementRedisRepository.increment(userId, "steel_count");
             achievementService.checkAndAwardAchievements(userId, steelCount, IRON_MAN);
         }
 
-        // 반도체 (032601)
-        if (sectorCode.equals("032601")) {
+        if (sectorCode.equals(SEMICONDUCTOR_SECTOR_CODE)) {
             long chipCount = achievementRedisRepository.increment(userId, "chip_count");
             achievementService.checkAndAwardAchievements(userId, chipCount, KOREA_CHIP);
         }
