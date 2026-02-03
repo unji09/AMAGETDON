@@ -2,8 +2,8 @@ package com.amagetdon.trading.service;
 
 import com.amagetdon.stock.entity.StockPrice;
 import com.amagetdon.stock.repository.StockPriceRepository;
+import com.amagetdon.trading.dto.response.StockHoldingItemResponse;
 import com.amagetdon.trading.dto.response.StockHoldingResponse;
-import com.amagetdon.trading.dto.response.StockHoldingResponse.StockHoldingItem;
 import com.amagetdon.trading.entity.StockHolding;
 import com.amagetdon.trading.repository.AccountRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 
+import static com.amagetdon.common.ErrorCode.NO_OWNED_STOCK;
 import static com.amagetdon.common.ErrorCode.PRICE_NOT_AVAILABLE;
 
 @Service
@@ -26,7 +27,7 @@ public class StockHoldingService {
 
     public StockHoldingResponse getStockHoldings(Long userId, Pageable pageable) {
         Page<StockHolding> holdingsPage = accountRepository.findByStockHoldingIdUserId(userId, pageable);
-        List<StockHoldingItem> items = convertToItems(holdingsPage.getContent());
+        List<StockHoldingItemResponse> items = convertToItems(holdingsPage.getContent());
 
         return new StockHoldingResponse(
                 holdingsPage.getNumber(),
@@ -36,18 +37,26 @@ public class StockHoldingService {
         );
     }
 
-    private List<StockHoldingItem> convertToItems(List<StockHolding> holdings) {
+    public StockHoldingItemResponse getSingleStockHolding(Long userId, String stockCode) {
+        StockHolding holding = accountRepository
+                .findByStockHoldingIdUserIdAndStockHoldingIdStockCode(userId, stockCode)
+                .orElseThrow(() -> new IllegalArgumentException(NO_OWNED_STOCK.getMessage()));
+
+        return convertToItem(holding);
+    }
+
+    private List<StockHoldingItemResponse> convertToItems(List<StockHolding> holdings) {
         return holdings.stream()
                 .map(this::convertToItem)
                 .toList();
     }
 
-    private StockHoldingItem convertToItem(StockHolding holding) {
+    private StockHoldingItemResponse convertToItem(StockHolding holding) {
         StockPrice latestPrice = getLatestStockPrice(holding);
         Integer currentPrice = Integer.parseInt(latestPrice.getCurrentPrice());
         BigDecimal changeRate = latestPrice.getChangeRate();
 
-        return StockHoldingItem.from(holding, currentPrice, changeRate);
+        return StockHoldingItemResponse.from(holding, currentPrice, changeRate);
     }
 
     private StockPrice getLatestStockPrice(StockHolding holding) {
