@@ -177,8 +177,8 @@ export const HomeContent = () => {
                     {achievements.slice(0, 7).map((achievement) => (
                         <div
                             key={achievement.achievementId}
-                            className={`home-achievement-item achievement-badge ${!achievement.isAchieved ? 'locked' : ''} tooltip`}
-                            data-tooltip={achievement.achievementName}
+                            className={`home-achievement-item achievement-badge ${!achievement.isAchieved ? 'locked' : 'tooltip'}`}
+                            {...(achievement.isAchieved && { 'data-tooltip': achievement.achievementName })}
                         >
                             {achievement.isAchieved && achievement.achievementIcon ? (
                                 <img
