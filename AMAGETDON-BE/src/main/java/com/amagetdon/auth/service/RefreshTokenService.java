@@ -33,7 +33,7 @@ public class RefreshTokenService {
 
     public void saveRefreshToken(Long userID, String refreshToken) {
         redisTemplate.opsForValue()
-                .set(refreshKey(userID), refreshToken, jwtProperties.getRefreshTokenExpirationMs()/1000, TimeUnit.SECONDS);
+                .set(refreshKey(userID), refreshToken, jwtProperties.getRefreshTokenExpirationMs() / 1000, TimeUnit.SECONDS);
     }
 
     public String validateAndExtractUserId(String token) {
@@ -78,6 +78,7 @@ public class RefreshTokenService {
     }
 
     public ResponseCookie createRefreshTokenCookie(String refreshToken) {
+        System.out.println("그렇다면 여기니?");
         return ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
                 .secure(cookieSecure)

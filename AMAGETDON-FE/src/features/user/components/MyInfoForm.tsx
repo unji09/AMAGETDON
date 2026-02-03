@@ -25,6 +25,7 @@ export const MyInfoForm = () => {
         password,
         setPassword,
         investmentTypeLabel,
+        isSocialLogin,
         showPassword,
         togglePasswordVisibility,
         loading,
@@ -57,37 +58,63 @@ export const MyInfoForm = () => {
                 <Card padding="large" className="myinfo-card">
                     <h3 className="myinfo-title">프로필 정보</h3>
 
-                    <ProfileField
-                        icon={<MailIcon />}
-                        label="이메일"
-                        type="email"
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                    />
-
-                    <ProfileField
-                        icon={<LockIcon />}
-                        label="비밀번호"
-                        inputWrapper={
-                            <div className="myinfo-input-wrapper">
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    className="myinfo-input myinfo-input-with-icon"
-                                    value={password}
-                                    onChange={e => setPassword(e.target.value)}
-                                    placeholder="새 비밀번호 입력"
-                                />
-                                <button
-                                    type="button"
-                                    className="myinfo-password-toggle"
-                                    onClick={togglePasswordVisibility}
-                                    aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
-                                >
-                                    {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-                                </button>
-                            </div>
-                        }
-                    />
+                    {isSocialLogin ? (
+                        /* 소셜 로그인 (KAKAO) */
+                        <>
+                            <ProfileField
+                                icon={<MailIcon />}
+                                label="이메일"
+                                rightLabel="(소셜 로그인)"
+                                inputWrapper={
+                                    <div className="myinfo-social-badge">KAKAO</div>
+                                }
+                            />
+                            <ProfileField
+                                icon={<LockIcon />}
+                                label="비밀번호"
+                                rightLabel="(소셜 로그인)"
+                                inputWrapper={
+                                    <div className="myinfo-social-badge">
+                                        소셜 로그인은 비밀번호가 필요하지 않습니다
+                                    </div>
+                                }
+                            />
+                        </>
+                    ) : (
+                        /* 로컬 로그인 (LOCAL) */
+                        <>
+                            <ProfileField
+                                icon={<MailIcon />}
+                                label="이메일"
+                                type="email"
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                            />
+                            <ProfileField
+                                icon={<LockIcon />}
+                                label="비밀번호"
+                                inputWrapper={
+                                    <div className="myinfo-input-wrapper">
+                                        <input
+                                            type={showPassword ? 'text' : 'password'}
+                                            className="myinfo-input myinfo-input-with-icon"
+                                            value={password}
+                                            onChange={e => setPassword(e.target.value)}
+                                            placeholder="새로운 비밀번호를 입력해주세요"
+                                        />
+                                        <button
+                                            type="button"
+                                            className="myinfo-password-toggle"
+                                            onClick={togglePasswordVisibility}
+                                            aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
+                                        >
+                                            {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                                        </button>
+                                    </div>
+                                }
+                            />
+                        </>
+                    )}
 
                     <ProfileField
                         icon={<UserIcon />}

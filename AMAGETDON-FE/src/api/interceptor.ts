@@ -32,14 +32,18 @@ const isAuthEndpoint = (url?: string) =>
     AUTH_ENDPOINTS.some(endpoint => url?.includes(endpoint))
 
 // 로그아웃 처리 (토큰 삭제 + 백엔드 쿠키 삭제 요청)
-const handleLogout = async () => {
+const handleLogout = async (isSessionExpired = false) => {
+    console.log('[Interceptor] handleLogout 호출됨, isSessionExpired:', isSessionExpired)
     localStorage.removeItem('accessToken')
     try {
         await apiClient.post('/auth/logout')
     } catch {
         // 로그아웃 API 실패해도 무시 (이미 세션 무효)
     }
-    window.location.href = '/login'
+    // 세션 만료 시 URL 파라미터로 전달
+    const redirectUrl = isSessionExpired ? '/login?expired=true' : '/login'
+    console.log('[Interceptor] 리다이렉트:', redirectUrl)
+    window.location.href = redirectUrl
 }
 
 console.log('[Interceptor] 등록됨')
@@ -61,6 +65,14 @@ apiClient.interceptors.response.use(
         if (error.response?.status === 401 && !originalRequest?._retry) {
             console.log('[Interceptor] 401 감지, refresh 시도...', originalRequest?.url)
             originalRequest._retry = true
+
+            // 토큰이 없으면 로그인 안 된 상태 → 그냥 로그인으로 이동 (세션 만료 알림 없음)
+            const hasToken = !!localStorage.getItem('accessToken')
+            if (!hasToken) {
+                console.log('[Interceptor] 토큰 없음, 로그인 페이지로 이동')
+                window.location.href = '/login'
+                return Promise.reject(error)
+            }
 
             // 이미 갱신 중이면 큐에 추가
             if (isRefreshing) {
@@ -94,8 +106,8 @@ apiClient.interceptors.response.use(
                 console.log('[Interceptor] refresh 실패:', refreshError)
                 // 갱신 실패 시 대기 중인 요청들도 reject
                 processQueue(refreshError)
-                // 로그아웃 처리
-                await handleLogout()
+                // 로그아웃 처리 (세션 만료로 인한 로그아웃)
+                await handleLogout(true)
                 return Promise.reject(refreshError)
             } finally {
                 isRefreshing = false
