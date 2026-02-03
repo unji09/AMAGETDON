@@ -241,7 +241,7 @@ class CandleFiller:
     def _find_missing_5min_slots(self, stock_code: str, target_date: date) -> List[datetime]:
         self.connect_db()
         cursor = self.conn.cursor()
-        
+
         query = """
         SELECT candle_time
         FROM chart_candles
@@ -251,16 +251,27 @@ class CandleFiller:
         """
         cursor.execute(query, (stock_code, target_date))
         existing_5m = {row[0] for row in cursor.fetchall()}
-        
+
+        now = datetime.now()
+        today = now.date()
+
         expected_5m = []
         start = datetime(target_date.year, target_date.month, target_date.day, 9, 0)
-        end = datetime(target_date.year, target_date.month, target_date.day, 15, 30)
-        
+
+        # 오늘이면 현재 시간까지만, 과거면 15:25까지
+        if target_date == today:
+            if now.hour < 9:
+                return []  # 장 시작 전
+            # 현재 시간 기준 마지막 완료된 5분봉 슬롯
+            end = now.replace(second=0, microsecond=0)
+        else:
+            end = datetime(target_date.year, target_date.month, target_date.day, 15, 25)
+
         current = start
-        while current < end:
+        while current <= end:
             expected_5m.append(current)
             current += timedelta(minutes=5)
-        
+
         missing = [slot for slot in expected_5m if slot not in existing_5m]
         return missing
     
@@ -268,7 +279,7 @@ class CandleFiller:
     def _find_missing_30min_slots(self, stock_code: str, target_date: date) -> List[datetime]:
         self.connect_db()
         cursor = self.conn.cursor()
-        
+
         query = """
         SELECT candle_time
         FROM chart_candles
@@ -278,16 +289,27 @@ class CandleFiller:
         """
         cursor.execute(query, (stock_code, target_date))
         existing_30m = {row[0] for row in cursor.fetchall()}
-        
+
+        now = datetime.now()
+        today = now.date()
+
         expected_30m = []
         start = datetime(target_date.year, target_date.month, target_date.day, 9, 0)
-        end = datetime(target_date.year, target_date.month, target_date.day, 15, 30)
-        
+
+        # 오늘이면 현재 시간까지만, 과거면 15:00까지
+        if target_date == today:
+            if now.hour < 9:
+                return []  # 장 시작 전
+            # 현재 시간 기준 마지막 완료된 30분봉 슬롯
+            end = now.replace(second=0, microsecond=0)
+        else:
+            end = datetime(target_date.year, target_date.month, target_date.day, 15, 0)
+
         current = start
-        while current < end:
+        while current <= end:
             expected_30m.append(current)
             current += timedelta(minutes=30)
-        
+
         missing = [slot for slot in expected_30m if slot not in existing_30m]
         return missing
     

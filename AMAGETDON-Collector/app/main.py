@@ -183,9 +183,11 @@ async def run_rest_collection_loop():
     logger.info("REST 수집 루프 종료")
 
 
-# 거래량 순위 조회(5분마다) + 웹소켓 종목 누락 보정
+# 거래량 순위 조회(5분마다) + 새로 추가된 웹소켓 종목만 누락 보정
 async def run_volume_rank_loop():
     global collection_active, token_manager, ws_collector, volume_tracker
+
+    prev_top_stocks = set()
 
     while collection_active:
         try:
@@ -197,8 +199,12 @@ async def run_volume_rank_loop():
                 ws_collector.subscribe_stocks(top_stocks)
                 logger.info(f"거래량 TOP 구독 갱신: {len(top_stocks)}개")
 
-                # 웹소켓 구독 종목 누락 분봉 보정 (오늘 날짜만)
-                await fill_ws_missing_candles(top_stocks, token_manager)
+                # 새로 추가된 웹소켓 종목만 누락 보정
+                top_stocks_set = set(top_stocks)
+                new_ws_stocks = list(top_stocks_set - prev_top_stocks)
+                if new_ws_stocks:
+                    await fill_ws_missing_candles(new_ws_stocks, token_manager)
+                prev_top_stocks = top_stocks_set
 
             elapsed = time.time() - loop_start
             wait_time = 300 - elapsed
@@ -349,7 +355,8 @@ async def stop_collection(rate_limit: int = 18):
         stock_codes=stocks,
         interval_type='1d',
         rate_limit=18,
-        batch_size=100
+        batch_size=100,
+        days=1  # 장 마감 시 오늘 하루치만
     )
     retries = result.get('total_retries', 0)
     logger.info(f"일봉 수집: {result['success_count']}성공, {result['fail_count']}실패, {retries}재시도, {result['elapsed_time']:.1f}초")
@@ -386,7 +393,8 @@ async def weekly_update():
         stock_codes=stocks,
         interval_type='1w',
         rate_limit=18,
-        batch_size=100
+        batch_size=100,
+        days=7  # 주봉 업데이트 시 이번 주 하나만
     )
     candle_collector.close()
     tm.close()

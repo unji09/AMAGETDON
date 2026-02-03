@@ -288,7 +288,8 @@ class CandleCollector:
         stock_codes: List[str],
         interval_type: str,
         rate_limit: int = 20,
-        batch_size: int = 100
+        batch_size: int = 100,
+        days: int = None
     ) -> Dict[str, any]:
 
         start_time = time.time()
@@ -323,14 +324,14 @@ class CandleCollector:
                 elif interval_type == '1d':
                     tasks = [
                         self._collect_and_save_daily_candles_direct(
-                            session, stock_code, limiter, db_lock
+                            session, stock_code, limiter, db_lock, days
                         )
                         for stock_code in batch_codes
                     ]
                 elif interval_type == '1w':
                     tasks = [
                         self._collect_and_save_weekly_candles_direct(
-                            session, stock_code, limiter, db_lock
+                            session, stock_code, limiter, db_lock, days
                         )
                         for stock_code in batch_codes
                     ]
@@ -473,10 +474,12 @@ class CandleCollector:
         session: aiohttp.ClientSession,
         stock_code: str,
         limiter: HardRateLimiter,
-        db_lock: asyncio.Lock
+        db_lock: asyncio.Lock,
+        days: int = None
     ) -> Dict[str, int]:
         try:
-            days = self.RETENTION_DAYS['1d']
+            if days is None:
+                days = self.RETENTION_DAYS['1d']
             start_date = (datetime.now() - timedelta(days=days)).strftime('%Y%m%d')
             end_date = datetime.now().strftime('%Y%m%d')
 
@@ -570,10 +573,12 @@ class CandleCollector:
         session: aiohttp.ClientSession,
         stock_code: str,
         limiter: HardRateLimiter,
-        db_lock: asyncio.Lock
+        db_lock: asyncio.Lock,
+        days: int = None
     ) -> Dict[str, int]:
         try:
-            days = self.RETENTION_DAYS['1w']
+            if days is None:
+                days = self.RETENTION_DAYS['1w']
             start_date = (datetime.now() - timedelta(days=days)).strftime('%Y%m%d')
             end_date = datetime.now().strftime('%Y%m%d')
 
