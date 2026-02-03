@@ -10,11 +10,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "members",
-uniqueConstraints = {
-        @UniqueConstraint(
-                name = "uk_member_user_active",
-                columnNames = {"userId", "isActive"})},
-indexes = {@Index(name = "idx_member_room_user_active", columnList = "roomId, userId, isActive")})
+// ✅ FIXED: unique constraint 제거 (hard delete 사용)
+        indexes = {@Index(name = "idx_member_room_user_active", columnList = "roomId, userId, isActive")})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -41,7 +38,9 @@ public class Member {
     @Column(nullable = false, updatable = false)
     private LocalDateTime joinedAt;
 
-    // 그룹 멤버가 맞는지 아닌지 활성화 하기 위해
+    // ✅ DEPRECATED: soft delete 대신 hard delete 사용
+    // 이 메서드는 더 이상 사용하지 않음
+    @Deprecated
     public void deactivate() {
         this.isActive = false;
     }

@@ -47,12 +47,22 @@ public class CommunityChatController {
         // ✅ DB의 Room 업데이트 (세션 ID가 변경된 경우)
         if (!sessionId.equals(actualSessionId)) {
             log.warn("⚠️ [CommunityChatController] 세션 ID 변경됨: {} → {}", sessionId, actualSessionId);
-            roomRepository.findByOpenviduSessionId(sessionId).ifPresent(room -> {
-                room.updateOpenViduSessionId(actualSessionId);
-                roomRepository.save(room);
-                log.info("✅ [CommunityChatController] Room 업데이트 완료 - roomId: {}, new sessionId: {}",
-                        room.getId(), actualSessionId);
-            });
+            try {
+                roomRepository.findByOpenviduSessionId(sessionId).ifPresent(room -> {
+                    // ✅ FIXED: Room이 삭제되었는지 확인
+                    if (roomRepository.existsById(room.getId())) {
+                        room.updateOpenViduSessionId(actualSessionId);
+                        roomRepository.save(room);
+                        log.info("✅ [CommunityChatController] Room 업데이트 완료 - roomId: {}, new sessionId: {}",
+                                room.getId(), actualSessionId);
+                    } else {
+                        log.warn("⚠️ [CommunityChatController] Room이 이미 삭제됨 - roomId: {}", room.getId());
+                    }
+                });
+            } catch (Exception e) {
+                // ✅ FIXED: Room이 삭제된 경우 무시
+                log.warn("⚠️ [CommunityChatController] Room 업데이트 실패 (이미 삭제됨) - sessionId: {}", sessionId, e);
+            }
         }
 
         // ✅ 토큰과 실제 세션 ID 모두 반환

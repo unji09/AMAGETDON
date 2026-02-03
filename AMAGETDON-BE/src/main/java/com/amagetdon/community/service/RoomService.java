@@ -43,7 +43,7 @@ public class RoomService {
 
     @Transactional
     public RoomResponseDto createGroup(Long ownerId, RoomCreateRequestDto request)
-    throws OpenViduJavaClientException, OpenViduHttpException {
+            throws OpenViduJavaClientException, OpenViduHttpException {
 
         memberRepository.findByUserIdAndIsActiveTrue(ownerId)
                 .ifPresent(member -> {
@@ -211,19 +211,24 @@ public class RoomService {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException(ErrorCode.ROOM_NOT_FOUND.getMessage()));
 
-        member.deactivate();
-        memberRepository.save(member);
+        // ✅ FIXED: Hard Delete (soft delete 대신)
+        // member.deactivate() + save() 방식은 unique constraint 위반 발생
+        memberRepository.delete(member);
+        System.out.println("✅ [RoomService] Member 삭제 완료 - userId: " + userId + ", roomId: " + roomId);
 
         room.decrementCurrentMemberCount();
 
         // 인원이 0명이면 삭제
         boolean isRoomDeleted = false;
         if(room.isEmpty()) {
+            System.out.println("🗑️ [RoomService] 방 인원 0명 - Room 삭제 시작 - roomId: " + roomId);
             chatMessageService.deleteMessages(roomId);
             roomRepository.delete(room);
             isRoomDeleted = true;
+            System.out.println("✅ [RoomService] Room 삭제 완료 - roomId: " + roomId);
         } else {
             roomRepository.save(room);
+            System.out.println("✅ [RoomService] Room 업데이트 완료 - roomId: " + roomId + ", 남은 인원: " + room.getCurrentMemberCount());
         }
 
         return RoomLeaveResponseDto.builder()
