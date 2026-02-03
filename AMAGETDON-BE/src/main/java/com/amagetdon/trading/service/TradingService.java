@@ -47,13 +47,11 @@ public class TradingService {
 
     @Transactional
     public TradingResponse buyStock(Long userId, TradingRequest request) {
-        validateMarketHours();
         return executeTrade(userId, request, TransactionType.BUY);
     }
 
     @Transactional
     public TradingResponse sellStock(Long userId, TradingRequest request) {
-        validateMarketHours();
         return executeTrade(userId, request, TransactionType.SELL);
     }
 
@@ -65,6 +63,9 @@ public class TradingService {
     }
 
     private TradingResponse executeTrade(Long userId, TradingRequest request, TransactionType type) {
+        // 장 시간 확인
+        validateMarketHours();
+
         // 사용자 및 주식 정보 조회
         User user = findUser(userId);
         Stock stock = findStock(request.stockCode());
