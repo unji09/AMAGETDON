@@ -17,11 +17,13 @@ from core.token_manager import TokenManager
 from utils.logger import logger
 from utils.market_hours import is_market_open
 from utils.kis_api_client import KISApiClient
+from collector.realtime_candle_builder import RealtimeCandleBuilder
 
 token_manager = None
 ws_collector = None
 volume_tracker = None
 candle_filler = None
+rest_candle_builder = None
 collection_active = False
 rest_loop_task = None
 candle_loop_task = None
@@ -90,16 +92,17 @@ async def check_and_initialize(rate_limit: int = 18):
         traceback.print_exc()
         raise
 
-#REST 수집(5초마다) + 새 유저 종목 분봉 보정
+#REST 수집(5초마다) + 새 유저 종목 분봉 보정 + 분봉 생성
 async def run_rest_collection_loop():
     from utils.rate_limiter import HardRateLimiter
     from utils.db import get_db_connection, save_stock_price
     from config.config import REDIS_KEYS
 
-    global collection_active, token_manager
+    global collection_active, token_manager, rest_candle_builder
 
     api_client = KISApiClient(token_manager)
     limiter = HardRateLimiter(18)
+    rest_candle_builder = RealtimeCandleBuilder()
 
     connector = aiohttp.TCPConnector(limit=18)
     timeout = aiohttp.ClientTimeout(total=30)
@@ -137,6 +140,7 @@ async def run_rest_collection_loop():
 
                 success = 0
                 fail = 0
+                now = datetime.now()
                 for stock_code, dto in results:
                     if dto:
                         try:
@@ -144,6 +148,13 @@ async def run_rest_collection_loop():
                             save_stock_price(conn, dto)
                             conn.close()
                             success += 1
+
+                            # 분봉 생성을 위해 틱 데이터 추가
+                            rest_candle_builder.on_tick(stock_code, {
+                                'time': now,
+                                'price': dto.current_price,
+                                'volume': dto.volume
+                            })
                         except Exception as e:
                             logger.error(f"REST DB 저장 실패 ({stock_code}): {e}")
                             fail += 1
@@ -163,12 +174,15 @@ async def run_rest_collection_loop():
             logger.error(f"REST 수집 루프 오류: {e}")
             await asyncio.sleep(5)
 
+    # 종료 시 남은 틱 데이터로 캔들 생성
+    if rest_candle_builder:
+        rest_candle_builder.close()
     await session.close()
     await api_client.close()
     logger.info("REST 수집 루프 종료")
 
 
-# 거래량 순위 조회(5분마다)
+# 거래량 순위 조회(5분마다) + 웹소켓 종목 누락 보정
 async def run_volume_rank_loop():
     global collection_active, token_manager, ws_collector, volume_tracker
 
@@ -182,6 +196,9 @@ async def run_volume_rank_loop():
                 ws_collector.subscribe_stocks(top_stocks)
                 logger.info(f"거래량 TOP 구독 갱신: {len(top_stocks)}개")
 
+                # 웹소켓 구독 종목 누락 분봉 보정 (오늘 날짜만)
+                await fill_ws_missing_candles(top_stocks, token_manager)
+
             elapsed = time.time() - loop_start
             wait_time = 300 - elapsed
             if wait_time > 0:
@@ -192,6 +209,30 @@ async def run_volume_rank_loop():
         except Exception as e:
             logger.error(f"거래량 순위 루프 오류: {e}")
             await asyncio.sleep(60)
+
+
+# 웹소켓 종목 누락 분봉 보정 (오늘 데이터만)
+async def fill_ws_missing_candles(stock_codes: list, token_manager):
+    if not stock_codes:
+        return
+
+    try:
+        today = datetime.now().date()
+        result = await CandleFiller.fill_missing_candles_parallel(
+            token_manager=token_manager,
+            stock_codes=stock_codes,
+            rate_limit=18,
+            fill_1m=True,
+            fill_5m=True,
+            fill_30m=True,
+            batch_size=50,
+            target_date=today
+        )
+
+        if result['success_count'] > 0:
+            logger.info(f"WS 종목 누락 보정: {result['success_count']}성공, {result['fail_count']}실패")
+    except Exception as e:
+        logger.error(f"WS 종목 누락 보정 오류: {e}")
 
 
 # 새 종목 분봉 보정 (병렬 처리)
@@ -446,7 +487,7 @@ async def update_financials(rate_limit: int = 18, batch_size: int = 100):
 async def main():
     logger.info("실시간 시세 수집 스케줄러 시작")
 
-    await check_and_initialize()
+    # await check_and_initialize()
 
     now = datetime.now()
     if now.hour > 8 or (now.hour == 8 and now.minute >= 40):
@@ -489,6 +530,9 @@ async def main():
     if is_market_open():
         logger.info("현재 장중 - 즉시 수집 시작")
         await start_collection()
+
+    while True:
+        await asyncio.sleep(1)
 
 if __name__ == "__main__":
     asyncio.run(main())
