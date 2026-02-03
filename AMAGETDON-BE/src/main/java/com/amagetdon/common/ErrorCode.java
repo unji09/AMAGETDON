@@ -23,6 +23,7 @@ public enum ErrorCode {
     // User
     USER_NOT_FOUND("회원을 찾을 수 없습니다. UserId: %d"),
     USER_NOT_FOUND_SIMPLE("회원을 찾을 수 없습니다."),
+    INSUFFICIENT_BALANCE("잔액이 부족합니다."),
 
     // Token
     TOKEN_EXPIRED("토큰이 만료되었습니다. 새로운 토큰을 재발급 받으세요."),
