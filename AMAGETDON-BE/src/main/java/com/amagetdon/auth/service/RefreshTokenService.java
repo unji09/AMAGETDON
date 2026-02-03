@@ -5,6 +5,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,12 @@ public class RefreshTokenService {
 
     private final RedisTemplate<Object, Object> redisTemplate;
     private final JwtProperties jwtProperties;
+
+    @Value("${cookie.secure:true}")
+    private boolean cookieSecure;
+
+    @Value("${cookie.same-site:Lax}")
+    private String cookieSameSite;
 
     private String refreshKey(Long userId) {
         return REFRESH_KEY_PREFIX + userId;
@@ -73,20 +80,20 @@ public class RefreshTokenService {
     public ResponseCookie createRefreshTokenCookie(String refreshToken) {
         return ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
-                .secure(true)
+                .secure(cookieSecure)
                 .path("/")
-                .maxAge(jwtProperties.getRefreshTokenExpirationMs() / 1000) //Ms 단위를 S 단위로 변경
-                .sameSite("Strict")
+                .maxAge(jwtProperties.getRefreshTokenExpirationMs() / 1000)
+                .sameSite(cookieSameSite)
                 .build();
     }
 
     public ResponseCookie deleteRefreshTokenCookie() {
         return ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
-                .secure(true)
+                .secure(cookieSecure)
                 .path("/")
                 .maxAge(0)
-                .sameSite("Strict")
+                .sameSite(cookieSameSite)
                 .build();
     }
 }

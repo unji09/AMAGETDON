@@ -1,4 +1,4 @@
-import type { ProgressSummary, ChapterType } from '../types/learning';
+import type { ProgressSummary, ChapterType } from '../../types/learning.ts';
 import './RoadmapHeader.css';
 
 //사이드 챕터 성향 타입 (NORMAL 제외)

@@ -1,6 +1,7 @@
 package com.amagetdon.common.jwt;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.stereotype.Component;
@@ -51,8 +52,27 @@ public class JwtTokenProvider {
         }
     }
 
+    public boolean isTokenExpired(String token) {
+        try {
+            parseClaims(token);
+            return false;
+        } catch (ExpiredJwtException e) {
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public Long getUserId(String token) {
         return parseClaims(token).get("userId", Long.class);
+    }
+
+    public Long getUserIdIgnoringExpiration(String token) {
+        try {
+            return parseClaims(token).get("userId", Long.class);
+        } catch (ExpiredJwtException e) {
+            return e.getClaims().get("userId", Long.class);
+        }
     }
 
     private Claims parseClaims(String token) {

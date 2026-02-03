@@ -1,6 +1,7 @@
 package com.amagetdon.trading.controller;
 
 import com.amagetdon.common.security.SecurityUtil;
+import com.amagetdon.trading.controller.swagger.StockHoldingControllerSwagger;
 import com.amagetdon.trading.dto.response.StockHoldingItemResponse;
 import com.amagetdon.trading.dto.response.StockHoldingResponse;
 import com.amagetdon.trading.service.StockHoldingService;
@@ -14,9 +15,10 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/accounts")
-public class StockHoldingController {
+public class StockHoldingController implements StockHoldingControllerSwagger {
     private final StockHoldingService stockHoldingService;
 
+    @Override
     @GetMapping("/holdings")
     public ResponseEntity<StockHoldingResponse> getStockHoldings(
             @RequestParam(defaultValue = "0") int page,
@@ -27,6 +29,7 @@ public class StockHoldingController {
         return ResponseEntity.ok(response);
     }
 
+    @Override
     @GetMapping("/holdings/{stockCode}")
     public ResponseEntity<StockHoldingItemResponse> getSingleStockHolding(
             @PathVariable String stockCode) {

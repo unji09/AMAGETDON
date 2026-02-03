@@ -42,9 +42,12 @@ public class AuthService {
 
     public void logout(String refreshToken) {
         try {
-            Long userId = jwtTokenProvider.getUserId(refreshToken);
-            refreshTokenService.deleteRefreshTokenByUserId(userId);
+            Long userId = jwtTokenProvider.getUserIdIgnoringExpiration(refreshToken);
+            if (userId != null) {
+                refreshTokenService.deleteRefreshTokenByUserId(userId);
+            }
         } catch (Exception e) {
+            // 토큰 파싱 자체가 불가능한 경우 무시
         }
     }
 
@@ -63,6 +66,7 @@ public class AuthService {
     }
 
     public TokenResponse refresh(String refreshTokenFromCookie) {
+        System.out.println("여기는 오니?");
         // 1. Refresh Token 검증 및 유저 ID 추출 (검증 실패 시 여기서 예외 발생)
         String userIdStr = refreshTokenService.validateAndExtractUserId(refreshTokenFromCookie);
         Long userId = Long.parseLong(userIdStr);

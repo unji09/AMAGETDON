@@ -59,9 +59,7 @@ public class WatchlistService {
 
     @Transactional
     public void addToWatchlist(Long userId, String stockCode) {
-        if (!StringUtils.hasText(stockCode)) {
-            throw new IllegalArgumentException(INVALID_INPUT.getMessage());
-        }
+        validateStockCode(stockCode);
 
         if (watchlistRepository.existsByUserUserIdAndStockStockCode(userId, stockCode)) {
             throw new IllegalArgumentException(WATCHLIST_ALREADY_EXISTS.getMessage());
@@ -114,5 +112,15 @@ public class WatchlistService {
         return stockPriceRepository
                 .findTopByStockOrderByCreatedAtDesc(stock)
                 .orElseThrow(() -> new IllegalStateException(PRICE_NOT_AVAILABLE.getMessage()));
+    }
+
+    private void validateStockCode(String stockCode) {
+        if (!StringUtils.hasText(stockCode)) {
+            throw new IllegalArgumentException(INVALID_INPUT.getMessage());
+        }
+
+        if (!stockCode.matches("\\d{6}")) {
+            throw new IllegalArgumentException(INVALID_STOCK_CODE_FORMAT.getMessage());
+        }
     }
 }

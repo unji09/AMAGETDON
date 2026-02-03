@@ -39,12 +39,13 @@ public class AchievementScheduler {
     private void checkUserAchievements(Long userId) {
         AssetResponse asset = assetService.getAsset(userId);
         long totalAsset = asset.totalAsset();
+        long stockAsset = asset.stockAsset();
         long totalProfitRate = asset.totalProfitRate()
                 .setScale(0, RoundingMode.DOWN)
                 .longValue();
 
         achievementService.checkAndAwardAchievements(userId, totalAsset, BILLIONAIRE);
-        achievementService.checkAndAwardAchievements(userId, totalAsset, TEN_MILLION_CLUB);
+        achievementService.checkAndAwardAchievements(userId, stockAsset, TEN_MILLION_CLUB);
         achievementService.checkAndAwardAchievements(userId, totalProfitRate, HALF_PROFIT);
         achievementService.checkAndAwardAchievements(userId, totalProfitRate, CRASH_LOSS);
     }
