@@ -29,7 +29,7 @@ public class StockService {
     private final RedisTemplate<String, String> redisTemplate;
 
     private static final String USER_STOCKS_KEY = "kis:user_stocks";
-    private static final String TOP_STOCKS_KEY = "kis:top_30_stocks";
+    private static final String TOP_STOCKS_KEY = "kis:top_10_stocks";
 
     public StockDetailResponse getStockDetail(String stockCode) {
 
