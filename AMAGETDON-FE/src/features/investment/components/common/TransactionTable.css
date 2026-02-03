@@ -1,0 +1,98 @@
+.transaction-table__wrapper {
+    overflow-x: auto;
+}
+
+.transaction-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-sm);
+}
+
+.transaction-table th {
+    padding: var(--spacing-3) var(--spacing-3);
+    text-align: left;
+    font-weight: var(--font-weight-semibold);
+    color: #888;
+    border-bottom: 2px solid #eee;
+    white-space: nowrap;
+}
+
+.transaction-table td {
+    padding: var(--spacing-3) var(--spacing-3);
+    border-bottom: 1px solid #f0f0f0;
+    white-space: nowrap;
+}
+
+.transaction-table__right {
+    text-align: right !important;
+}
+
+.transaction-table__row {
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.transaction-table__row:hover {
+    background: var(--color-background);
+}
+
+.transaction-table__date {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-dark-gray);
+}
+
+.transaction-table__time {
+    font-size: var(--font-size-xs);
+    color: #999;
+}
+
+.transaction-table__stock-name {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-dark-gray);
+}
+
+.transaction-table__stock-code {
+    font-size: var(--font-size-xs);
+    color: #999;
+}
+
+.transaction-table__badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+}
+
+.transaction-table__badge--buy {
+    background: rgba(220, 0, 0, 0.08);
+    color: var(--color-chart-up);
+}
+
+.transaction-table__badge--sell {
+    background: rgba(0, 70, 180, 0.08);
+    color: var(--color-chart-down);
+}
+
+.transaction-table__status {
+    font-size: var(--font-size-xs);
+    color: var(--color-main-green);
+    font-weight: var(--font-weight-medium);
+}
+
+.transaction-table__empty {
+    text-align: center;
+    padding: var(--spacing-8) 0 !important;
+    color: #999;
+}
+
+@media (max-width: 768px) {
+    .transaction-table {
+        font-size: var(--font-size-xs);
+    }
+
+    .transaction-table th,
+    .transaction-table td {
+        padding: var(--spacing-2);
+    }
+}
