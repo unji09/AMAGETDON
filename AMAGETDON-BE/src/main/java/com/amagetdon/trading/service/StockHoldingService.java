@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 
+import static com.amagetdon.common.ErrorCode.NO_OWNED_STOCK;
 import static com.amagetdon.common.ErrorCode.PRICE_NOT_AVAILABLE;
 
 @Service
@@ -34,6 +35,14 @@ public class StockHoldingService {
                 holdingsPage.getTotalElements(),
                 items
         );
+    }
+
+    public StockHoldingItemResponse getSingleStockHolding(Long userId, String stockCode) {
+        StockHolding holding = accountRepository
+                .findByStockHoldingIdUserIdAndStockHoldingIdStockCode(userId, stockCode)
+                .orElseThrow(() -> new IllegalArgumentException(NO_OWNED_STOCK.getMessage()));
+
+        return convertToItem(holding);
     }
 
     private List<StockHoldingItemResponse> convertToItems(List<StockHolding> holdings) {
