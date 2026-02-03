@@ -18,5 +18,4 @@ public class OpenViduConfig {
     public OpenVidu openVidu() {
         return new OpenVidu(openViduUrl, openViduSecret);
     }
-
 }
