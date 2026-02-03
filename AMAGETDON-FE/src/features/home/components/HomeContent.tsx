@@ -1,6 +1,7 @@
 import { Loading } from '@/components/common'
-import { useHome } from '../hooks/useHome'
+
 import './HomeContent.css'
+import {useHome} from "@/features/home";
 
 export const HomeContent = () => {
     const {

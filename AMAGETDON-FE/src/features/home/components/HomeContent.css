@@ -545,7 +545,7 @@
         width: 0;
     }
     to {
-        width: var(--progress-width);
+        width: var(--progress-width, 100%);
     }
 }
 
