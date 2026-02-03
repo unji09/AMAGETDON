@@ -112,7 +112,7 @@ export const getChatMessages = async (roomId: number): Promise<ChatMessage[]> =>
 /**
  * OpenVidu 커넥션 토큰 발급
  */
-export const getOpenViduToken = async (sessionId: string): Promise<string> => {
-    const response = await apiClient.post<string>(`/sessions/${sessionId}/connections`, {});
+export const getOpenViduToken = async (sessionId: string): Promise<{token: string; sessionId: string}> => {
+    const response = await apiClient.post<{token: string; sessionId: string}>(`/sessions/${sessionId}/connections`, {});
     return response.data;
 };

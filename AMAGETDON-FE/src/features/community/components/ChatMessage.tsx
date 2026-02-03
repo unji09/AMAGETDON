@@ -1,6 +1,6 @@
 /**
  * ChatMessage - 채팅 메시지 컴포넌트
- * Figma 디자인 기반: 내 메시지(오른쪽/노란색) vs 상대 메시지(왼쪽/회색)
+ * Figma 디자인 기반: 내 메시지(오른쪽/노란색) vs 상대 메시지(왼쪽/흰색)
  */
 
 import React from 'react';
@@ -36,12 +36,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ userName, message, createdAt,
         );
     }
 
-    // 상대 메시지 (왼쪽, 회색)
+    // 상대 메시지 (왼쪽, 흰색)
     return (
         <OtherMessageContainer>
-            <Avatar>
-                <AvatarText>{userName.charAt(0)}</AvatarText>
-            </Avatar>
             <MessageContent>
                 <MessageHeader>
                     <UserName>{userName}</UserName>
@@ -74,24 +71,6 @@ const OtherMessageContainer = styled.div`
     align-items: flex-start;
     gap: 12px;
     margin-bottom: 16px;
-`;
-
-// 아바타
-const Avatar = styled.div`
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #203c2e;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-`;
-
-const AvatarText = styled.span`
-    color: white;
-    font-size: 16px;
-    font-weight: 700;
 `;
 
 // 메시지 내용 영역
@@ -132,12 +111,13 @@ const MyMessageBubble = styled.div`
     word-wrap: break-word;
 `;
 
-// 상대 메시지 말풍선 (회색)
+// ✅ 상대 메시지 말풍선 (흰색)
 const OtherMessageBubble = styled.div`
-    background-color: #f8f8f8;
+    background-color: #ffffff;
     padding: 12px 16px;
     border-radius: 8px;
     word-wrap: break-word;
+    border: 1px solid #e0e0e0; /* 흰색 배경에 경계선 추가 */
 `;
 
 // 메시지 텍스트
