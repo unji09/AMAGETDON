@@ -1,6 +1,7 @@
 package com.amagetdon.watchlist.controller;
 
 import com.amagetdon.common.security.SecurityUtil;
+import com.amagetdon.watchlist.controller.swagger.WatchlistControllerSwagger;
 import com.amagetdon.watchlist.dto.request.WatchlistAddRequest;
 import com.amagetdon.watchlist.dto.response.WatchlistResponse;
 import com.amagetdon.watchlist.service.WatchlistService;
@@ -14,10 +15,11 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/watchlist")
-public class WatchlistController {
+public class WatchlistController implements WatchlistControllerSwagger {
 
     private final WatchlistService watchlistService;
 
+    @Override
     @GetMapping
     public ResponseEntity<WatchlistResponse> getWatchlist(
             @RequestParam(defaultValue = "0") int page,
@@ -30,6 +32,7 @@ public class WatchlistController {
         return ResponseEntity.ok(response);
     }
 
+    @Override
     @PostMapping
     public ResponseEntity<Void> addToWatchlist(@RequestBody WatchlistAddRequest request) {
         Long userId = SecurityUtil.getCurrentUserId();
@@ -37,6 +40,7 @@ public class WatchlistController {
         return ResponseEntity.ok().build();
     }
 
+    @Override
     @DeleteMapping("/{watchlistId}")
     public ResponseEntity<Void> removeFromWatchlist(@PathVariable Long watchlistId) {
         Long userId = SecurityUtil.getCurrentUserId();

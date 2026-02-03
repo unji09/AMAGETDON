@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
-public class AuthController implements AuthControllerSwagger{
+public class AuthController {
 
     private final AuthService authService;
     private final RefreshTokenService refreshTokenService;
@@ -70,9 +70,9 @@ public class AuthController implements AuthControllerSwagger{
     }
 
     @DeleteMapping("/withdraw")
-    public ResponseEntity<String> withdraw(@CookieValue("refreshToken") String refreshToken) {
+    public ResponseEntity<String> withdraw(@CookieValue(value = "refreshToken", required = false) String refreshToken) {
         if (refreshToken == null || refreshToken.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("인증 정보가 없습니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("인증 정보가 없습니다.");
         }
 
         authService.withdraw(refreshToken);
@@ -84,13 +84,17 @@ public class AuthController implements AuthControllerSwagger{
                 .body("회원 탈퇴가 완료되었습니다.");
     }
 
-    @PostMapping("/refresh")
-    public ResponseEntity<AuthLoginResponse> refresh(@CookieValue("refreshToken") String refreshToken) {
-        TokenResponse tokenResponse = authService.refresh(refreshToken);
+        @PostMapping("/refresh")
+        public ResponseEntity<?> refresh(@CookieValue(value = "refreshToken", required = false) String refreshToken) {
+            if (refreshToken == null || refreshToken.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("리프레시 토큰이 없습니다.");
+            }
 
-        ResponseCookie newRefreshTokenCookie = refreshTokenService.createRefreshTokenCookie(tokenResponse.refreshToken());
+            TokenResponse tokenResponse = authService.refresh(refreshToken);
 
-        return ResponseEntity.ok()
+            ResponseCookie newRefreshTokenCookie = refreshTokenService.createRefreshTokenCookie(tokenResponse.refreshToken());
+
+            return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, newRefreshTokenCookie.toString())
                 .body(AuthLoginResponse.builder()
                 .accessToken(tokenResponse.accessToken())

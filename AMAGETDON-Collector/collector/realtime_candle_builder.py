@@ -164,6 +164,16 @@ class RealtimeCandleBuilder:
         except Exception as e:
             logger.error(f"30분봉 생성 실패: {e}")
     
+    def flush_all(self):
+        """남아있는 틱 데이터로 캔들 생성 (장 마감 시 호출)"""
+        for stock_code, ticks in list(self.current_minute.items()):
+            if ticks:
+                minute_time = ticks[0]['time'].replace(second=0, microsecond=0)
+                self._create_and_save_minute_candle(stock_code, minute_time, ticks)
+        self.current_minute.clear()
+        logger.info("남은 틱 데이터 캔들 생성 완료")
+
     def close(self):
+        self.flush_all()
         if self.conn:
             self.conn.close()

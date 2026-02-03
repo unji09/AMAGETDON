@@ -14,8 +14,26 @@ from utils.kis_api_client import KISApiClient
 from config.config import DB_CONFIG
 
 
-async def fetch_single(session, api_client, stock_code):
+class HardRateLimiter:
+    """Hard Rate Limiter - 콜 간격을 강제로 고정"""
+
+    def __init__(self, rate_per_second: int):
+        self._interval = 1.0 / rate_per_second
+        self._last_call = 0
+        self._lock = asyncio.Lock()
+
+    async def acquire(self):
+        async with self._lock:
+            now = time.monotonic()
+            wait = self._interval - (now - self._last_call)
+            if wait > 0:
+                await asyncio.sleep(wait)
+            self._last_call = time.monotonic()
+
+
+async def fetch_single(session, api_client, stock_code, limiter):
     """단일 종목 조회"""
+    await limiter.acquire()
     url = f"{api_client.base_url}/uapi/domestic-stock/v1/quotations/search-stock-info"
     headers = api_client._get_headers("CTPF1002R")
     params = {
@@ -61,36 +79,22 @@ async def test_stock_basic_info_fast():
     token_manager = TokenManager.get_instance()
     api_client = KISApiClient(token_manager)
 
-    # 초당 요청 수 (API 제한에 맞게 조절)
-    BATCH_SIZE = 19
+    # HardRateLimiter (초당 19건)
+    limiter = HardRateLimiter(19)
 
     start_time = datetime.now()
     success_count = 0
     fail_count = 0
-    all_results = []
 
     try:
         # 동시 연결 20개 허용하는 세션 생성
         connector = aiohttp.TCPConnector(limit=20)
-        timeout = aiohttp.ClientTimeout(total=30)
+        timeout = aiohttp.ClientTimeout(total=300)
         session = aiohttp.ClientSession(connector=connector, timeout=timeout)
 
-        # 배치 단위로 처리
-        for i in range(0, len(stocks), BATCH_SIZE):
-            batch_start = time.time()
-            batch = stocks[i:i + BATCH_SIZE]
-
-            # 배치 내 요청은 병렬로 실행
-            tasks = [fetch_single(session, api_client, code) for code in batch]
-            results = await asyncio.gather(*tasks)
-            all_results.extend(results)
-
-            # 1초가 안 지났으면 대기
-            elapsed = time.time() - batch_start
-            if elapsed < 1.0 and i + BATCH_SIZE < len(stocks):
-                await asyncio.sleep(1.0 - elapsed)
-
-            print(f"  배치 {i // BATCH_SIZE + 1}/{(len(stocks) + BATCH_SIZE - 1) // BATCH_SIZE} 완료")
+        # 모든 태스크를 한번에 생성하고 리미터가 속도 제어
+        tasks = [fetch_single(session, api_client, code, limiter) for code in stocks]
+        all_results = await asyncio.gather(*tasks)
 
         for stock_code, info in all_results:
             if info:

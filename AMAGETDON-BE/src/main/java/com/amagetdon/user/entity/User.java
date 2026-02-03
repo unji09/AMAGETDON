@@ -12,6 +12,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
+import static com.amagetdon.common.ErrorCode.INSUFFICIENT_BALANCE;
+
 @Entity
 @Table(name = "users")
 @EntityListeners(AuditingEntityListener.class)
@@ -42,7 +44,6 @@ public class User {
     private InvestmentType investmentType;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private LoginType loginType;
 
     @Column
@@ -87,7 +88,7 @@ public class User {
 
     public void deductBalance(Long amount) {
         if (this.balance < amount) {
-            throw new IllegalArgumentException("잔액이 부족합니다.");
+            throw new IllegalArgumentException(INSUFFICIENT_BALANCE.getMessage());
         }
         this.balance -= amount;
     }

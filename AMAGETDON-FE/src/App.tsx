@@ -4,12 +4,17 @@ import { HomePage } from '@/pages/HomePage';
 import { CommunityPage } from '@/pages/CommunityPage';
 import { RankingPage } from '@/pages/RankingPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
-import { LoginPage } from "@/pages/LoginPage.tsx";
+import LoginPage from "@/pages/LoginPage.tsx";
 import OAuthKakaoCallback from "./pages/OAuthKakaoCallback";
 import { LearningPage } from '@/pages/LearningPage';
 import { ChapterDetailPage } from '@/pages/ChapterDetailPage';
 import { AchievementPage } from '@/pages/AchievementPage';
 import ChatRoomPage from '@/pages/ChatRoomPage';
+import SignupPage from "@/pages/SignupPage.tsx";
+import PasswordResetPage from "@/pages/PasswordResetPage.tsx";
+import MyInfoPage from "@/pages/MyInfoPage.tsx";
+import SurveyPage from "@/pages/SurveyPage.tsx";
+import '@/api/interceptor'
 
 function App() {
     return (
@@ -24,7 +29,11 @@ function App() {
                     <Route path="/community/chat/:roomId" element={<ChatRoomPage />} />
                     <Route path="/ranking" element={<RankingPage />} />
                     <Route path="/login" element={<LoginPage />} />
+                    <Route path="/signup" element={<SignupPage />} />
                     <Route path="/oauth/kakao" element={<OAuthKakaoCallback />} />
+                    <Route path="/password-reset" element={<PasswordResetPage />} />
+                    <Route path="/mypage" element={<MyInfoPage />} />
+                    <Route path="/survey" element={<SurveyPage />} />
                     <Route path="*" element={<NotFoundPage />} />
                 </Routes>
             </BrowserRouter>
