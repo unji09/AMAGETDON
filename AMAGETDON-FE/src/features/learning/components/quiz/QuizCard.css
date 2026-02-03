@@ -1,0 +1,178 @@
+/* 퀴즈 카드 */
+.quiz-card {
+    background: var(--color-white);
+    border-radius: 16px;
+    padding: var(--spacing-8);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 퀴즈 헤더 */
+.quiz-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-6);
+}
+
+.quiz-card__sequence {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-main-green);
+    background: rgba(199, 216, 183, 0.2);
+    padding: var(--spacing-2) var(--spacing-4);
+    border-radius: 20px;
+}
+
+.quiz-card__type-badge {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-white);
+    background: var(--color-brown);
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+/* 퀴즈 문제 */
+.quiz-card__question {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-dark-gray);
+    line-height: var(--line-height-relaxed);
+    margin-bottom: var(--spacing-8);
+    word-break: keep-all;
+}
+
+/* 선택지 컨테이너 */
+.quiz-card__options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+}
+
+/* OX 선택지 (가로 배치) */
+.quiz-card__options--ox {
+    flex-direction: row;
+    gap: var(--spacing-5);
+}
+
+/* 선택지 버튼 */
+.quiz-card__option {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    width: 100%;
+    padding: var(--spacing-5);
+    background: var(--color-white);
+    border: 2px solid #e5e5e5;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.quiz-card__option:hover {
+    border-color: var(--color-main-green);
+    background: rgba(199, 216, 183, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(32, 60, 46, 0.1);
+}
+
+.quiz-card__option--selected {
+    border-color: var(--color-main-green);
+    background: rgba(199, 216, 183, 0.2);
+    box-shadow: 0 2px 8px rgba(32, 60, 46, 0.15);
+}
+
+.quiz-card__option:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* OX 선택지 (특수 스타일) */
+.quiz-card__option--ox {
+    justify-content: center;
+    min-height: 100px;
+}
+
+.quiz-card__option--ox .quiz-card__option-text {
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-bold);
+}
+
+/* 선택지 번호 */
+.quiz-card__option-no {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f5f5f5;
+    border-radius: 50%;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: #666;
+    transition: all 0.2s ease;
+}
+
+.quiz-card__option--selected .quiz-card__option-no {
+    background: var(--color-main-green);
+    color: var(--color-white);
+}
+
+/* 선택지 텍스트 */
+.quiz-card__option-text {
+    flex: 1;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-dark-gray);
+    line-height: var(--line-height-normal);
+    word-break: keep-all;
+}
+
+/* 제출 버튼 영역 */
+.quiz-card__submit {
+    margin-top: var(--spacing-8);
+    padding-top: var(--spacing-6);
+    border-top: 1px solid #e5e5e5;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .quiz-card {
+        padding: var(--spacing-6);
+    }
+
+    .quiz-card__question {
+        font-size: var(--font-size-lg);
+    }
+
+    .quiz-card__options--ox {
+        flex-direction: column;
+    }
+
+    .quiz-card__option--ox {
+        min-height: 80px;
+    }
+
+    .quiz-card__option--ox .quiz-card__option-text {
+        font-size: var(--font-size-3xl);
+    }
+}

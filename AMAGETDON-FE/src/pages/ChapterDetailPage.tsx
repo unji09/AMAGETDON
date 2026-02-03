@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout';
 import { ContainerContent } from '@/components/layout';
 import { Loading } from '@/components/common';
-import { ChapterContent } from '@/features/learning/components/ChapterContent';
+import { ChapterContent } from '@/features/learning/components/chapter/ChapterContent.tsx';
 import { getChapterDetail, getBaseChapters, getSideChapters } from '@/api/learningApi';
 import type { ChapterDetailResponse, ChapterItem } from '@/features/learning/types/learning';
 

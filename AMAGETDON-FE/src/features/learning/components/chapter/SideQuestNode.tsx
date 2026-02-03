@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Lock, CheckCircle, BookOpen } from 'lucide-react';
-import type { ChapterItem } from '../types/learning';
+import type { ChapterItem } from '../../types/learning.ts';
 import './SideQuestNode.css';
 
 interface SideQuestNodeProps {
