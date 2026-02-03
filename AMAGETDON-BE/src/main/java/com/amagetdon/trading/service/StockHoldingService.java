@@ -2,6 +2,7 @@ package com.amagetdon.trading.service;
 
 import com.amagetdon.stock.entity.StockPrice;
 import com.amagetdon.stock.repository.StockPriceRepository;
+import com.amagetdon.stock.repository.StockRepository;
 import com.amagetdon.trading.dto.response.StockHoldingItemResponse;
 import com.amagetdon.trading.dto.response.StockHoldingResponse;
 import com.amagetdon.trading.entity.StockHolding;
@@ -12,19 +13,20 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.amagetdon.common.ErrorCode.NO_OWNED_STOCK;
-import static com.amagetdon.common.ErrorCode.PRICE_NOT_AVAILABLE;
+import static com.amagetdon.common.ErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class StockHoldingService {
     private final AccountRepository accountRepository;
+    private final StockRepository stockRepository;
     private final StockPriceRepository stockPriceRepository;
     private final RedisTemplate<String, String> redisTemplate;
 
@@ -53,6 +55,8 @@ public class StockHoldingService {
     }
 
     public StockHoldingItemResponse getSingleStockHolding(Long userId, String stockCode) {
+        validateStockCode(stockCode);
+
         StockHolding holding = accountRepository
                 .findByStockHoldingIdUserIdAndStockHoldingIdStockCode(userId, stockCode)
                 .orElseThrow(() -> new IllegalArgumentException(NO_OWNED_STOCK.getMessage()));
@@ -78,5 +82,18 @@ public class StockHoldingService {
         return stockPriceRepository
                 .findTopByStockOrderByCreatedAtDesc(holding.getStock())
                 .orElseThrow(() -> new IllegalStateException(PRICE_NOT_AVAILABLE.getMessage()));
+    }
+
+    private void validateStockCode(String stockCode) {
+        if (!StringUtils.hasText(stockCode)) {
+            throw new IllegalArgumentException(INVALID_INPUT.getMessage());
+        }
+
+        if (!stockCode.matches("\\d{6}")) {
+            throw new IllegalArgumentException(INVALID_STOCK_CODE_FORMAT.getMessage());
+        }
+
+        stockRepository.findById(stockCode)
+                .orElseThrow(() -> new IllegalArgumentException(STOCK_INFO_NOT_FOUND.getMessage()));
     }
 }
