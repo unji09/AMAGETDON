@@ -44,7 +44,6 @@ public class User {
     private InvestmentType investmentType;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private LoginType loginType;
 
     @Column

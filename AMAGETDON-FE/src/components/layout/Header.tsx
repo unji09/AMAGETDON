@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import { useAuthUser } from '@/features/user/hooks/authUser';
 import './Header.css';
 
 /**
@@ -6,6 +7,7 @@ import './Header.css';
  */
 export const Header = () => {
     const location = useLocation();
+    const { user, isAuthenticated } = useAuthUser();
 
     return (
         <header className="header">
@@ -44,11 +46,17 @@ export const Header = () => {
                     </Link>
                 </nav>
 
-                {/* 프로필 */}
+                {/* 프로필/로그인 */}
                 <div className="header-profile">
-                    <div className="header-profile-circle">
-                        <span>김</span>
-                    </div>
+                    {isAuthenticated ? (
+                        <div className="header-profile-circle">
+                            <span>{user?.nickname?.charAt(0) ?? '?'}</span>
+                        </div>
+                    ) : (
+                        <Link to="/login" className="header-login-btn">
+                            로그인
+                        </Link>
+                    )}
                 </div>
             </div>
         </header>
