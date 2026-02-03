@@ -27,7 +27,7 @@ class KISApiClient:
     #세션 하나로 유지
     async def _get_session(self) -> aiohttp.ClientSession:
         if self._session is None or self._session.closed:
-            connector = aiohttp.TCPConnector(limit=5) 
+            connector = aiohttp.TCPConnector(limit=18) 
             timeout = aiohttp.ClientTimeout(total=30)
             self._session = aiohttp.ClientSession(connector=connector, timeout=timeout)
         return self._session
@@ -335,7 +335,8 @@ class KISApiClient:
                         'high': int(item.get('stck_hgpr', 0)),
                         'low': int(item.get('stck_lwpr', 0)),
                         'close': close_price,
-                        'volume': int(item.get('acml_vol', 0))
+                        'volume': int(item.get('acml_vol', 0)),
+                        'trading_value': int(item.get('acml_tr_pbmn', 0))
                     })
 
                 tr_cont = data.get("tr_cont", "")
@@ -348,7 +349,7 @@ class KISApiClient:
 
         return candles
 
-    #일봉/주봉 조회 api (내부 limiter 사용)
+    #일봉/주봉 조회 api (내부 limiter 사용) - 미사용
     async def fetch_daily_candles_async(
         self,
         session: aiohttp.ClientSession,

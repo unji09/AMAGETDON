@@ -487,7 +487,7 @@ async def update_financials(rate_limit: int = 18, batch_size: int = 100):
 async def main():
     logger.info("실시간 시세 수집 스케줄러 시작")
 
-    # await check_and_initialize()
+    await check_and_initialize()
 
     now = datetime.now()
     if now.hour > 8 or (now.hour == 8 and now.minute >= 40):
