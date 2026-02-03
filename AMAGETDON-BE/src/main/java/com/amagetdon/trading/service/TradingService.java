@@ -30,6 +30,9 @@ import static com.amagetdon.common.ErrorCode.*;
 @Service
 @RequiredArgsConstructor
 public class TradingService {
+    private static final LocalTime MARKET_OPEN = LocalTime.of(9, 0);
+    private static final LocalTime MARKET_CLOSE = LocalTime.of(15, 30);
+
     private final UserRepository userRepository;
     private final StockRepository stockRepository;
     private final StockPriceRepository stockPriceRepository;
@@ -40,12 +43,21 @@ public class TradingService {
 
     @Transactional
     public TradingResponse buyStock(Long userId, TradingRequest request) {
+        validateMarketHours();
         return executeTrade(userId, request, TransactionType.BUY);
     }
 
     @Transactional
     public TradingResponse sellStock(Long userId, TradingRequest request) {
+        validateMarketHours();
         return executeTrade(userId, request, TransactionType.SELL);
+    }
+
+    private void validateMarketHours() {
+        LocalTime now = LocalTime.now();
+        if (now.isBefore(MARKET_OPEN) || now.isAfter(MARKET_CLOSE)) {
+            throw new IllegalStateException(MARKET_CLOSED.getMessage());
+        }
     }
 
     private TradingResponse executeTrade(Long userId, TradingRequest request, TransactionType type) {
@@ -184,14 +196,14 @@ public class TradingService {
     private void checkTimingAchievements(Long userId) {
         LocalTime now = LocalTime.now();
 
-        // OPEN_RUN
+        // OPEN_RUN: 9:00 ~ 9:01
         if (isTimeBetween(now, LocalTime.of(9, 0), LocalTime.of(9, 1))) {
             if (achievementRedisRepository.setFlagIfAbsent(userId, "is_early_bought")) {
                 achievementService.checkAndAwardAchievements(userId, 1L, OPEN_RUN);
             }
         }
 
-        // BUZZER_BEATER
+        // BUZZER_BEATER: 15:29 ~ 15:30
         if (isTimeBetween(now, LocalTime.of(15, 29), LocalTime.of(15, 30))) {
             if (achievementRedisRepository.setFlagIfAbsent(userId, "is_late_bought")) {
                 achievementService.checkAndAwardAchievements(userId, 1L, BUZZER_BEATER);
