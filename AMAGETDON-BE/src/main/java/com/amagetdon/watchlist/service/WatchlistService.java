@@ -14,12 +14,14 @@ import com.amagetdon.watchlist.repository.WatchlistRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.amagetdon.achievement.entity.AchievementIdCode.DIVERSIFY_EGGS;
 import static com.amagetdon.common.ErrorCode.*;
@@ -34,19 +36,30 @@ public class WatchlistService {
     private final StockRepository stockRepository;
     private final StockPriceRepository stockPriceRepository;
     private final AchievementService achievementService;
+    private final RedisTemplate<String, String> redisTemplate;
+
+    private static final String USER_STOCKS_KEY = "kis:user_stocks";
 
     public WatchlistResponse getWatchlist(Long userId, Pageable pageable) {
         Page<Watchlist> watchlistPage = watchlistRepository.findByUserUserId(userId, pageable);
         List<WatchlistItem> items = convertToItems(watchlistPage.getContent());
+
+        watchlistPage.getContent().forEach(watchlist -> {
+            String stockCode = watchlist.getStock().getStockCode();
+            redisTemplate.opsForValue().set(
+                    USER_STOCKS_KEY + ":" + stockCode,
+                    stockCode,
+                    10,
+                    TimeUnit.SECONDS
+            );
+        });
 
         return WatchlistResponse.from(watchlistPage, items);
     }
 
     @Transactional
     public void addToWatchlist(Long userId, String stockCode) {
-        if (!StringUtils.hasText(stockCode)) {
-            throw new IllegalArgumentException(INVALID_INPUT.getMessage());
-        }
+        validateStockCode(stockCode);
 
         if (watchlistRepository.existsByUserUserIdAndStockStockCode(userId, stockCode)) {
             throw new IllegalArgumentException(WATCHLIST_ALREADY_EXISTS.getMessage());
@@ -99,5 +112,15 @@ public class WatchlistService {
         return stockPriceRepository
                 .findTopByStockOrderByCreatedAtDesc(stock)
                 .orElseThrow(() -> new IllegalStateException(PRICE_NOT_AVAILABLE.getMessage()));
+    }
+
+    private void validateStockCode(String stockCode) {
+        if (!StringUtils.hasText(stockCode)) {
+            throw new IllegalArgumentException(INVALID_INPUT.getMessage());
+        }
+
+        if (!stockCode.matches("\\d{6}")) {
+            throw new IllegalArgumentException(INVALID_STOCK_CODE_FORMAT.getMessage());
+        }
     }
 }

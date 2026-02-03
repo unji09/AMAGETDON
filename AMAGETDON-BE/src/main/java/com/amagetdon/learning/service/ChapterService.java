@@ -7,10 +7,7 @@ import com.amagetdon.learning.dto.chapter.SideChaptersResponse;
 import com.amagetdon.learning.dto.chapter.*;
 import com.amagetdon.learning.dto.quiz.ChapterQuizzesResponse;
 import com.amagetdon.learning.entity.*;
-import com.amagetdon.learning.repository.ChapterRepository;
-import com.amagetdon.learning.repository.QuizChoiceRepository;
-import com.amagetdon.learning.repository.QuizRepository;
-import com.amagetdon.learning.repository.UserChapterProgressRepository;
+import com.amagetdon.learning.repository.*;
 import com.amagetdon.user.entity.InvestmentType;
 import com.amagetdon.user.entity.User;
 import com.amagetdon.user.repository.UserRepository;
@@ -36,6 +33,7 @@ public class ChapterService {
     private final UserRepository userRepository;
     private final QuizRepository quizRepository;
     private final QuizChoiceRepository quizChoiceRepository;
+    private final ReviewNoteRepository reviewNoteRepository;
 
     private static final int OX_QUIZ_COUNT = 4;
     private static final int MCQ_QUIZ_COUNT = 6;
@@ -415,7 +413,16 @@ public class ChapterService {
         }
 
         // 7. 오답 노트 저장 (틀린 문제들)
-        // TODO(민규) : 오답 노트 저장 로직 추가
+        if (!wrongQuizIds.isEmpty()) {
+            List<ReviewNote> reviewNotes = wrongQuizIds.stream()
+                    .map(quizId -> {
+                        Quiz quiz = quizMap.get(quizId);
+                        return new ReviewNote(userId, quiz);
+                    })
+                    .toList();
+
+            reviewNoteRepository.saveAll(reviewNotes);
+        }
 
         return QuizSubmissionResponse.builder()
                 .success(true)

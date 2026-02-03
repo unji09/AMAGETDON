@@ -169,7 +169,7 @@ class WebSocketCollector:
             }
             self.on_tick(stock_code, tick_data)
 
-            logger.debug(f"체결: {stock_code} {current_price}원")
+            logger.info(f"WS 체결: {stock_code} {current_price:,}원 ({change_rate:+.2f}%)")
 
         except Exception as e:
             logger.error(f"메시지 처리 오류: {e}")
@@ -301,14 +301,14 @@ class WebSocketCollector:
         except Exception as e:
             logger.error(f"5분봉 생성 실패: {e}")
 
-    #DB에 있는 5분봉으로만 30분봉 생성
+    #DB에 있는 5분봉으로 30분봉 생성 (1개 이상이면 생성)
     def _create_30min_candle_from_db(self, stock_code: str, start_time: datetime):
         try:
             self.connect_db()
             cursor = self.conn.cursor()
-            
+
             end_time = start_time + timedelta(minutes=29, seconds=59)
-            
+
             query = """
             SELECT candle_time, open_price, high_price, low_price, close_price, volume
             FROM chart_candles
@@ -318,28 +318,27 @@ class WebSocketCollector:
             AND candle_time <= %s
             ORDER BY candle_time ASC
             """
-            
+
             cursor.execute(query, (stock_code, start_time, end_time))
             rows = cursor.fetchall()
-            
-            if len(rows) < 6:
-                logger.debug(f"{stock_code} 30분봉 스킵: {start_time} (5분봉 {len(rows)}개)")
-                return
-            
-            candle_30m = CandleDTO(
-                stock_code=stock_code,
-                interval_type='30m',
-                candle_time=start_time,
-                open_price=rows[0][1],
-                high_price=max(row[2] for row in rows),
-                low_price=min(row[3] for row in rows),
-                close_price=rows[-1][4],
-                volume=sum(row[5] for row in rows)
-            )
-            
-            save_candle(self.conn, candle_30m, auto_commit=True)
-            logger.info(f"{stock_code} 30분봉 생성: {start_time}")
-            
+
+            if len(rows) >= 1:  # 1개 이상이면 생성
+                candle_30m = CandleDTO(
+                    stock_code=stock_code,
+                    interval_type='30m',
+                    candle_time=start_time,
+                    open_price=rows[0][1],
+                    high_price=max(row[2] for row in rows),
+                    low_price=min(row[3] for row in rows),
+                    close_price=rows[-1][4],
+                    volume=sum(row[5] for row in rows)
+                )
+
+                save_candle(self.conn, candle_30m, auto_commit=True)
+                logger.info(f"{stock_code} 30분봉 생성: {start_time} (5분봉 {len(rows)}개)")
+            else:
+                logger.debug(f"{stock_code} 30분봉 스킵: {start_time} (5분봉 없음)")
+
         except Exception as e:
             logger.error(f"30분봉 생성 실패: {e}")
     

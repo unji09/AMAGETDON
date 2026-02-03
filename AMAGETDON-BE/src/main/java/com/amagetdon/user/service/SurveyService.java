@@ -40,7 +40,7 @@ public class SurveyService {
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.RESOURCE_NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND_SIMPLE.getMessage()));
 
         user.updateInvestmentType(result);
 
