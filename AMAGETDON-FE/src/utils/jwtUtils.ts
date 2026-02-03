@@ -56,10 +56,14 @@ export const getCurrentUser = (): { userId: number; nickname: string; email: str
             return null;
         }
 
+        // ✅ FIXED: localStorage에서 nickname 우선 사용
+        const nickname = localStorage.getItem('userNickname') || payload.nickname || payload.email.split('@')[0];
+        const email = localStorage.getItem('userEmail') || payload.email || '';
+
         return {
             userId: payload.userId,
-            nickname: payload.nickname || payload.email.split('@')[0], // 닉네임 없으면 이메일 앞부분 사용
-            email: payload.email,
+            nickname: nickname,
+            email: email,
         };
     } catch (error) {
         console.error('사용자 정보 가져오기 실패:', error);
@@ -72,6 +76,13 @@ export const getCurrentUser = (): { userId: number; nickname: string; email: str
  * @returns 닉네임 또는 '알 수 없음'
  */
 export const getCurrentUserNickname = (): string => {
+    // ✅ FIXED: localStorage에서 직접 가져오기 (우선순위 높음)
+    const cachedNickname = localStorage.getItem('userNickname');
+    if (cachedNickname) {
+        return cachedNickname;
+    }
+
+    // ✅ JWT에서 시도
     const user = getCurrentUser();
     return user?.nickname || '알 수 없음';
 };
@@ -83,4 +94,23 @@ export const getCurrentUserNickname = (): string => {
 export const getCurrentUserId = (): number | null => {
     const user = getCurrentUser();
     return user?.userId || null;
+};
+
+/**
+ * ✅ 새로 추가: 사용자 정보를 localStorage에 저장
+ * 로그인 성공 후 호출하여 nickname과 email 저장
+ */
+export const setCurrentUserInfo = (nickname: string, email: string): void => {
+    localStorage.setItem('userNickname', nickname);
+    localStorage.setItem('userEmail', email);
+    console.log('✅ [jwtUtils] 사용자 정보 저장:', { nickname, email });
+};
+
+/**
+ * ✅ 새로 추가: 로그아웃 시 사용자 정보 삭제
+ */
+export const clearCurrentUserInfo = (): void => {
+    localStorage.removeItem('userNickname');
+    localStorage.removeItem('userEmail');
+    console.log('✅ [jwtUtils] 사용자 정보 삭제');
 };
