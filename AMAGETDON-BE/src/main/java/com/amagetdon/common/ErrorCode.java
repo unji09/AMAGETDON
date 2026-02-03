@@ -78,6 +78,7 @@ public enum ErrorCode {
     STOCK_CODE_REQUIRED("종목 코드는 필수입니다."),
     WATCHLIST_NOT_FOUND("관심 종목을 찾을 수 없습니다."),
     WATCHLIST_ACCESS_DENIED("본인의 관심 종목만 삭제할 수 있습니다."),
+    INVALID_STOCK_CODE_FORMAT("잘못된 주식 코드 형식입니다. 6자리 숫자를 입력해주세요."),
 
     // Chart
     WRONG_PERIOD("잘못된 기간입니다."),
