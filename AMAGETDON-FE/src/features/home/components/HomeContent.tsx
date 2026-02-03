@@ -115,7 +115,7 @@ export const HomeContent = () => {
                             <div className="home-progress-bar">
                                 <div
                                     className="home-progress-fill progress-fill"
-                                    style={{ '--progress-width': '20%', width: '20%' } as React.CSSProperties}
+                                    style={{ width: '20%' }}
                                 />
                             </div>
                         </div>

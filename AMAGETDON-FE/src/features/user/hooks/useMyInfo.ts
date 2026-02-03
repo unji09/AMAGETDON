@@ -9,6 +9,7 @@ const INVESTMENT_TYPE_LABELS: Record<InvestmentType, string> = {
     STABLE: '안정형',
 }
 
+
 export const useMyInfo = () => {
     const navigate = useNavigate()
     const initialDataRef = useRef<UserInfo | null>(null)
