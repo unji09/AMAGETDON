@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Lock, Play, CheckCircle } from 'lucide-react';
-import type { ChapterItem } from '../types/learning';
+import type { ChapterItem } from '../../types/learning.ts';
 import './ChapterNode.css';
 
 interface ChapterNodeProps {

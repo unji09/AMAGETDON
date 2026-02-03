@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { ChapterNode } from './ChapterNode';
-import { SideQuestNode } from './SideQuestNode';
-import type { ChapterItem } from '../types/learning';
+import { ChapterNode } from './ChapterNode.tsx';
+import { SideQuestNode } from './SideQuestNode.tsx';
+import type { ChapterItem } from '../../types/learning.ts';
 import './RoadmapTimeline.css';
 
 interface RoadmapTimelineProps {

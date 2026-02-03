@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/common';
 import { Toast } from '@/components/common';
-import type { ChapterDetailResponse, ChapterItem } from '../types/learning';
+import type { ChapterDetailResponse, ChapterItem } from '../../types/learning.ts';
 import './ChapterContent.css';
 
 /** 챕터 타입별 한글 라벨 */

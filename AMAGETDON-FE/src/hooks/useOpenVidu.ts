@@ -6,17 +6,20 @@
 import { useState, useEffect, useRef } from 'react';
 import { OpenVidu, Session, Publisher, SignalEvent } from 'openvidu-browser';
 import { getOpenViduToken } from '@/api/communityApi';
+import { getCurrentUserNickname } from '@/utils/jwtUtils';
 
-// 간단한 메시지 데이터 (OpenVidu 전용)
 interface SimpleMessage {
     userName: string;
     message: string;
     createdAt: string;
+    isMine: boolean;
 }
 
 interface UseOpenViduProps {
     sessionId: string | null;
     onMessageReceived: (message: SimpleMessage) => void;
+    onParticipantChanged?: (count: number) => void;
+    onSessionIdChanged?: (newSessionId: string) => void;
 }
 
 interface UseOpenViduReturn {
@@ -25,61 +28,80 @@ interface UseOpenViduReturn {
     connected: boolean;
     connecting: boolean;
     error: string | null;
+    participantCount: number;
     connect: () => Promise<void>;
     disconnect: () => void;
     sendMessage: (message: string) => void;
 }
 
-// OpenVidu 메시지 데이터 타입
 interface OpenViduMessageData {
     sender: string;
     message: string;
     timestamp: string;
 }
 
-export const useOpenVidu = ({ sessionId, onMessageReceived }: UseOpenViduProps): UseOpenViduReturn => {
+export const useOpenVidu = ({
+                                sessionId,
+                                onMessageReceived,
+                                onParticipantChanged,
+                                onSessionIdChanged
+                            }: UseOpenViduProps): UseOpenViduReturn => {
     const [session, setSession] = useState<Session | null>(null);
     const [publisher, setPublisher] = useState<Publisher | null>(null);
     const [connected, setConnected] = useState(false);
     const [connecting, setConnecting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [participantCount, setParticipantCount] = useState(0);
 
     const OV = useRef<OpenVidu | null>(null);
+    const currentUserNickname = useRef<string>('');
 
-    // 세션 연결
+    const updateParticipantCount = (newSession: Session) => {
+        const count = newSession.remoteConnections.size + 1;
+        setParticipantCount(count);
+        onParticipantChanged?.(count);
+    };
+
     const connect = async () => {
         if (!sessionId) {
-            console.error('세션 ID가 없습니다.');
             setError('세션 ID가 없습니다.');
             return;
         }
 
-        if (connecting) {
-            console.log('이미 연결 중입니다.');
-            return;
-        }
+        if (connecting) return;
 
         try {
             setConnecting(true);
             setError(null);
 
-            // OpenVidu 인스턴스 생성
+            currentUserNickname.current = getCurrentUserNickname();
+
             OV.current = new OpenVidu();
             const newSession = OV.current.initSession();
 
+            // 참여자 입장 이벤트
+            newSession.on('connectionCreated', () => {
+                updateParticipantCount(newSession);
+            });
+
+            // 참여자 퇴장 이벤트
+            newSession.on('connectionDestroyed', () => {
+                updateParticipantCount(newSession);
+            });
+
             // 메시지 수신 이벤트
             newSession.on('signal:chat', (event: SignalEvent) => {
-                if (!event.data) {
-                    console.warn('메시지 데이터가 없습니다.');
-                    return;
-                }
+                if (!event.data) return;
 
                 try {
                     const data = JSON.parse(event.data) as OpenViduMessageData;
+                    const isMine = !event.from || event.from.connectionId === newSession.connection.connectionId;
+
                     const message: SimpleMessage = {
                         userName: data.sender || '알 수 없음',
                         message: data.message || '',
                         createdAt: data.timestamp || new Date().toISOString(),
+                        isMine: isMine,
                     };
                     onMessageReceived(message);
                 } catch (err) {
@@ -87,49 +109,38 @@ export const useOpenVidu = ({ sessionId, onMessageReceived }: UseOpenViduProps):
                 }
             });
 
-            // 연결 상태 이벤트
+            // 세션 연결 해제 이벤트
             newSession.on('sessionDisconnected', () => {
-                console.log('세션 연결 해제됨');
                 setConnected(false);
                 setSession(null);
                 setPublisher(null);
+                setParticipantCount(0);
             });
 
             // 에러 이벤트
             newSession.on('exception', (exception: { message?: string }) => {
-                console.error('OpenVidu 예외 발생:', exception);
                 setError(exception.message || '알 수 없는 오류');
             });
 
             // 백엔드에서 토큰 발급
-            console.log('토큰 발급 요청:', sessionId);
-            const token = await getOpenViduToken(sessionId);
-            console.log('토큰 발급 완료');
+            const response = await getOpenViduToken(sessionId);
+            const token = response.token;
+            const actualSessionId = response.sessionId;
+
+            // 세션 ID가 변경되었으면 부모 컴포넌트에 알림
+            if (actualSessionId !== sessionId) {
+                onSessionIdChanged?.(actualSessionId);
+            }
 
             // 세션 연결
-            await newSession.connect(token, { clientData: '사용자' });
-            console.log('세션 연결 성공');
-
-            // Publisher 생성 (영상 없이 데이터만)
-            const newPublisher = await OV.current.initPublisherAsync(undefined, {
-                audioSource: false,
-                videoSource: false,
-                publishAudio: false,
-                publishVideo: false,
-            });
-
-            // Publisher 게시
-            await newSession.publish(newPublisher);
-            console.log('Publisher 게시 완료');
+            await newSession.connect(token, { clientData: currentUserNickname.current });
 
             setSession(newSession);
-            setPublisher(newPublisher);
+            setPublisher(null);
             setConnected(true);
-
-            console.log('OpenVidu 세션 연결 성공:', sessionId);
+            updateParticipantCount(newSession);
         } catch (err) {
             const error = err as Error;
-            console.error('OpenVidu 연결 실패:', error);
             setError(error.message || 'OpenVidu 연결에 실패했습니다.');
             setConnected(false);
         } finally {
@@ -137,26 +148,21 @@ export const useOpenVidu = ({ sessionId, onMessageReceived }: UseOpenViduProps):
         }
     };
 
-    // 세션 연결 해제
     const disconnect = () => {
         if (session) {
             session.disconnect();
             setSession(null);
             setPublisher(null);
             setConnected(false);
-            console.log('OpenVidu 세션 연결 해제');
+            setParticipantCount(0);
         }
     };
 
-    // 메시지 전송
     const sendMessage = (message: string) => {
-        if (!session || !connected) {
-            console.error('세션이 연결되지 않았습니다.');
-            return;
-        }
+        if (!session || !connected) return;
 
         const data: OpenViduMessageData = {
-            sender: '현재 사용자', // TODO: 실제 사용자 이름
+            sender: currentUserNickname.current,
             message: message,
             timestamp: new Date().toISOString(),
         };
@@ -166,21 +172,18 @@ export const useOpenVidu = ({ sessionId, onMessageReceived }: UseOpenViduProps):
                 type: 'chat',
                 data: JSON.stringify(data),
             })
-            .then(() => {
-                console.log('메시지 전송 성공:', message);
-            })
-            .catch((error) => {
-                console.error('메시지 전송 실패:', error);
+            .catch(() => {
                 setError('메시지 전송 실패');
             });
     };
 
-    // 컴포넌트 언마운트 시 세션 해제
     useEffect(() => {
         return () => {
-            disconnect();
+            if (session) {
+                session.disconnect();
+            }
         };
-    }, []);
+    }, [session]);
 
     return {
         session,
@@ -188,6 +191,7 @@ export const useOpenVidu = ({ sessionId, onMessageReceived }: UseOpenViduProps):
         connected,
         connecting,
         error,
+        participantCount,
         connect,
         disconnect,
         sendMessage,

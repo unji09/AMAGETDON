@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout';
 import { ContainerContent } from '@/components/layout';
 import { Loading } from '@/components/common';
-import { RoadmapHeader } from '@/features/learning/components/RoadmapHeader';
-import { RoadmapTimeline } from '@/features/learning/components/RoadmapTimeline';
-import { ChapterDetailModal } from '@/features/learning/components/ChapterDetailModal';
+import { RoadmapHeader } from '@/features/learning/components/chapter/RoadmapHeader.tsx';
+import { RoadmapTimeline } from '@/features/learning/components/chapter/RoadmapTimeline.tsx';
+import { ChapterDetailModal } from '@/features/learning/components/chapter/ChapterDetailModal.tsx';
 import { getBaseChapters, getSideChapters, getProgress } from '@/api/learningApi';
 import type { ChapterItem, ChapterType, ProgressSummary } from '@/features/learning/types/learning';
 
