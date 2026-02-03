@@ -1,7 +1,7 @@
 import { Clock, Banknote, Rocket } from 'lucide-react';
 import { Modal } from '@/components/common';
 import { Button } from '@/components/common';
-import type { ChapterItem } from '../types/learning';
+import type { ChapterItem } from '../../types/learning.ts';
 import './ChapterDetailModal.css';
 
 interface ChapterDetailModalProps {
