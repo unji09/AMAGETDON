@@ -84,7 +84,7 @@ export const HomeContent = () => {
                 <div className="home-streak-content">
                     <h3 className="home-streak-title">
                         너 학습했니?<br />
-                        학습해야 돈 벌 수 있다
+                        학습해야 돈 벌 수 있단다
                     </h3>
 
                     <div className="home-streak-stats">
