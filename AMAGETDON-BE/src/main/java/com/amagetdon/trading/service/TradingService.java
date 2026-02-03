@@ -19,6 +19,7 @@ import com.amagetdon.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -60,6 +61,7 @@ public class TradingService {
         // 기본 검증
         validateMarketHours();
         validateQuantity(request.quantity());
+        validateStockCode(request.stockCode());
 
         // 사용자 및 주식 정보 조회
         User user = findUser(userId);
@@ -95,6 +97,16 @@ public class TradingService {
     private void validateQuantity(Integer quantity) {
         if (quantity == null || quantity < MIN_QUANTITY) {
             throw new IllegalArgumentException(INVALID_QUANTITY.getMessage());
+        }
+    }
+
+    private void validateStockCode(String stockCode) {
+        if (!StringUtils.hasText(stockCode)) {
+            throw new IllegalArgumentException(INVALID_INPUT.getMessage());
+        }
+
+        if (!stockCode.matches("\\d{6}")) {
+            throw new IllegalArgumentException(INVALID_STOCK_CODE_FORMAT.getMessage());
         }
     }
 
