@@ -1,0 +1,128 @@
+.recent-transactions {
+    background: var(--color-white);
+    border-radius: 12px;
+    padding: var(--spacing-5) var(--spacing-6);
+    margin-top: var(--spacing-5);
+}
+
+.recent-transactions__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-4);
+}
+
+.recent-transactions__title {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+}
+
+.recent-transactions__more-link {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    border: none;
+    background: none;
+    color: #888;
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+.recent-transactions__more-link:hover {
+    color: var(--color-main-green);
+}
+
+.recent-transactions__empty {
+    text-align: center;
+    color: #999;
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-6) 0;
+}
+
+.recent-transactions__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+}
+
+.recent-transactions__item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-3);
+    border: 1px solid #f0f0f0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.recent-transactions__item:hover {
+    background: var(--color-background);
+    border-color: #ddd;
+}
+
+.recent-transactions__item-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.recent-transactions__item-name {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+}
+
+.recent-transactions__item-date {
+    font-size: var(--font-size-xs);
+    color: #999;
+}
+
+.recent-transactions__item-center {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.recent-transactions__badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+}
+
+.recent-transactions__badge--buy {
+    background: rgba(220, 0, 0, 0.08);
+    color: var(--color-chart-up);
+}
+
+.recent-transactions__badge--sell {
+    background: rgba(0, 70, 180, 0.08);
+    color: var(--color-chart-down);
+}
+
+.recent-transactions__item-qty {
+    font-size: var(--font-size-xs);
+    color: #888;
+}
+
+.recent-transactions__item-right {
+    text-align: right;
+    min-width: 80px;
+}
+
+.recent-transactions__item-amount {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-dark-gray);
+}
+
+@media (max-width: 768px) {
+    .recent-transactions {
+        padding: var(--spacing-4);
+    }
+}

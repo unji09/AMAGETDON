@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { QuizCard } from '@/components/learning/quiz/QuizCard';
-import { QuizProgress } from '@/components/learning/quiz/QuizProgress';
-import { QuizFeedbackModal } from '@/components/learning/quiz/QuizFeedbackModal';
-import { RewardNotification } from '@/components/learning/quiz/RewardNotification';
-import { QuizCelebration } from '@/components/learning/quiz/QuizCelebration';
+import { QuizCard } from '@/features/learning/components/quiz/QuizCard';
+import { QuizProgress } from '@/features/learning/components/quiz/QuizProgress';
+import { QuizFeedbackModal } from '@/features/learning/components/quiz/QuizFeedbackModal';
+import { RewardNotification } from '@/features/learning/components/quiz/RewardNotification';
+import { QuizCelebration } from '@/features/learning/components/quiz/QuizCelebration';
 import { fetchDailyQuiz, submitDailyQuiz } from '@/api/quizApi';
 import type { QuizResponse, QuizSubmitResponse } from '@/types/quiz';
 import './DailyQuizPage.css';

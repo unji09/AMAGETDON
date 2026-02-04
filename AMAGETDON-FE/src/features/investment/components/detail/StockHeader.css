@@ -1,0 +1,118 @@
+.stock-header {
+    background: var(--color-white);
+    border-radius: 12px;
+    margin-top: var(--spacing-6);
+    margin-bottom: var(--spacing-6);
+    padding: var(--spacing-5) var(--spacing-6);
+    animation: headerFade 0.5s ease-out;
+}
+
+@keyframes headerFade {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.stock-header__top {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    margin-bottom: var(--spacing-3);
+}
+
+.stock-header__back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: var(--color-white);
+    color: #666;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.stock-header__back-btn:hover {
+    border-color: var(--color-main-green);
+    color: var(--color-main-green);
+}
+
+.stock-header__fav {
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    border: none;
+    background: none;
+    color: #ddd;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.stock-header__fav:hover { color: var(--color-chart-up); transform: scale(1.15); }
+.stock-header__fav--active { color: var(--color-chart-up); }
+
+.stock-header__market-badge {
+    font-size: 11px;
+    font-weight: var(--font-weight-bold);
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.stock-header__market-badge--kospi {
+    color: var(--color-main-green);
+    background: rgba(32, 60, 46, 0.08);
+}
+
+.stock-header__market-badge--kosdaq {
+    color: var(--color-brown);
+    background: rgba(150, 119, 61, 0.08);
+}
+
+.stock-header__code {
+    font-size: var(--font-size-sm);
+    color: #888;
+}
+
+.stock-header__name {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+    margin: 0 0 var(--spacing-2);
+}
+
+.stock-header__price-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-3);
+    margin-bottom: var(--spacing-2);
+}
+
+.stock-header__price {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+}
+
+.stock-header__change {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+}
+
+.stock-header__change--up { color: var(--color-chart-up); }
+.stock-header__change--down { color: var(--color-chart-down); }
+
+.stock-header__meta {
+    display: flex;
+    gap: var(--spacing-6);
+}
+
+.stock-header__meta-item {
+    font-size: var(--font-size-xs);
+    color: #888;
+}
+
+.stock-header__meta-item strong {
+    color: var(--color-dark-gray);
+    margin-left: 4px;
+}

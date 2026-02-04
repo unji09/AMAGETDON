@@ -16,16 +16,28 @@ import MyInfoPage from "@/pages/MyInfoPage.tsx";
 import SurveyPage from "@/pages/SurveyPage.tsx";
 import { DailyQuizPage } from '@/features/learning/components/quiz/DailyQuizPage';
 import '@/api/interceptor'
+import { InvestmentPage } from '@/pages/InvestmentPage';
+import { StockDetailPage } from '@/pages/StockDetailPage';
+import { TransactionPage } from '@/pages/TransactionPage';
+import { HoldingsPage } from '@/pages/HoldingsPage';
+import { WatchlistPage } from '@/pages/WatchlistPage';
+// import { LandingPage } from '@/pages/LandingPage';
 
 function App() {
     return (
         <ErrorBoundary>
             <BrowserRouter>
                 <Routes>
+                    {/* <Route path="/" element={<LandingPage />} /> */}
                     <Route path="/" element={<HomePage />} />
                     <Route path="/learning" element={<LearningPage />} />
                     <Route path="/learning/:chapterId" element={<ChapterDetailPage />} />
                     <Route path="/achievement" element={<AchievementPage />} />
+                    <Route path="/investment" element={<InvestmentPage />} />
+                    <Route path="/investment/transactions" element={<TransactionPage />} />
+                    <Route path="/investment/holdings" element={<HoldingsPage />} />
+                    <Route path="/investment/watchlist" element={<WatchlistPage />} />
+                    <Route path="/investment/:stockCode" element={<StockDetailPage />} />
                     <Route path="/community" element={<CommunityPage />} />
                     <Route path="/community/chat/:roomId" element={<ChatRoomPage />} />
                     <Route path="/ranking" element={<RankingPage />} />
