@@ -1,38 +1,40 @@
 /**
  * 퀴즈 타입 정의
- * QuizService.java 및 BE DTO 기준
+ * 백엔드 QuizController.java 및 DTO 기준
  */
 
 // 퀴즈 유형
 export type QuizType = 'OX' | 'MCQ';
 
-// 선택지 정보
+// 선택지 정보 (백엔드: ChoiceInfo)
 export interface QuizChoiceInfo {
     choiceId: number;
     choiceText: string;
-    choiceNo: number;
+    choiceOrder: number; // 백엔드는 choiceOrder 사용
 }
 
-// 퀴즈 상세 정보
+// 퀴즈 상세 정보 (백엔드: QuizDetail)
 export interface QuizDetail {
     quizId: number;
     quizType: QuizType;
-    quizContent: string;
+    content: string; // 백엔드는 content 사용 (quizContent 아님)
     choices: QuizChoiceInfo[] | null; // OX일 경우 null
 }
 
-// 무한 퀴즈 응답 (GET /api/v1/quiz/continuous/next)
+// 무한 퀴즈 응답 (GET /api/v1/quizzes/daily)
 export interface QuizResponse {
     quizSequence: number;
     isQuizRewardReceived: boolean;
-    quizDetail: QuizDetail;
+    quiz: QuizDetail; // 백엔드는 quiz 사용 (quizDetail 아님)
 }
 
-// 무한 퀴즈 제출 요청 (POST /api/v1/quiz/continuous/submit)
+// 무한 퀴즈 제출 요청 (POST /api/v1/quizzes/daily)
 export interface QuizSubmitRequest {
     quizId: number;
-    oxAnswer?: boolean; // OX 퀴즈일 경우
-    choiceId?: number;  // MCQ일 경우
+    answer: string; // 백엔드는 answer(string) 사용
+    oxAnswer?: boolean;
+    choiceId?: number;
+    oxAnswerValue?: boolean;
 }
 
 // 무한 퀴즈 제출 응답
@@ -44,20 +46,25 @@ export interface QuizSubmitResponse {
     currentBalance: number;
 }
 
-// 챕터 퀴즈 응답 (GET /api/v1/quiz/chapter/{chapterId})
+// 챕터 퀴즈 응답 (GET /api/v1/chapters/{chapterId}/quizzes)
 export interface ChapterQuizResponse {
     chapterId: number;
+    chapterTitle: string;
+    chapterType: 'NORMAL' | 'AGGRESSIVE' | 'NEUTRAL' | 'STABLE';
+    passThreshold: number;
+    rewardAmount: number;
     quizzes: QuizDetail[];
 }
 
-// 챕터 퀴즈 제출 요청 (POST /api/v1/quiz/chapter/result)
+// 챕터 퀴즈 답안 아이템
+export interface ChapterAnswerItem {
+    quizId: number;
+    answer: string;
+}
+
+// 챕터 퀴즈 제출 요청 (POST /api/v1/chapters/{chapterId}/quizzes)
 export interface ChapterQuizSubmitRequest {
-    // chapterId는 URL 파라미터로 전달되므로 제거
-    answers: {
-        quizId: number;
-        oxAnswer?: boolean;
-        choiceId?: number;
-    }[];
+    answers: ChapterAnswerItem[];
 }
 
 // 챕터 퀴즈 결과 데이터
@@ -79,19 +86,21 @@ export interface ChapterQuizSubmitResponse {
     data: ChapterQuizResultData;
 }
 
-// 오답노트 아이템
+// 오답노트 아이템 (백엔드: ReviewNoteDetail)
 export interface ReviewNoteItem {
     reviewNoteId: number;
     quizId: number;
     quizType: QuizType;
-    quizContent: string;
+    content: string; // 백엔드는 content 사용
     choices: QuizChoiceInfo[] | null;
     addedAt: string; // ISO DateTime
-    chapterId?: number;
 }
 
-// 오답노트 목록 응답
+// 오답노트 목록 응답 (백엔드: ReviewNoteListResponse)
 export interface ReviewNoteListResponse {
+    todayRewardReceived: boolean;
     totalCount: number;
-    reviewNotes: ReviewNoteItem[];
+    reviewNotes: {
+        [date: string]: ReviewNoteItem[];
+    };
 }
