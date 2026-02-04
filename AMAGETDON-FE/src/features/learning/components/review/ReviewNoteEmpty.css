@@ -1,0 +1,34 @@
+/* 빈 상태 */
+.review-note-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-20) var(--spacing-6);
+    text-align: center;
+}
+
+.review-note-empty__icon {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(199, 216, 183, 0.2), rgba(199, 216, 183, 0.05));
+    border-radius: 50%;
+    color: var(--color-main-green);
+    margin-bottom: var(--spacing-6);
+}
+
+.review-note-empty__message {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-dark-gray);
+    margin-bottom: var(--spacing-2);
+}
+
+.review-note-empty__submessage {
+    font-size: var(--font-size-base);
+    color: #666;
+    margin-bottom: var(--spacing-6);
+}
