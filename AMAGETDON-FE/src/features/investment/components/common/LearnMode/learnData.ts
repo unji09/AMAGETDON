@@ -51,6 +51,42 @@ export const LEARN_DATA: Record<string, LearnItem> = {
         description: '선택한 종목의 기본 정보예요. 현재가, 등락률, 거래량 등을 확인할 수 있어요.',
         tip: 'KOSPI는 대형주 중심, KOSDAQ은 기술주/중소형주 중심의 시장이에요.',
     },
+    'stock-code': {
+        id: 'stock-code',
+        title: '종목코드',
+        description: '각 주식을 구분하는 6자리 고유 번호예요. 예를 들어 삼성전자는 005930이에요.',
+        tip: '종목코드를 알면 검색이 더 빠르고 정확해요!',
+    },
+    'stock-metrics': {
+        id: 'stock-metrics',
+        title: '투자 지표',
+        description: '종목의 가치를 판단하는 데 도움이 되는 지표들이에요. 거래량, 시가총액, PER, PBR을 확인할 수 있어요.',
+        tip: '하나의 지표만 보지 말고 여러 지표를 종합적으로 판단하세요!',
+    },
+    'per': {
+        id: 'per',
+        title: 'PER (주가수익비율)',
+        description: '주가를 주당순이익(EPS)으로 나눈 값이에요. 현재 주가가 기업 수익의 몇 배인지 나타내요.',
+        tip: 'PER이 낮으면 저평가, 높으면 고평가일 수 있어요. 같은 업종끼리 비교하세요!',
+    },
+    'pbr': {
+        id: 'pbr',
+        title: 'PBR (주가순자산비율)',
+        description: '주가를 주당순자산(BPS)으로 나눈 값이에요. 1보다 낮으면 장부가치보다 싸게 거래되는 거예요.',
+        tip: 'PBR 1 미만은 청산가치보다 낮은 것으로, 저평가 신호일 수 있어요.',
+    },
+    'market-cap': {
+        id: 'market-cap',
+        title: '시가총액',
+        description: '현재 주가 × 발행 주식 수로 계산된 기업의 총 가치예요. 기업의 규모를 나타내죠.',
+        tip: '시가총액이 크면 대형주, 작으면 중소형주로 분류해요.',
+    },
+    'volume': {
+        id: 'volume',
+        title: '거래량',
+        description: '하루 동안 거래된 주식의 총 수량이에요. 투자자들의 관심도를 보여줘요.',
+        tip: '거래량이 급증하면 큰 변동이 있을 수 있으니 주의하세요!',
+    },
     'candle-chart': {
         id: 'candle-chart',
         title: '캔들 차트',
