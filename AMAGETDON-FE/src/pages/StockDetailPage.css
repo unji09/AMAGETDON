@@ -10,7 +10,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 12px;
+    padding: 6px 20px;
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-semibold);
     border-radius: 16px;

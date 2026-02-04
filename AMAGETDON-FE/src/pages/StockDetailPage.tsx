@@ -128,10 +128,12 @@ export const StockDetailPage = () => {
             <Layout>
                 <ContainerContent>
                     <div className="stock-detail__header">
-                        <div className={`stock-detail__market-status ${isOpen ? 'stock-detail__market-status--open' : 'stock-detail__market-status--closed'}`}>
-                            <span className="stock-detail__market-dot"></span>
-                            {statusText}
-                        </div>
+                        <LearnSpotlight id="market-status">
+                            <div className={`stock-detail__market-status ${isOpen ? 'stock-detail__market-status--open' : 'stock-detail__market-status--closed'}`}>
+                                <span className="stock-detail__market-dot"></span>
+                                {statusText}
+                            </div>
+                        </LearnSpotlight>
                         <LearnModeToggle />
                     </div>
                     <LearnOverlay />
