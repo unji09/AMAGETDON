@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
+import { FlipText } from '@/components/common';
 import type { VolumeRankingItem } from '../../types/investment';
 import { formatPrice, formatVolume } from '../../utils/format';
 import { addToWatchlist, removeFromWatchlist } from '@/api/investmentApi';
@@ -27,27 +28,29 @@ const StockRow = memo(({
     onNavigate: (stockCode: string) => void;
 }) => {
     const [prevPrice, setPrevPrice] = useState(item.currentPrice);
-    const [priceFlash, setPriceFlash] = useState<'up' | 'down' | null>(null);
+    const [priceDirection, setPriceDirection] = useState<'up' | 'down' | null>(null);
     const [prevRate, setPrevRate] = useState(item.changeRate);
-    const [rateFlash, setRateFlash] = useState<'up' | 'down' | null>(null);
+    const [rateDirection, setRateDirection] = useState<'up' | 'down' | null>(null);
 
     useEffect(() => {
         if (item.currentPrice !== prevPrice) {
-            setPriceFlash(item.currentPrice > prevPrice ? 'up' : 'down');
+            setPriceDirection(Number(item.currentPrice) > Number(prevPrice) ? 'up' : 'down');
             setPrevPrice(item.currentPrice);
-            const timer = setTimeout(() => setPriceFlash(null), 600);
+            const timer = setTimeout(() => setPriceDirection(null), 500);
             return () => clearTimeout(timer);
         }
     }, [item.currentPrice, prevPrice]);
 
     useEffect(() => {
         if (item.changeRate !== prevRate) {
-            setRateFlash(item.changeRate > prevRate ? 'up' : 'down');
+            setRateDirection(item.changeRate > prevRate ? 'up' : 'down');
             setPrevRate(item.changeRate);
-            const timer = setTimeout(() => setRateFlash(null), 600);
+            const timer = setTimeout(() => setRateDirection(null), 500);
             return () => clearTimeout(timer);
         }
     }, [item.changeRate, prevRate]);
+
+    const isUp = item.changeRate >= 0;
 
     return (
         <tr
@@ -57,15 +60,19 @@ const StockRow = memo(({
             <td className="popular-stocks__td popular-stocks__td--rank">{item.rank}</td>
             <td className="popular-stocks__td popular-stocks__td--name">{item.stockName}</td>
             <td className="popular-stocks__td popular-stocks__td--price">
-                <span className={`popular-stocks__animated ${priceFlash ? `popular-stocks__flash--${priceFlash}` : ''}`}>
-                    {formatPrice(item.currentPrice)}
-                </span>
+                <FlipText
+                    value={formatPrice(item.currentPrice)}
+                    highlightUp={priceDirection === 'up'}
+                    highlightDown={priceDirection === 'down'}
+                />
             </td>
             <td className="popular-stocks__td popular-stocks__td--volume">{formatVolume(item.volume)}</td>
-            <td className={`popular-stocks__td popular-stocks__td--rate ${item.changeRate >= 0 ? 'popular-stocks__td--up' : 'popular-stocks__td--down'}`}>
-                <span className={`popular-stocks__animated ${rateFlash ? `popular-stocks__flash--${rateFlash}` : ''}`}>
-                    {item.changeRate >= 0 ? '+' : ''}{item.changeRate.toFixed(2)}%
-                </span>
+            <td className={`popular-stocks__td popular-stocks__td--rate ${isUp ? 'popular-stocks__td--up' : 'popular-stocks__td--down'}`}>
+                <FlipText
+                    value={`${isUp ? '+' : ''}${item.changeRate.toFixed(2)}%`}
+                    highlightUp={rateDirection === 'up'}
+                    highlightDown={rateDirection === 'down'}
+                />
             </td>
             <td className="popular-stocks__td popular-stocks__td--fav">
                 <button

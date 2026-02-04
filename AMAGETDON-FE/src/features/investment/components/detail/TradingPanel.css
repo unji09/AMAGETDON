@@ -82,41 +82,26 @@
 }
 
 .trading-panel__price-display {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-bold);
     color: var(--color-dark-gray);
-    text-align: right;
     padding: var(--spacing-2) var(--spacing-3);
     background: var(--color-background);
     border-radius: 8px;
-    transition: background-color 0.3s ease;
 }
 
-/* 가격 변동 플래시 애니메이션 */
-.trading-panel__price-display--flash-up {
-    animation: tradingPriceFlashUp 0.6s ease;
+/* FlipText 스타일 - 주문단가 */
+.trading-panel__flip-price {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
 }
 
-.trading-panel__price-display--flash-down {
-    animation: tradingPriceFlashDown 0.6s ease;
-}
-
-@keyframes tradingPriceFlashUp {
-    0% {
-        background-color: rgba(231, 76, 60, 0.2);
-    }
-    100% {
-        background-color: var(--color-background);
-    }
-}
-
-@keyframes tradingPriceFlashDown {
-    0% {
-        background-color: rgba(52, 152, 219, 0.2);
-    }
-    100% {
-        background-color: var(--color-background);
-    }
+.trading-panel__flip-price .flip-text__value {
+    padding: 2px 6px;
+    border-radius: 6px;
 }
 
 .trading-panel__input {

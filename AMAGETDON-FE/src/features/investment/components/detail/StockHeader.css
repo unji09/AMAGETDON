@@ -92,62 +92,28 @@
     font-size: var(--font-size-3xl);
     font-weight: var(--font-weight-bold);
     color: var(--color-dark-gray);
-    padding: 4px 8px;
+}
+
+/* FlipText 스타일 - 가격 (큰 사이즈) */
+.stock-header__flip-price {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+}
+
+.stock-header__flip-price .flip-text__value {
+    padding: 4px 10px;
     border-radius: 8px;
-    transition: background-color 0.3s ease;
 }
 
-/* 가격 변동 플래시 애니메이션 */
-.stock-header__price--flash-up {
-    animation: priceFlashUp 0.6s ease;
+/* FlipText 스타일 - 등락률 */
+.stock-header__flip-change {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
 }
 
-.stock-header__price--flash-down {
-    animation: priceFlashDown 0.6s ease;
-}
-
-.stock-header__change--flash-up {
-    animation: changeFlashUp 0.6s ease;
-}
-
-.stock-header__change--flash-down {
-    animation: changeFlashDown 0.6s ease;
-}
-
-@keyframes priceFlashUp {
-    0% {
-        background-color: rgba(231, 76, 60, 0.2);
-    }
-    100% {
-        background-color: transparent;
-    }
-}
-
-@keyframes priceFlashDown {
-    0% {
-        background-color: rgba(52, 152, 219, 0.2);
-    }
-    100% {
-        background-color: transparent;
-    }
-}
-
-@keyframes changeFlashUp {
-    0%, 25% {
-        transform: scale(1.1);
-    }
-    100% {
-        transform: scale(1);
-    }
-}
-
-@keyframes changeFlashDown {
-    0%, 25% {
-        transform: scale(1.1);
-    }
-    100% {
-        transform: scale(1);
-    }
+.stock-header__flip-change .flip-text__value {
+    padding: 2px 6px;
+    border-radius: 4px;
 }
 
 .stock-header__change {

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, ArrowLeft } from 'lucide-react';
+import { FlipText } from '@/components/common';
 import type { StockDetailData } from '../../types/investment';
 import { formatPrice, formatVolume } from '../../utils/format';
 import { addToWatchlist, removeFromWatchlist } from '@/api/investmentApi';
@@ -56,11 +57,21 @@ export const StockHeader = ({ stockCode, detail, isFavorite, onWatchlistChange, 
             </div>
             <h1 className="stock-header__name">{detail.stockName}</h1>
             <div className="stock-header__price-row">
-                <span className={`stock-header__price ${priceDirection ? `stock-header__price--flash-${priceDirection}` : ''}`}>
-                    {formatPrice(detail.currentPrice)}
+                <span className="stock-header__price">
+                    <FlipText
+                        value={formatPrice(detail.currentPrice)}
+                        className="stock-header__flip-price"
+                        highlightUp={priceDirection === 'up'}
+                        highlightDown={priceDirection === 'down'}
+                    />
                 </span>
-                <span className={`stock-header__change ${isUp ? 'stock-header__change--up' : 'stock-header__change--down'} ${priceDirection ? `stock-header__change--flash-${priceDirection}` : ''}`}>
-                    {isUp ? '+' : '-'}{changeAmount.toLocaleString()} ({isUp ? '+' : ''}{detail.changeRate.toFixed(2)}%)
+                <span className={`stock-header__change ${isUp ? 'stock-header__change--up' : 'stock-header__change--down'}`}>
+                    <FlipText
+                        value={`${isUp ? '+' : '-'}${changeAmount.toLocaleString()} (${isUp ? '+' : ''}${detail.changeRate.toFixed(2)}%)`}
+                        className="stock-header__flip-change"
+                        highlightUp={priceDirection === 'up'}
+                        highlightDown={priceDirection === 'down'}
+                    />
                 </span>
             </div>
             <div className="stock-header__meta">

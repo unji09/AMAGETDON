@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { FlipText } from '@/components/common';
 import { buyStock, sellStock } from '@/api/investmentApi';
 import { formatWon, formatRate } from '../../utils/format';
 import type { SingleHoldingData } from '../../types/investment';
@@ -130,8 +131,13 @@ export const TradingPanel = ({ stockCode, currentPrice, balance, holding, onTrad
 
             <div className="trading-panel__field">
                 <label className="trading-panel__label">주문단가 (KRW)</label>
-                <div className={`trading-panel__price-display ${priceDirection ? `trading-panel__price-display--flash-${priceDirection}` : ''}`}>
-                    {formatWon(currentPrice)}
+                <div className="trading-panel__price-display">
+                    <FlipText
+                        value={formatWon(currentPrice)}
+                        className="trading-panel__flip-price"
+                        highlightUp={priceDirection === 'up'}
+                        highlightDown={priceDirection === 'down'}
+                    />
                 </div>
             </div>
 
