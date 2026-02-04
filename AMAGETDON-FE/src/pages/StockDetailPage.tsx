@@ -27,11 +27,13 @@ export const StockDetailPage = () => {
     const [period, setPeriod] = useState<ChartPeriod>('1D');
     const [loading, setLoading] = useState(true);
 
-    const fetchAll = useCallback(async () => {
+    // 초기 로딩 (stockCode 변경 시에만)
+    const fetchInitial = useCallback(async () => {
         if (!stockCode) return;
+        setLoading(true);
         const [detailRes, chartRes, assetsRes, watchlistRes, holdingRes] = await Promise.allSettled([
             getStockDetail(stockCode),
-            getStockChart(stockCode, period),
+            getStockChart(stockCode, '1D'), // 초기에는 1D 차트
             getAssets(),
             getAllWatchlist(),
             getSingleHolding(stockCode),
@@ -42,9 +44,9 @@ export const StockDetailPage = () => {
         if (watchlistRes.status === 'fulfilled') setWatchlist(watchlistRes.value);
         if (holdingRes.status === 'fulfilled') setHolding(holdingRes.value);
         setLoading(false);
-    }, [stockCode, period]);
+    }, [stockCode]);
 
-    useEffect(() => { fetchAll(); }, [fetchAll]);
+    useEffect(() => { fetchInitial(); }, [fetchInitial]);
 
     // 현재가/자산 정보 폴링 (7초)
     const fetchDetailSilent = useCallback(async () => {
