@@ -6,7 +6,7 @@ interface ContainerProps {
 }
 
 /**
- * 전체 컨테이너 (max-width: 1920px)
+ * 전체 컨테이너
  */
 export const Container = ({ children, className = '' }: ContainerProps) => {
     return (
@@ -22,7 +22,7 @@ interface ContainerContentProps {
 }
 
 /**
- * 콘텐츠 컨테이너 (max-width: 1200px)
+ * 콘텐츠 컨테이너
  */
 export const ContainerContent = ({ children, className = '' }: ContainerContentProps) => {
     return (

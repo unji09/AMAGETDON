@@ -3,6 +3,7 @@ package com.amagetdon.learning.service;
 import com.amagetdon.achievement.entity.AchievementIdCode;
 import com.amagetdon.achievement.repository.AchievementRedisRepository;
 import com.amagetdon.achievement.service.AchievementService;
+import com.amagetdon.learning.dto.quiz.QuizCountResponse;
 import com.amagetdon.learning.dto.quiz.QuizResponse;
 import com.amagetdon.learning.dto.quiz.QuizSubmitRequest;
 import com.amagetdon.learning.dto.quiz.QuizSubmitResponse;
@@ -389,5 +390,11 @@ public class QuizService {
                 false,
                 quizDetail
         );
+    }
+
+    public QuizCountResponse getTodayQuizCount(Long userId) {
+        LocalDate now = LocalDate.now();
+        int count = historyRepository.countByUserIdAndQuizDate(userId, now);
+        return new QuizCountResponse(count);
     }
 }
