@@ -11,6 +11,11 @@
     transform: scale(1.01);
 }
 
+/* 학습 모드일 때 내부 클릭 차단 (힌트/카드 제외) */
+.learn-spotlight--enabled > *:not(.learn-spotlight__hint):not(.learn-spotlight__card) {
+    pointer-events: none;
+}
+
 .learn-spotlight--enabled::before {
     content: '';
     position: absolute;
