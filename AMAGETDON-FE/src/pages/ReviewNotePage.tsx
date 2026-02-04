@@ -1,186 +1,241 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Layout } from '@/components/layout';
 import { useReviewNote } from '@/features/learning/hooks/useReviewNote';
-import { ReviewNoteHeader } from '@/features/learning/components/review/ReviewNoteHeader';
-import { ReviewNoteList } from '@/features/learning/components/review/ReviewNoteList';
-import { ReviewNoteEmpty } from '@/features/learning/components/review/ReviewNoteEmpty';
-import { Modal, Toast } from '@/components/common';
-import type { ReviewNoteDetail } from '@/types/quiz';
+import {
+    ReviewNoteHeader,
+    ReviewNoteList,
+    ReviewNoteEmpty,
+} from '@/features/learning/components/review';
+import { Modal, Button, Toast } from '@/components/common';
+import type { ReviewNoteDetail, ReviewNoteSubmitRequest } from '@/types/quiz';
 import './ReviewNotePage.css';
 
 /**
  * 오답노트 페이지
- * - 오답 목록 조회 및 표시
- * - 다시 풀기 (모달)
+ * - 챕터별 그룹화된 오답 목록
+ * - 다시 풀기 모달 (OX/객관식)
  * - 개별 삭제
  */
 export const ReviewNotePage = () => {
     const navigate = useNavigate();
-    const {
-        reviewNotes,
-        totalCount,
-        loading,
-        error,
-        handleSubmit,
-        handleDelete,
-    } = useReviewNote();
+    const { reviewNotes, totalCount, todayRewardReceived, loading, error, handleSubmit, handleDelete } = useReviewNote();
 
     const [selectedNote, setSelectedNote] = useState<ReviewNoteDetail | null>(null);
-    const [userAnswer, setUserAnswer] = useState('');
-    const [submitting, setSubmitting] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [selectedAnswer, setSelectedAnswer] = useState<string>('');
     const [toastMsg, setToastMsg] = useState<string | null>(null);
+    const [toastType, setToastType] = useState<'success' | 'error'>('success');
+    const [submitting, setSubmitting] = useState(false);
 
-    // 다시 풀기 버튼 클릭
+    // 다시 풀기 모달 열기
     const handleSolveClick = (note: ReviewNoteDetail) => {
         setSelectedNote(note);
-        setUserAnswer('');
+        setSelectedAnswer('');
+        setShowModal(true);
     };
 
-    // 답안 제출
-    const handleAnswerSubmit = async () => {
-        if (!selectedNote || !userAnswer.trim()) return;
+    // 다시 풀기 모달 닫기
+    const handleCloseModal = () => {
+        setShowModal(false);
+        setSelectedNote(null);
+        setSelectedAnswer('');
+    };
+
+    // OX 버튼 클릭
+    const handleOXClick = async (answer: 'O' | 'X') => {
+        if (!selectedNote || submitting) return;
 
         setSubmitting(true);
         try {
-            const result = await handleSubmit(selectedNote.quizId, userAnswer.trim());
+            const request: ReviewNoteSubmitRequest = {
+                quizId: selectedNote.quizId,
+                answer,
+            };
+            const response = await handleSubmit(request);
 
-            if (result.isCorrect) {
+            if (response.isCorrect) {
+                setToastType('success');
                 let message = '정답입니다! 오답노트에서 삭제되었습니다.';
-                if (result.rewardReceived) {
-                    message += ' 50,000원 보상을 받았습니다!';
+                if (response.rewardReceived) {
+                    message += ` 첫 풀이 보상 50,000원이 지급되었습니다.`;
                 }
                 setToastMsg(message);
-                setSelectedNote(null);
             } else {
-                setToastMsg('틀렸습니다. 다시 도전해보세요!');
+                setToastType('error');
+                setToastMsg(response.message || '오답입니다. 다시 도전해보세요!');
             }
+            handleCloseModal();
         } catch (err) {
-            console.error('답안 제출 오류:', err);
-            setToastMsg('답안 제출에 실패했습니다.');
+            setToastType('error');
+            setToastMsg('답안 제출에 실패했습니다');
         } finally {
             setSubmitting(false);
         }
     };
 
-    // 삭제 확인
+    // 객관식 제출
+    const handleMCQSubmit = async () => {
+        if (!selectedNote || !selectedAnswer || submitting) return;
+
+        setSubmitting(true);
+        try {
+            const request: ReviewNoteSubmitRequest = {
+                quizId: selectedNote.quizId,
+                answer: selectedAnswer,
+            };
+            const response = await handleSubmit(request);
+
+            if (response.isCorrect) {
+                setToastType('success');
+                let message = '정답입니다! 오답노트에서 삭제되었습니다.';
+                if (response.rewardReceived) {
+                    message += ` 첫 풀이 보상 50,000원이 지급되었습니다.`;
+                }
+                setToastMsg(message);
+            } else {
+                setToastType('error');
+                setToastMsg(response.message || '오답입니다. 다시 도전해보세요!');
+            }
+            handleCloseModal();
+        } catch (err) {
+            setToastType('error');
+            setToastMsg('답안 제출에 실패했습니다');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    // 개별 삭제
     const handleDeleteClick = async (reviewNoteId: number) => {
-        if (!confirm('정말 삭제하시겠습니까?')) return;
+        if (!confirm('이 문제를 오답노트에서 삭제하시겠습니까?')) return;
 
         try {
             await handleDelete(reviewNoteId);
-            setToastMsg('삭제되었습니다.');
+            setToastType('success');
+            setToastMsg('오답노트에서 삭제되었습니다');
         } catch (err) {
-            console.error('삭제 오류:', err);
-            setToastMsg('삭제에 실패했습니다.');
+            setToastType('error');
+            setToastMsg('삭제에 실패했습니다');
         }
     };
 
     if (loading) {
         return (
-            <div className="review-note-page">
-                <div className="review-note-page__loading">로딩 중...</div>
-            </div>
+            <Layout>
+                <div className="review-note-page">
+                    <div className="review-note-page__loading">
+                        <p className="review-note-page__loading-text">오답노트를 불러오는 중...</p>
+                    </div>
+                </div>
+            </Layout>
         );
     }
 
     if (error) {
         return (
-            <div className="review-note-page">
-                <div className="review-note-page__error">{error}</div>
-            </div>
+            <Layout>
+                <div className="review-note-page">
+                    <div className="review-note-page__error">
+                        <p className="review-note-page__error-text">{error}</p>
+                        <Button variant="secondary" onClick={() => window.location.reload()}>
+                            다시 시도
+                        </Button>
+                    </div>
+                </div>
+            </Layout>
         );
     }
 
     return (
-        <div className="review-note-page">
-            <ReviewNoteHeader totalCount={totalCount} />
+        <Layout>
+            <div className="review-note-page">
+                <ReviewNoteHeader totalCount={totalCount} />
 
-            {totalCount === 0 ? (
-                <ReviewNoteEmpty />
-            ) : (
-                <ReviewNoteList
-                    reviewNotes={reviewNotes}
-                    onSolve={handleSolveClick}
-                    onDelete={handleDeleteClick}
-                />
-            )}
+                {totalCount === 0 ? (
+                    <ReviewNoteEmpty onStartLearning={() => navigate('/learning')} />
+                ) : (
+                    <ReviewNoteList
+                        reviewNotes={reviewNotes || {}}
+                        onSolveClick={handleSolveClick}
+                        onDeleteClick={handleDeleteClick}
+                    />
+                )}
 
-            {/* 다시 풀기 모달 */}
-            {selectedNote && (
-                <Modal
-                    isOpen={true}
-                    onClose={() => setSelectedNote(null)}
-                >
-                    <div className="review-note-modal">
-                        <h3 className="review-note-modal__title">문제 다시 풀기</h3>
-                        <p className="review-note-modal__question">{selectedNote.content}</p>
+                {/* 다시 풀기 모달 */}
+                {showModal && selectedNote && (
+                    <Modal isOpen onClose={handleCloseModal}>
+                        <div className="review-note-modal">
+                            <span className="review-note-modal__type">
+                                {selectedNote.quizType === 'OX' ? 'OX 퀴즈' : '객관식'}
+                            </span>
+                            <p className="review-note-modal__content">{selectedNote.content}</p>
 
-                        {selectedNote.quizType === 'MCQ' && selectedNote.choices ? (
-                            <div className="review-note-modal__choices">
-                                {selectedNote.choices.map((choice) => (
-                                    <label
-                                        key={choice.choiceId}
-                                        className={`review-note-modal__choice ${
-                                            userAnswer === String(choice.choiceId)
-                                                ? 'review-note-modal__choice--selected'
-                                                : ''
-                                        }`}
+                            {selectedNote.quizType === 'OX' ? (
+                                <div className="review-note-modal__ox-buttons">
+                                    <button
+                                        type="button"
+                                        className="review-note-modal__ox-btn review-note-modal__ox-btn--o"
+                                        onClick={() => handleOXClick('O')}
+                                        disabled={submitting}
                                     >
-                                        <input
-                                            type="radio"
-                                            name="answer"
-                                            value={choice.choiceId}
-                                            checked={userAnswer === String(choice.choiceId)}
-                                            onChange={(e) => setUserAnswer(e.target.value)}
-                                        />
-                                        <span>{choice.choiceText}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="review-note-modal__ox">
-                                <button
-                                    type="button"
-                                    className={`review-note-modal__ox-btn ${
-                                        userAnswer === 'O' ? 'review-note-modal__ox-btn--selected' : ''
-                                    }`}
-                                    onClick={() => setUserAnswer('O')}
-                                >
-                                    O
-                                </button>
-                                <button
-                                    type="button"
-                                    className={`review-note-modal__ox-btn ${
-                                        userAnswer === 'X' ? 'review-note-modal__ox-btn--selected' : ''
-                                    }`}
-                                    onClick={() => setUserAnswer('X')}
-                                >
-                                    X
-                                </button>
-                            </div>
-                        )}
+                                        O
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="review-note-modal__ox-btn review-note-modal__ox-btn--x"
+                                        onClick={() => handleOXClick('X')}
+                                        disabled={submitting}
+                                    >
+                                        X
+                                    </button>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="review-note-modal__choices">
+                                        {selectedNote.choices?.map((choice) => (
+                                            <label
+                                                key={choice.choiceId}
+                                                className="review-note-modal__choice"
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name="answer"
+                                                    value={choice.choiceId.toString()}
+                                                    checked={selectedAnswer === choice.choiceId.toString()}
+                                                    onChange={(e) => setSelectedAnswer(e.target.value)}
+                                                />
+                                                <span className="review-note-modal__choice-text">
+                                                    {choice.choiceText}
+                                                </span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <Button
+                                        variant="primary"
+                                        size="large"
+                                        fullWidth
+                                        onClick={handleMCQSubmit}
+                                        disabled={!selectedAnswer || submitting}
+                                    >
+                                        제출하기
+                                    </Button>
+                                </>
+                            )}
+                        </div>
+                    </Modal>
+                )}
 
-                        <button
-                            type="button"
-                            className="review-note-modal__submit"
-                            onClick={handleAnswerSubmit}
-                            disabled={submitting || !userAnswer}
-                        >
-                            {submitting ? '제출 중...' : '제출하기'}
-                        </button>
-                    </div>
-                </Modal>
-            )}
-
-            {/* 토스트 알림 */}
-            {toastMsg && (
-                <Toast
-                    message={toastMsg}
-                    type="success"
-                    duration={3000}
-                    onClose={() => setToastMsg(null)}
-                />
-            )}
-        </div>
+                {/* 토스트 알림 */}
+                {toastMsg && (
+                    <Toast
+                        message={toastMsg}
+                        type={toastType}
+                        duration={4000}
+                        onClose={() => setToastMsg(null)}
+                    />
+                )}
+            </div>
+        </Layout>
     );
 };

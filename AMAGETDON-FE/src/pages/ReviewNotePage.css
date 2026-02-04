@@ -1,0 +1,134 @@
+/* 오답노트 페이지 */
+.review-note-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: var(--spacing-8) var(--spacing-4);
+}
+
+.review-note-page__loading,
+.review-note-page__error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-20) var(--spacing-6);
+    text-align: center;
+}
+
+.review-note-page__loading-text,
+.review-note-page__error-text {
+    font-size: var(--font-size-lg);
+    color: #666;
+    margin-top: var(--spacing-4);
+}
+
+.review-note-page__error-text {
+    color: #dc0000;
+}
+
+/* 다시 풀기 모달 */
+.review-note-modal {
+    padding: var(--spacing-2) 0;
+}
+
+.review-note-modal__content {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-dark-gray);
+    margin-bottom: var(--spacing-8);
+    line-height: var(--line-height-relaxed);
+}
+
+.review-note-modal__type {
+    display: inline-block;
+    padding: 4px 10px;
+    background: var(--color-quiz-yellow);
+    color: var(--color-dark-gray);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    border-radius: 6px;
+    margin-bottom: var(--spacing-4);
+}
+
+/* OX 버튼 */
+.review-note-modal__ox-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-4);
+    margin-bottom: var(--spacing-6);
+}
+
+.review-note-modal__ox-btn {
+    height: 80px;
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-bold);
+    border-radius: 12px;
+    border: 2px solid #e0e0e0;
+    background: var(--color-white);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.review-note-modal__ox-btn--o {
+    color: var(--color-chart-up);
+}
+
+.review-note-modal__ox-btn--o:hover {
+    border-color: var(--color-chart-up);
+    background: #fff5f5;
+}
+
+.review-note-modal__ox-btn--x {
+    color: var(--color-chart-down);
+}
+
+.review-note-modal__ox-btn--x:hover {
+    border-color: var(--color-chart-down);
+    background: #f5f8ff;
+}
+
+/* 객관식 선택지 */
+.review-note-modal__choices {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+    margin-bottom: var(--spacing-6);
+}
+
+.review-note-modal__choice {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-4);
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.review-note-modal__choice:hover {
+    border-color: var(--color-main-green);
+    background: rgba(199, 216, 183, 0.05);
+}
+
+.review-note-modal__choice input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.review-note-modal__choice-text {
+    flex: 1;
+    font-size: var(--font-size-base);
+    color: var(--color-dark-gray);
+}
+
+@media (max-width: 640px) {
+    .review-note-page {
+        padding: var(--spacing-4) var(--spacing-3);
+    }
+
+    .review-note-modal__ox-buttons {
+        grid-template-columns: 1fr;
+    }
+}
