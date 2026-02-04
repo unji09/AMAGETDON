@@ -9,6 +9,7 @@ import { Layout, ContainerContent } from '@/components/layout';
 import GroupCard from '@/features/community/components/GroupCard';
 import GroupCreateModal from '@/features/community/components/GroupCreateModal';
 import JoinCodeModal from '@/features/community/components/JoinCodeModal';
+import RankingCard from '@/features/ranking/components/RankingCard';
 import {
     getPublicRooms,
     getMyRoom,
@@ -60,7 +61,6 @@ export const CommunityPage = () => {
     // 검색
     const handleSearch = async () => {
         if (!searchQuery.trim()) {
-            // 검색어 없으면 전체 목록 다시 로드
             loadData();
             return;
         }
@@ -84,7 +84,10 @@ export const CommunityPage = () => {
             showToast('그룹이 생성되었습니다!', 'success');
             setMyRoom(newRoom);
             setIsCreateModalOpen(false);
-            await loadData();
+
+            // ✅ 그룹 생성 후 바로 채팅방으로 이동
+            navigate(`/community/chat/${newRoom.roomId}`);
+
         } catch (error: unknown) {
             console.error('그룹 생성 실패:', error);
             const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || '그룹 생성에 실패했습니다';
@@ -98,10 +101,7 @@ export const CommunityPage = () => {
         try {
             await joinPublicRoom(roomId);
             showToast('그룹에 참여했습니다!', 'success');
-
-            // 채팅방으로 이동
             navigate(`/community/chat/${roomId}`);
-
         } catch (error: unknown) {
             console.error('참여 실패:', error);
             const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || '그룹 참여에 실패했습니다';
@@ -115,10 +115,7 @@ export const CommunityPage = () => {
             const response = await joinPrivateRoom({ joinCode });
             showToast('그룹에 참여했습니다!', 'success');
             setIsJoinModalOpen(false);
-
-            // 채팅방으로 이동
             navigate(`/community/chat/${response.roomId}`);
-
             return response;
         } catch (error: unknown) {
             console.error('참여 실패:', error);
@@ -201,7 +198,7 @@ export const CommunityPage = () => {
                         </div>
                     )}
 
-                    {/* 검색 및 액션 버튼 */}
+                    {/* 검색바 및 액션 버튼 */}
                     <div style={{
                         display: 'flex',
                         gap: '16px',
@@ -297,7 +294,7 @@ export const CommunityPage = () => {
                     </div>
 
                     {/* 그룹 목록 */}
-                    <div>
+                    <div style={{ marginBottom: '48px' }}>
                         <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1A1A1A', marginBottom: '16px' }}>
                             공개 그룹
                         </h2>
@@ -307,7 +304,7 @@ export const CommunityPage = () => {
                                 display: 'flex',
                                 justifyContent: 'center',
                                 alignItems: 'center',
-                                minHeight: '400px',
+                                minHeight: '200px',
                             }}>
                                 <div style={{ fontSize: '16px', color: '#666666' }}>로딩 중...</div>
                             </div>
@@ -317,7 +314,7 @@ export const CommunityPage = () => {
                                 flexDirection: 'column',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                minHeight: '400px',
+                                minHeight: '200px',
                                 padding: '40px 20px',
                             }}>
                                 <div style={{ fontSize: '64px', marginBottom: '16px' }}>🏠</div>
@@ -340,6 +337,16 @@ export const CommunityPage = () => {
                                 ))}
                             </div>
                         )}
+                    </div>
+
+                    {/* 랭킹 카드 섹션 */}
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, 1fr)',
+                        gap: '24px',
+                    }}>
+                        <RankingCard type="profit" />
+                        <RankingCard type="learning" />
                     </div>
                 </div>
             </ContainerContent>

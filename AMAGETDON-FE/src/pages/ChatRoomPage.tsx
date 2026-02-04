@@ -1,10 +1,12 @@
 /**
  * ChatRoomPage - 채팅방 페이지
  * Figma 디자인 기반 (커뮤니티 대화)
+ * Layout 컴포넌트 포함하여 상단 네비게이션 바 표시
  */
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Layout } from '@/components/layout';
 import { useOpenVidu } from '@/hooks/useOpenVidu';
 import { getMyRoom, leaveRoom, getRoomMembers } from '@/api/communityApi';
 import type { RoomResponse, RoomMemberListResponse, RoomMemberDto } from '@/features/community/types/CommunityTypes';
@@ -29,6 +31,7 @@ const ChatRoomPage = () => {
     const [participants, setParticipants] = useState<RoomMemberDto[]>([]);
     const [loadingParticipants, setLoadingParticipants] = useState(false);
     const [showLeaveModal, setShowLeaveModal] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -58,6 +61,7 @@ const ChatRoomPage = () => {
     useEffect(() => {
         const loadRoom = async () => {
             try {
+                setLoading(true);
                 const myRoom = await getMyRoom();
                 if (myRoom && myRoom.roomId === Number(roomId)) {
                     setRoom(myRoom);
@@ -68,6 +72,8 @@ const ChatRoomPage = () => {
             } catch (err) {
                 console.error('방 정보 로드 실패:', err);
                 navigate('/community');
+            } finally {
+                setLoading(false);
             }
         };
         loadRoom();
@@ -168,196 +174,212 @@ const ChatRoomPage = () => {
         return groups;
     };
 
+    // 로딩 중
+    if (loading) {
+        return (
+            <Layout>
+                <div className="chat-loading">
+                    <div className="chat-loading-spinner" />
+                    <p>채팅방을 불러오는 중...</p>
+                </div>
+            </Layout>
+        );
+    }
+
+    // 방 정보 없음
     if (!room) {
         return (
-            <div className="chat-loading">
-                <div className="chat-loading-spinner" />
-                <p>채팅방을 불러오는 중...</p>
-            </div>
+            <Layout>
+                <div className="chat-loading">
+                    <p>채팅방 정보를 찾을 수 없습니다.</p>
+                </div>
+            </Layout>
         );
     }
 
     const messageGroups = groupMessagesByDate(messages);
 
     return (
-        <div className="chat-room-container">
-            {/* 헤더 */}
-            <div className="chat-header">
-                <div className="chat-header-info">
-                    <h1 className="chat-room-name">{room.name}</h1>
-                    <div className="chat-room-meta">
-                        <span className="chat-online-dot" />
-                        <span className="chat-participant-count">
-                            {participantCount > 0 ? participantCount : room.currentMemberCount}명 참여 중
-                        </span>
-                        <span className="chat-room-type-tag">
-                            {room.isPublic ? '공개방' : '비공개방'}
-                        </span>
-                    </div>
-                </div>
-                <div className="chat-header-actions">
-                    <button
-                        className={`chat-action-btn participants-btn ${showParticipants ? 'active' : ''}`}
-                        onClick={handleToggleParticipants}
-                    >
-                        <span className="dots-icon">
-                            <span className="dot" />
-                            <span className="dot" />
-                            <span className="dot" />
-                        </span>
-                        참여자 보기
-                    </button>
-                    <button
-                        className="chat-action-btn leave-btn"
-                        onClick={() => setShowLeaveModal(true)}
-                    >
-                        그룹 나가기
-                    </button>
-                </div>
-            </div>
-
-            {/* 메인 컨텐츠 */}
-            <div className="chat-main">
-                {/* 채팅 영역 */}
-                <div className={`chat-messages-area ${showParticipants ? 'with-sidebar' : ''}`}>
-                    {/* 연결 상태 */}
-                    {connecting && (
-                        <div className="chat-status connecting">연결 중...</div>
-                    )}
-                    {error && (
-                        <div className="chat-status error">{error}</div>
-                    )}
-
-                    {/* 메시지 목록 */}
-                    <div className="chat-messages">
-                        {messages.length === 0 ? (
-                            <div className="chat-empty">
-                                <div className="chat-empty-icon">💬</div>
-                                <p>채팅을 시작해보세요!</p>
-                            </div>
-                        ) : (
-                            messageGroups.map((group, groupIndex) => (
-                                <div key={groupIndex} className="chat-date-group">
-                                    {/* 날짜 구분선 */}
-                                    <div className="chat-date-divider">
-                                        <span className="chat-date-line" />
-                                        <span className="chat-date-text">{group.date}</span>
-                                        <span className="chat-date-line" />
-                                    </div>
-
-                                    {/* 메시지들 */}
-                                    {group.messages.map((msg, msgIndex) => (
-                                        <div
-                                            key={msgIndex}
-                                            className={`chat-message ${msg.isMine ? 'mine' : 'others'}`}
-                                        >
-                                            {!msg.isMine && (
-                                                <div className="message-header">
-                                                    <span className="message-sender">{msg.userName}</span>
-                                                    <span className="message-time">{formatTime(msg.createdAt)}</span>
-                                                </div>
-                                            )}
-                                            {msg.isMine && (
-                                                <div className="message-time-right">
-                                                    <span className="message-time">{formatTime(msg.createdAt)}</span>
-                                                </div>
-                                            )}
-                                            <div className="message-bubble">
-                                                <p className="message-content">{msg.message}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ))
-                        )}
-                        <div ref={messagesEndRef} />
-                    </div>
-
-                    {/* 입력 영역 */}
-                    <div className="chat-input-area">
-                        <div className="chat-input-wrapper">
-                            <input
-                                type="text"
-                                className="chat-input"
-                                placeholder="메시지를 입력하세요..."
-                                value={inputMessage}
-                                onChange={(e) => setInputMessage(e.target.value)}
-                                onKeyPress={handleKeyPress}
-                                disabled={!connected}
-                            />
+        <Layout>
+            <div className="chat-room-container">
+                {/* 헤더 */}
+                <div className="chat-header">
+                    <div className="chat-header-info">
+                        <h1 className="chat-room-name">{room.name}</h1>
+                        <div className="chat-room-meta">
+                            <span className="chat-online-dot" />
+                            <span className="chat-participant-count">
+                                {participantCount > 0 ? participantCount : room.currentMemberCount}명 참여 중
+                            </span>
+                            <span className="chat-room-type-tag">
+                                {room.isPublic ? '공개방' : '비공개방'}
+                            </span>
                         </div>
+                    </div>
+                    <div className="chat-header-actions">
                         <button
-                            className="chat-send-btn"
-                            onClick={handleSendMessage}
-                            disabled={!connected || !inputMessage.trim()}
+                            className={`chat-action-btn participants-btn ${showParticipants ? 'active' : ''}`}
+                            onClick={handleToggleParticipants}
                         >
-                            전송
+                            <span className="dots-icon">
+                                <span className="dot" />
+                                <span className="dot" />
+                                <span className="dot" />
+                            </span>
+                            참여자 보기
+                        </button>
+                        <button
+                            className="chat-action-btn leave-btn"
+                            onClick={() => setShowLeaveModal(true)}
+                        >
+                            그룹 나가기
                         </button>
                     </div>
                 </div>
 
-                {/* 참여자 사이드바 */}
-                {showParticipants && (
-                    <div className="chat-participants-sidebar">
-                        <div className="participants-header">
-                            <h3>참여자 목록</h3>
-                            <span className="participants-count">{participants.length}명</span>
-                            <button
-                                className="participants-close-btn"
-                                onClick={() => setShowParticipants(false)}
-                            >
-                                ✕
-                            </button>
-                        </div>
-                        <div className="participants-list">
-                            {loadingParticipants ? (
-                                <div className="participants-loading">불러오는 중...</div>
+                {/* 메인 컨텐츠 */}
+                <div className="chat-main">
+                    {/* 채팅 영역 */}
+                    <div className={`chat-messages-area ${showParticipants ? 'with-sidebar' : ''}`}>
+                        {/* 연결 상태 */}
+                        {connecting && (
+                            <div className="chat-status connecting">연결 중...</div>
+                        )}
+                        {error && (
+                            <div className="chat-status error">{error}</div>
+                        )}
+
+                        {/* 메시지 목록 */}
+                        <div className="chat-messages">
+                            {messages.length === 0 ? (
+                                <div className="chat-empty">
+                                    <div className="chat-empty-icon">💬</div>
+                                    <p>채팅을 시작해보세요!</p>
+                                </div>
                             ) : (
-                                participants.map((member) => (
-                                    <div key={member.memberId} className="participant-item">
-                                        <div className="participant-avatar">
-                                            {member.nickname.charAt(0)}
+                                messageGroups.map((group, groupIndex) => (
+                                    <div key={groupIndex} className="chat-date-group">
+                                        {/* 날짜 구분선 */}
+                                        <div className="chat-date-divider">
+                                            <span className="chat-date-line" />
+                                            <span className="chat-date-text">{group.date}</span>
+                                            <span className="chat-date-line" />
                                         </div>
-                                        <div className="participant-info">
-                                            <span className="participant-name">
-                                                {member.nickname}
-                                                {member.isOwner && (
-                                                    <span className="owner-badge">방장</span>
+
+                                        {/* 메시지들 */}
+                                        {group.messages.map((msg, msgIndex) => (
+                                            <div
+                                                key={msgIndex}
+                                                className={`chat-message ${msg.isMine ? 'mine' : 'others'}`}
+                                            >
+                                                {!msg.isMine && (
+                                                    <div className="message-header">
+                                                        <span className="message-sender">{msg.userName}</span>
+                                                        <span className="message-time">{formatTime(msg.createdAt)}</span>
+                                                    </div>
                                                 )}
-                                            </span>
-                                        </div>
+                                                {msg.isMine && (
+                                                    <div className="message-time-right">
+                                                        <span className="message-time">{formatTime(msg.createdAt)}</span>
+                                                    </div>
+                                                )}
+                                                <div className="message-bubble">
+                                                    <p className="message-content">{msg.message}</p>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 ))
                             )}
+                            <div ref={messagesEndRef} />
+                        </div>
+
+                        {/* 입력 영역 */}
+                        <div className="chat-input-area">
+                            <div className="chat-input-wrapper">
+                                <input
+                                    type="text"
+                                    className="chat-input"
+                                    placeholder="메시지를 입력하세요..."
+                                    value={inputMessage}
+                                    onChange={(e) => setInputMessage(e.target.value)}
+                                    onKeyPress={handleKeyPress}
+                                    disabled={!connected}
+                                />
+                            </div>
+                            <button
+                                className="chat-send-btn"
+                                onClick={handleSendMessage}
+                                disabled={!connected || !inputMessage.trim()}
+                            >
+                                전송
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* 참여자 사이드바 */}
+                    {showParticipants && (
+                        <div className="chat-participants-sidebar">
+                            <div className="participants-header">
+                                <h3>참여자 목록</h3>
+                                <span className="participants-count">{participants.length}명</span>
+                                <button
+                                    className="participants-close-btn"
+                                    onClick={() => setShowParticipants(false)}
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                            <div className="participants-list">
+                                {loadingParticipants ? (
+                                    <div className="participants-loading">불러오는 중...</div>
+                                ) : (
+                                    participants.map((member) => (
+                                        <div key={member.memberId} className="participant-item">
+                                            <div className="participant-avatar">
+                                                {member.nickname.charAt(0)}
+                                            </div>
+                                            <div className="participant-info">
+                                                <span className="participant-name">
+                                                    {member.nickname}
+                                                    {member.isOwner && (
+                                                        <span className="owner-badge">방장</span>
+                                                    )}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* 나가기 확인 모달 */}
+                {showLeaveModal && (
+                    <div className="leave-modal-overlay" onClick={() => setShowLeaveModal(false)}>
+                        <div className="leave-modal" onClick={(e) => e.stopPropagation()}>
+                            <h3>그룹 나가기</h3>
+                            <p>정말 '{room.name}' 그룹을 나가시겠습니까?</p>
+                            <div className="leave-modal-actions">
+                                <button
+                                    className="leave-modal-cancel"
+                                    onClick={() => setShowLeaveModal(false)}
+                                >
+                                    취소
+                                </button>
+                                <button
+                                    className="leave-modal-confirm"
+                                    onClick={handleLeaveRoom}
+                                >
+                                    나가기
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
             </div>
-
-            {/* 나가기 확인 모달 */}
-            {showLeaveModal && (
-                <div className="leave-modal-overlay" onClick={() => setShowLeaveModal(false)}>
-                    <div className="leave-modal" onClick={(e) => e.stopPropagation()}>
-                        <h3>그룹 나가기</h3>
-                        <p>정말 '{room.name}' 그룹을 나가시겠습니까?</p>
-                        <div className="leave-modal-actions">
-                            <button
-                                className="leave-modal-cancel"
-                                onClick={() => setShowLeaveModal(false)}
-                            >
-                                취소
-                            </button>
-                            <button
-                                className="leave-modal-confirm"
-                                onClick={handleLeaveRoom}
-                            >
-                                나가기
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
+        </Layout>
     );
 };
 

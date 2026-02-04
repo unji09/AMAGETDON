@@ -1,16 +1,18 @@
 /**
  * ChatRoomPage 스타일
  * Figma 디자인 기반 (커뮤니티 대화)
+ * Layout 컴포넌트 내부에서 동작
  */
 
-/* 컨테이너 */
+/* 컨테이너 - Layout 내부에서 전체 높이 차지 */
 .chat-room-container {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 70px);
+    height: calc(100vh - 70px); /* 상단 네비게이션 바 높이 제외 */
     background-color: #FFFFFF;
     max-width: 1800px;
     margin: 0 auto;
+    width: 100%;
 }
 
 /* 로딩 */
@@ -46,6 +48,7 @@
     background-color: #FFFFFF;
     border-bottom: 1px solid #E0E0E0;
     min-height: 80px;
+    flex-shrink: 0;
 }
 
 .chat-header-info {
@@ -142,6 +145,7 @@
     display: flex;
     flex: 1;
     overflow: hidden;
+    min-height: 0; /* flex 자식이 overflow 되도록 */
 }
 
 /* 채팅 영역 */
@@ -151,6 +155,7 @@
     flex-direction: column;
     background-color: #FFFFFF;
     transition: all 0.3s ease;
+    min-width: 0; /* flex 자식이 overflow 되도록 */
 }
 
 .chat-messages-area.with-sidebar {
@@ -162,6 +167,7 @@
     padding: 8px 16px;
     text-align: center;
     font-size: 13px;
+    flex-shrink: 0;
 }
 
 .chat-status.connecting {
@@ -179,6 +185,7 @@
     flex: 1;
     overflow-y: auto;
     padding: 24px 36px;
+    min-height: 0; /* flex 자식이 overflow 되도록 */
 }
 
 /* 빈 상태 */
@@ -303,6 +310,7 @@
     padding: 22px 32px;
     background-color: #FFFFFF;
     border-top: 1px solid #E0E0E0;
+    flex-shrink: 0;
 }
 
 .chat-input-wrapper {
@@ -319,6 +327,7 @@
     border: 1px solid #E0E0E0;
     outline: none;
     transition: border-color 0.2s ease;
+    box-sizing: border-box;
 }
 
 .chat-input:focus {
@@ -344,6 +353,7 @@
     border: none;
     cursor: pointer;
     transition: background-color 0.2s ease;
+    flex-shrink: 0;
 }
 
 .chat-send-btn:hover:not(:disabled) {
@@ -363,6 +373,7 @@
     display: flex;
     flex-direction: column;
     animation: slideIn 0.3s ease;
+    flex-shrink: 0;
 }
 
 @keyframes slideIn {
@@ -382,6 +393,7 @@
     gap: 8px;
     padding: 20px;
     border-bottom: 1px solid #E0E0E0;
+    flex-shrink: 0;
 }
 
 .participants-header h3 {
@@ -455,10 +467,12 @@
     font-size: 16px;
     font-weight: 700;
     border-radius: 50%;
+    flex-shrink: 0;
 }
 
 .participant-info {
     flex: 1;
+    min-width: 0;
 }
 
 .participant-name {
@@ -476,6 +490,7 @@
     color: #FFFFFF;
     background-color: #203C2E;
     border-radius: 10px;
+    flex-shrink: 0;
 }
 
 /* 나가기 모달 */
