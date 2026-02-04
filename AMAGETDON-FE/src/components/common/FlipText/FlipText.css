@@ -1,0 +1,114 @@
+.flip-text {
+    display: inline-flex;
+    align-items: center;
+}
+
+.flip-text__container {
+    display: inline-grid;
+    position: relative;
+    overflow: hidden;
+    vertical-align: bottom;
+}
+
+/* 모든 값을 같은 그리드 셀에 배치 */
+.flip-text__value {
+    grid-area: 1 / 1;
+    display: inline-block;
+    padding: 2px 4px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+/* ===== 슬라이드 애니메이션 ===== */
+
+/* 나가는 값 - 위로 올라가며 사라짐 (값이 증가할 때) */
+.flip-text__value--out.flip-text__value--up {
+    animation: slideOutUp 0.3s ease-out forwards;
+}
+
+/* 나가는 값 - 아래로 내려가며 사라짐 (값이 감소할 때) */
+.flip-text__value--out.flip-text__value--down {
+    animation: slideOutDown 0.3s ease-out forwards;
+}
+
+/* 들어오는 값 - 아래에서 올라옴 (값이 증가할 때) */
+.flip-text__value--in.flip-text__value--up {
+    animation: slideInUp 0.3s ease-out forwards;
+}
+
+/* 들어오는 값 - 위에서 내려옴 (값이 감소할 때) */
+.flip-text__value--in.flip-text__value--down {
+    animation: slideInDown 0.3s ease-out forwards;
+}
+
+@keyframes slideOutUp {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+}
+
+@keyframes slideOutDown {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+}
+
+@keyframes slideInUp {
+    0% {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideInDown {
+    0% {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ===== 하이라이트 효과 ===== */
+
+/* 상승 시 배경 플래시 */
+.flip-text--highlight-up .flip-text__value:not(.flip-text__value--out) {
+    animation: slideInUp 0.3s ease-out, bgFlashUp 0.5s ease-out;
+}
+
+/* 하락 시 배경 플래시 */
+.flip-text--highlight-down .flip-text__value:not(.flip-text__value--out) {
+    animation: slideInDown 0.3s ease-out, bgFlashDown 0.5s ease-out;
+}
+
+@keyframes bgFlashUp {
+    0%, 30% {
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+@keyframes bgFlashDown {
+    0%, 30% {
+    }
+    100% {
+        background-color: transparent;
+    }
+}
