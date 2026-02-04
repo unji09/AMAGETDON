@@ -30,8 +30,8 @@ function App() {
                 <Routes>
                     {/* <Route path="/" element={<LandingPage />} /> */}
                     <Route path="/" element={<HomePage />} />
-                    <Route path="/learning" element={<LearningPage />} />
                     <Route path="/learning/quiz" element={<DailyQuizPage />} />
+                    <Route path="/learning" element={<LearningPage />} />
                     <Route path="/learning/:chapterId" element={<ChapterDetailPage />} />
                     <Route path="/achievement" element={<AchievementPage />} />
                     <Route path="/investment" element={<InvestmentPage />} />

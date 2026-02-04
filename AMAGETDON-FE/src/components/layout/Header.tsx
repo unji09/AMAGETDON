@@ -47,7 +47,7 @@ export const Header = () => {
         fetchUserInfo();
     }, [fetchUserInfo]);
 
-    // 네비게이션 아이템 (순서: 홈, 학습, 투자, 업적, 커뮤니티)
+    // 네비게이션 아이템 (순서: 홈, 학습, 오늘의 퀴즈, 투자, 업적, 커뮤니티)
     const navItems = [
         {
             path: '/',
@@ -66,6 +66,17 @@ export const Header = () => {
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
                     <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                </svg>
+            ),
+        },
+        {
+            path: '/learning/quiz',
+            label: '오늘의 퀴즈',
+            icon: (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
                 </svg>
             ),
         },
@@ -114,7 +125,7 @@ export const Header = () => {
 
     const handleEditProfile = () => {
         setShowProfileMenu(false);
-        navigate('/mypage/edit');
+        navigate('/mypage');
     };
 
     const handleLogout = () => {
@@ -165,39 +176,6 @@ export const Header = () => {
                             </Link>
                         ))}
                     </nav>
-                {/* 네비게이션 */}
-                <nav className="header-nav">
-                    <Link
-                        to="/"
-                        className={`header-nav-link ${location.pathname === '/' ? 'active' : ''}`}
-                    >
-                        홈
-                    </Link>
-                    <Link
-                        to="/community"
-                        className={`header-nav-link ${location.pathname === '/community' ? 'active' : ''}`}
-                    >
-                        커뮤니티
-                    </Link>
-                    <Link
-                        to="/learning"
-                        className={`header-nav-link ${location.pathname === '/learning' ? 'active' : ''}`}
-                    >
-                        투자 강의
-                    </Link>
-                    <Link
-                        to="/learning/quiz"
-                        className={`header-nav-link ${location.pathname === '/learning/quiz' ? 'active' : ''}`}
-                    >
-                        오늘의 퀴즈
-                    </Link>
-                    <Link
-                        to="/mypage"
-                        className={`header-nav-link ${location.pathname === '/mypage' ? 'active' : ''}`}
-                    >
-                        마이페이지
-                    </Link>
-                </nav>
 
                     {/* 프로필 영역 */}
                     <div className="header-profile-area">

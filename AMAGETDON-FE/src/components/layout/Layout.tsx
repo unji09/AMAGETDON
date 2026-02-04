@@ -1,7 +1,5 @@
 /**
  * Layout 컴포넌트
- * Header + Main + Footer 조합
- * 반응형 지원 (데스크톱/모바일)
  */
 
 import { Header } from './Header';
@@ -10,7 +8,7 @@ import './Layout.css';
 
 interface LayoutProps {
     children: React.ReactNode;
-    /** Footer 표시 여부 (기본: true) */
+    /** Footer 표시 여부 */
     showFooter?: boolean;
 }
 
