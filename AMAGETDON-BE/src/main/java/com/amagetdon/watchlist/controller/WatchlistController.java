@@ -3,6 +3,7 @@ package com.amagetdon.watchlist.controller;
 import com.amagetdon.common.security.SecurityUtil;
 import com.amagetdon.watchlist.controller.swagger.WatchlistControllerSwagger;
 import com.amagetdon.watchlist.dto.request.WatchlistAddRequest;
+import com.amagetdon.watchlist.dto.response.WatchlistCheckResponse;
 import com.amagetdon.watchlist.dto.response.WatchlistResponse;
 import com.amagetdon.watchlist.service.WatchlistService;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,15 @@ public class WatchlistController implements WatchlistControllerSwagger {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         WatchlistResponse response = watchlistService.getWatchlist(userId, pageable);
 
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @GetMapping("/{stockCode}")
+    public ResponseEntity<WatchlistCheckResponse> checkWatchlist(
+            @PathVariable String stockCode) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        WatchlistCheckResponse response = watchlistService.checkWatchlist(userId, stockCode);
         return ResponseEntity.ok(response);
     }
 

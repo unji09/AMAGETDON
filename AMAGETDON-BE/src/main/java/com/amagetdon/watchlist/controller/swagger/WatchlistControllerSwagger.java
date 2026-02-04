@@ -1,6 +1,7 @@
 package com.amagetdon.watchlist.controller.swagger;
 
 import com.amagetdon.watchlist.dto.request.WatchlistAddRequest;
+import com.amagetdon.watchlist.dto.response.WatchlistCheckResponse;
 import com.amagetdon.watchlist.dto.response.WatchlistResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -61,6 +62,40 @@ public interface WatchlistControllerSwagger {
     ResponseEntity<WatchlistResponse> getWatchlist(
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") int page,
             @Parameter(description = "페이지 크기", example = "20") int size
+    );
+
+    @Operation(summary = "관심 종목 여부 조회", description = "종목 코드로 관심 종목에 포함되어 있는지 확인합니다")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "관심 종목에 포함되어 있음",
+                    content = @Content(
+                            schema = @Schema(implementation = WatchlistCheckResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "watchlistId": 123
+                                    }
+                                    """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 종목 코드 형식",
+                    content = @Content(schema = @Schema(hidden = true))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(schema = @Schema(hidden = true))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "관심 종목에 포함되어 있지 않음",
+                    content = @Content(schema = @Schema(hidden = true))
+            )
+    })
+    ResponseEntity<WatchlistCheckResponse> checkWatchlist(
+            @Parameter(description = "종목 코드", example = "005930") String stockCode
     );
 
     @Operation(summary = "관심 종목 추가", description = "종목을 관심 종목에 추가합니다 (최대 50개)")
