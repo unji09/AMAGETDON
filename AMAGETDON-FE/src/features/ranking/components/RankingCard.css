@@ -227,12 +227,18 @@
 /* 빈 상태 */
 .ranking-empty {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 120px;
+    height: 180px;
     color: #9CA3AF;
     font-size: 14px;
     font-family: 'Inter', sans-serif;
+    gap: 12px;
+}
+
+.ranking-empty-icon {
+    font-size: 32px;
 }
 
 /* 로딩 상태 */

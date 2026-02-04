@@ -168,14 +168,18 @@ const RankingCard = ({ type }: RankingCardProps) => {
         );
     }
 
-    if (error) {
+    // 에러 또는 데이터 없음 → 빈 상태로 표시
+    if (error || (top3Rankings.length === 0 && !loading)) {
         return (
             <div className="ranking-card">
                 <div className="ranking-card-header">
                     <span className="ranking-card-title">{title}</span>
                     <span className="ranking-card-date">오늘</span>
                 </div>
-                <div className="ranking-card-error">{error}</div>
+                <div className="ranking-empty">
+                    <span className="ranking-empty-icon">🏆</span>
+                    <span>아직 랭킹 정보가 없습니다</span>
+                </div>
             </div>
         );
     }
@@ -190,35 +194,31 @@ const RankingCard = ({ type }: RankingCardProps) => {
 
             {/* TOP 3 랭킹 */}
             <div className="ranking-card-top3">
-                {top3Rankings.length === 0 ? (
-                    <div className="ranking-empty">아직 랭킹 정보가 없습니다</div>
-                ) : (
-                    top3Rankings.map((item) => {
-                        const score = isProfit
-                            ? (item as ProfitRankingItem).totalProfit
-                            : (item as LearningRankingItem).totalCorrect;
-                        const isMe = myRanking && item.userId === myRanking.userId;
+                {top3Rankings.map((item) => {
+                    const score = isProfit
+                        ? (item as ProfitRankingItem).totalProfit
+                        : (item as LearningRankingItem).totalCorrect;
+                    const isMe = myRanking && item.userId === myRanking.userId;
 
-                        return (
-                            <div
-                                key={`${type}-top-${item.userId}`}
-                                className={`ranking-item ${isMe ? 'ranking-item--me' : ''}`}
-                            >
-                                <span className="ranking-item-rank">{item.rank}</span>
-                                <span className="ranking-item-nickname">
+                    return (
+                        <div
+                            key={`${type}-top-${item.userId}`}
+                            className={`ranking-item ${isMe ? 'ranking-item--me' : ''}`}
+                        >
+                            <span className="ranking-item-rank">{item.rank}</span>
+                            <span className="ranking-item-nickname">
                                     {item.nickname}
-                                    {isMe && <span className="ranking-item-badge" style={{ background: accentColor }}>ME</span>}
+                                {isMe && <span className="ranking-item-badge" style={{ background: accentColor }}>ME</span>}
                                 </span>
-                                <span
-                                    className="ranking-item-score"
-                                    style={{ color: getScoreColor(score) }}
-                                >
+                            <span
+                                className="ranking-item-score"
+                                style={{ color: getScoreColor(score) }}
+                            >
                                     {formatScore(score)}
                                 </span>
-                            </div>
-                        );
-                    })
-                )}
+                        </div>
+                    );
+                })}
             </div>
 
             {/* 4~10위 펼치기/접기 */}
