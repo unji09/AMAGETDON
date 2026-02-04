@@ -72,12 +72,37 @@
     transform: translateX(-50%);
     margin-top: var(--spacing-3);
     width: 280px;
+    max-width: calc(100vw - 32px);
     padding: var(--spacing-4);
     background: var(--color-white);
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
     z-index: 1001;
     animation: cardFadeIn 0.2s ease-out;
+}
+
+/* 왼쪽 가장자리 요소용 - 카드를 오른쪽으로 정렬 */
+.learn-spotlight--edge-left .learn-spotlight__card {
+    left: 0;
+    transform: none;
+}
+
+.learn-spotlight--edge-left .learn-spotlight__card::before {
+    left: 20px;
+    transform: none;
+}
+
+/* 오른쪽 가장자리 요소용 - 카드를 왼쪽으로 정렬 */
+.learn-spotlight--edge-right .learn-spotlight__card {
+    left: auto;
+    right: 0;
+    transform: none;
+}
+
+.learn-spotlight--edge-right .learn-spotlight__card::before {
+    left: auto;
+    right: 20px;
+    transform: none;
 }
 
 @keyframes cardFadeIn {
