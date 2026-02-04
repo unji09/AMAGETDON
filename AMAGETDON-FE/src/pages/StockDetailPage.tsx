@@ -137,14 +137,12 @@ export const StockDetailPage = () => {
                         <LearnModeToggle />
                     </div>
                     <LearnOverlay />
-                    <LearnSpotlight id="stock-header">
-                        <StockHeader
-                            stockCode={stockCode}
-                            detail={detail}
-                            isFavorite={isFavorite}
-                            onWatchlistChange={fetchWatchlist}
-                        />
-                    </LearnSpotlight>
+                    <StockHeader
+                        stockCode={stockCode}
+                        detail={detail}
+                        isFavorite={isFavorite}
+                        onWatchlistChange={fetchWatchlist}
+                    />
                     <div className="stock-detail__grid">
                         <div className="stock-detail__left">
                             <LearnSpotlight id="candle-chart">
