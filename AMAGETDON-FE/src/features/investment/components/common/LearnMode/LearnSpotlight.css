@@ -16,12 +16,18 @@
     pointer-events: none;
 }
 
+/* 활성화 시 children을 ::before 위로 올림 */
+.learn-spotlight--active > *:not(.learn-spotlight__hint):not(.learn-spotlight__card) {
+    position: relative;
+    z-index: 1;
+}
+
 .learn-spotlight--enabled::before {
     content: '';
     position: absolute;
     inset: -4px;
     border: 2px dashed transparent;
-    border-radius: 16px;
+    border-radius: 8px;
     pointer-events: none;
     transition: all 0.3s ease;
 }
@@ -32,13 +38,13 @@
 
 .learn-spotlight--active {
     z-index: 1000;
-    transform: scale(1.02);
 }
 
 .learn-spotlight--active::before {
     border-color: var(--color-main-green);
     border-style: solid;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 0 4px rgba(32, 60, 46, 0.1);
 }
 
 /* 힌트 아이콘 */
