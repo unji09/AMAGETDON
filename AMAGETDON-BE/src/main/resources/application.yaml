@@ -6,10 +6,10 @@ spring:
   application:
     name: amagetdonbe
   datasource:
-    url: jdbc:mysql://localhost:3306/amagetdon?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:amagetdon}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: ${MYSQL_ROOT_PASSWORD}
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD}
 
   jpa:
     hibernate:
@@ -22,8 +22,8 @@ spring:
 
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
   jwt:
     secret-key: "ArmageddonTemporarySecretKeyForTesting"
@@ -43,8 +43,8 @@ spring:
             enable: true
 
 openvidu:
-  url: http://localhost:4443/
-  secret: MY_SECRET
+  url: ${OPENVIDU_URL:http://openvidu:4443/}
+  secret: ${OPENVIDU_SECRET:MY_SECRET}
 
 springdoc:
   swagger-ui:
@@ -57,7 +57,7 @@ springdoc:
   default-produces-media-type: application/json
 
 fastapi:
-  url: http://localhost:8000
+  url: ${FASTAPI_URL:http://fastapi:8000}
   quiz:
     generate-endpoint: /api/quiz/generate
 
