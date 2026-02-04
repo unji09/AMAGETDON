@@ -14,7 +14,7 @@ import SignupPage from "@/pages/SignupPage.tsx";
 import PasswordResetPage from "@/pages/PasswordResetPage.tsx";
 import MyInfoPage from "@/pages/MyInfoPage.tsx";
 import SurveyPage from "@/pages/SurveyPage.tsx";
-import { DailyQuizPage } from '@/features/learning/components/quiz/DailyQuizPage';
+import { DailyQuizPage } from '@/pages/DailyQuizPage';
 import '@/api/interceptor'
 import { InvestmentPage } from '@/pages/InvestmentPage';
 import { StockDetailPage } from '@/pages/StockDetailPage';
@@ -31,6 +31,7 @@ function App() {
                     {/* <Route path="/" element={<LandingPage />} /> */}
                     <Route path="/" element={<HomePage />} />
                     <Route path="/learning" element={<LearningPage />} />
+                    <Route path="/learning/quiz" element={<DailyQuizPage />} />
                     <Route path="/learning/:chapterId" element={<ChapterDetailPage />} />
                     <Route path="/achievement" element={<AchievementPage />} />
                     <Route path="/investment" element={<InvestmentPage />} />

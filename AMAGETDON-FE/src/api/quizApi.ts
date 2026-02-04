@@ -1,4 +1,4 @@
-import axios from 'axios';
+import apiClient from '@/api/client.ts';
 import type {
     QuizResponse,
     QuizSubmitRequest,
@@ -9,16 +9,16 @@ import type {
     ReviewNoteListResponse,
 } from '@/types/quiz';
 
-const QUIZ_BASE = '/api/v1/quiz';
-const CHAPTER_BASE = '/api/v1/chapters';
-const REVIEW_NOTE_BASE = '/api/v1/review-note';
+const QUIZ_BASE = '/quizzes';
+const CHAPTER_BASE = '/chapters';
+const REVIEW_NOTE_BASE = '/review-note';
 
 /**
  * 무한 퀴즈 - 오늘의 퀴즈 조회
  * GET /api/v1/quiz/daily
  */
 export const fetchDailyQuiz = async (): Promise<QuizResponse> => {
-    const { data } = await axios.get(`${QUIZ_BASE}/daily`);
+    const { data } = await apiClient.get(`${QUIZ_BASE}/daily`);
     return data;
 };
 
@@ -29,7 +29,7 @@ export const fetchDailyQuiz = async (): Promise<QuizResponse> => {
 export const submitDailyQuiz = async (
     request: QuizSubmitRequest
 ): Promise<QuizSubmitResponse> => {
-    const { data } = await axios.post(`${QUIZ_BASE}/daily`, request);
+    const { data } = await apiClient.post(`${QUIZ_BASE}/daily`, request);
     return data;
 };
 
@@ -40,7 +40,7 @@ export const submitDailyQuiz = async (
 export const fetchChapterQuiz = async (
     chapterId: number
 ): Promise<ChapterQuizResponse> => {
-    const { data } = await axios.get(
+    const { data } = await apiClient.get(
         `${CHAPTER_BASE}/${chapterId}/quizzes`
     );
     return data;
@@ -54,7 +54,7 @@ export const submitChapterQuiz = async (
     chapterId: number,
     request: ChapterQuizSubmitRequest
 ): Promise<ChapterQuizSubmitResponse> => {
-    const { data } = await axios.post(
+    const { data } = await apiClient.post(
         `${CHAPTER_BASE}/${chapterId}/quizzes`,
         request
     );
@@ -66,7 +66,7 @@ export const submitChapterQuiz = async (
  * GET /api/v1/review-note
  */
 export const fetchReviewNotes = async (): Promise<ReviewNoteListResponse> => {
-    const { data } = await axios.get(REVIEW_NOTE_BASE);
+    const { data } = await apiClient.get(REVIEW_NOTE_BASE);
     return data;
 };
 
@@ -78,7 +78,7 @@ export const solveReviewNote = async (
     reviewNoteId: number,
     request: QuizSubmitRequest
 ): Promise<QuizSubmitResponse> => {
-    const { data } = await axios.post(
+    const { data } = await apiClient.post(
         `${REVIEW_NOTE_BASE}/${reviewNoteId}/solve`,
         request
     );
@@ -92,5 +92,5 @@ export const solveReviewNote = async (
 export const deleteReviewNote = async (
     reviewNoteId: number
 ): Promise<void> => {
-    await axios.delete(`${REVIEW_NOTE_BASE}/${reviewNoteId}`);
+    await apiClient.delete(`${REVIEW_NOTE_BASE}/${reviewNoteId}`);
 };

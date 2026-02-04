@@ -18,7 +18,7 @@ export const QuizCelebration = ({ onClose, onContinue }: QuizCelebrationProps) =
             <div className="quiz-celebration__content">
                 {/* 축하 아이콘 */}
                 <div className="quiz-celebration__icon-wrap">
-                    <Party size={64} className="quiz-celebration__icon" />
+                    <PartyPopper size={64} className="quiz-celebration__icon" />
                 </div>
 
                 {/* 축하 메시지 */}
