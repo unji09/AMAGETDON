@@ -2,7 +2,7 @@ export const kakaoOAuthLogin = async (
     code: string
 ) => {
     const response = await fetch(
-        "http://localhost:8080/api/v1/oauth/kakao/login",
+        "/api/v1/oauth/kakao/login",
         {
             method: "POST",
             headers: {

@@ -28,7 +28,14 @@ public interface DailyQuizHistoryRepository extends JpaRepository<DailyQuizHisto
      * 오늘 푼 퀴즈 개수 조회
      * 진행도 확인용
      */
-    Integer countByUserIdAndQuizDate(Long userId, LocalDate quizDate);
+    @Query("SELECT COUNT(d) FROM DailyQuizHistory d " +
+            "WHERE d.userId = :userId " +
+            "AND d.quizDate = :quizDate " +
+            "AND d.isCorrect = true")
+    int countByUserIdAndQuizDate(
+            @Param("userId") Long userId,
+            @Param("quizDate") LocalDate quizDate
+    );
 
     /**
      * 특정 퀴즈를 오늘 이미 풀었는지 확인
