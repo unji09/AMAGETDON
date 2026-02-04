@@ -1,19 +1,17 @@
-import { Link, useLocation } from 'react-router-dom';
-import { useAuthUser } from '@/features/user/hooks/authUser';
-import './Header.css';
-
-/**
- * Header 컴포넌트
- */
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import apiClient from '@/api/client';
 import './Header.css';
 
-// 사용자 정보 타입
+// 사용자 정보 타입 (User 엔티티 기반)
 interface UserInfo {
+    userId: number;
     nickname: string;
+    email: string;
+    currentTitle: string | null;
     balance: number;
+    totalPoints: number;
+    investmentType: 'AGGRESSIVE' | 'NEUTRAL' | 'STABLE' | null;
 }
 
 export const Header = () => {
@@ -21,16 +19,33 @@ export const Header = () => {
     const navigate = useNavigate();
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // 사용자 정보 로드 (실제 API 연동 필요)
-    useEffect(() => {
-        // TODO: 실제 API에서 사용자 정보 가져오기
-        const mockUser: UserInfo = {
-            nickname: '주식은주식2',
-            balance: 4000000,
-        };
-        setUserInfo(mockUser);
+    // 사용자 정보 API 호출 함수
+    const fetchUserInfo = useCallback(async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                setIsLoading(false);
+                return;
+            }
+
+            const response = await apiClient.get<UserInfo>('/users/me');
+            setUserInfo(response.data);
+        } catch (error) {
+            console.error('사용자 정보 조회 실패:', error);
+            // 401 에러시 토큰 정리
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+        } finally {
+            setIsLoading(false);
+        }
     }, []);
+
+    // 컴포넌트 마운트 시 사용자 정보 로드
+    useEffect(() => {
+        fetchUserInfo();
+    }, [fetchUserInfo]);
 
     // 네비게이션 아이템 (순서: 홈, 학습, 투자, 업적, 커뮤니티)
     const navItems = [
@@ -94,12 +109,20 @@ export const Header = () => {
     };
 
     const handleProfileClick = () => {
-        setShowProfileMenu(!showProfileMenu);
+        setShowProfileMenu(prev => !prev);
     };
 
     const handleEditProfile = () => {
         setShowProfileMenu(false);
         navigate('/mypage/edit');
+    };
+
+    const handleLogout = () => {
+        setShowProfileMenu(false);
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        setUserInfo(null);
+        navigate('/login');
     };
 
     // 외부 클릭시 프로필 메뉴 닫기
@@ -113,6 +136,11 @@ export const Header = () => {
         document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
+
+    // 잔액 포맷팅
+    const formatBalance = (balance: number) => {
+        return balance.toLocaleString();
+    };
 
     return (
         <>
@@ -173,59 +201,72 @@ export const Header = () => {
 
                     {/* 프로필 영역 */}
                     <div className="header-profile-area">
-                        <button
-                            className="header-profile-btn"
-                            onClick={handleProfileClick}
-                        >
-                            <div className="header-profile-avatar">
-                                <span>{userInfo?.nickname?.charAt(0) || '?'}</span>
-                            </div>
-                            <span className="header-profile-name">
-                                {userInfo?.nickname || '로그인'}
-                            </span>
-                            <svg
-                                className={`header-profile-arrow ${showProfileMenu ? 'open' : ''}`}
-                                width="12"
-                                height="12"
-                                viewBox="0 0 12 12"
-                            >
-                                <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-                            </svg>
-                        </button>
-
-                        {/* 프로필 드롭다운 메뉴 */}
-                        {showProfileMenu && (
-                            <div className="header-profile-dropdown">
-                                <div className="profile-dropdown-header">
-                                    <span className="profile-dropdown-name">{userInfo?.nickname}</span>
-                                    <span className="profile-dropdown-balance">
-                                        {userInfo?.balance?.toLocaleString()} GM
+                        {isLoading ? (
+                            <div className="header-profile-skeleton" />
+                        ) : userInfo ? (
+                            <>
+                                <button
+                                    className="header-profile-btn"
+                                    onClick={handleProfileClick}
+                                >
+                                    <div className="header-profile-avatar">
+                                        <span>{userInfo.nickname.charAt(0)}</span>
+                                    </div>
+                                    <span className="header-profile-name">
+                                        {userInfo.nickname}
                                     </span>
-                                </div>
-                                <div className="profile-dropdown-divider" />
-                                <button
-                                    className="profile-dropdown-item"
-                                    onClick={handleEditProfile}
-                                >
-                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                        <path d="M8 10a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
-                                        <path d="M12.5 10a.83.83 0 0 0 .17.92l.03.03a1 1 0 1 1-1.42 1.42l-.03-.03a.83.83 0 0 0-.92-.17.83.83 0 0 0-.5.76v.1a1 1 0 0 1-2 0v-.06a.83.83 0 0 0-.54-.76.83.83 0 0 0-.92.17l-.03.03a1 1 0 1 1-1.42-1.42l.03-.03a.83.83 0 0 0 .17-.92.83.83 0 0 0-.76-.5h-.1a1 1 0 0 1 0-2h.06a.83.83 0 0 0 .76-.54.83.83 0 0 0-.17-.92l-.03-.03a1 1 0 1 1 1.42-1.42l.03.03a.83.83 0 0 0 .92.17h.04a.83.83 0 0 0 .5-.76v-.1a1 1 0 1 1 2 0v.06c0 .32.19.6.5.76a.83.83 0 0 0 .92-.17l.03-.03a1 1 0 1 1 1.42 1.42l-.03.03a.83.83 0 0 0-.17.92v.04c.16.31.44.5.76.5h.1a1 1 0 0 1 0 2h-.06a.83.83 0 0 0-.76.5Z"/>
+                                    <svg
+                                        className={`header-profile-arrow ${showProfileMenu ? 'open' : ''}`}
+                                        width="12"
+                                        height="12"
+                                        viewBox="0 0 12 12"
+                                    >
+                                        <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
                                     </svg>
-                                    내 정보 수정
                                 </button>
-                                <div className="profile-dropdown-divider" />
-                                <button
-                                    className="profile-dropdown-item logout"
-                                    onClick={() => navigate('/login')}
-                                >
-                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                        <path d="M6 14H3.33A1.33 1.33 0 0 1 2 12.67V3.33A1.33 1.33 0 0 1 3.33 2H6"/>
-                                        <polyline points="10.67,11.33 14,8 10.67,4.67"/>
-                                        <line x1="14" y1="8" x2="6" y2="8"/>
-                                    </svg>
-                                    로그아웃
-                                </button>
-                            </div>
+
+                                {/* 프로필 드롭다운 메뉴 */}
+                                {showProfileMenu && (
+                                    <div className="header-profile-dropdown">
+                                        <div className="profile-dropdown-header">
+                                            <span className="profile-dropdown-name">{userInfo.nickname}</span>
+                                            {userInfo.currentTitle && (
+                                                <span className="profile-dropdown-title">{userInfo.currentTitle}</span>
+                                            )}
+                                            <span className="profile-dropdown-balance">
+                                                {formatBalance(userInfo.balance)} GM
+                                            </span>
+                                        </div>
+                                        <div className="profile-dropdown-divider" />
+                                        <button
+                                            className="profile-dropdown-item"
+                                            onClick={handleEditProfile}
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                                <path d="M8 10a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
+                                                <path d="M12.5 10a.83.83 0 0 0 .17.92l.03.03a1 1 0 1 1-1.42 1.42l-.03-.03a.83.83 0 0 0-.92-.17.83.83 0 0 0-.5.76v.1a1 1 0 0 1-2 0v-.06a.83.83 0 0 0-.54-.76.83.83 0 0 0-.92.17l-.03.03a1 1 0 1 1-1.42-1.42l.03-.03a.83.83 0 0 0 .17-.92.83.83 0 0 0-.76-.5h-.1a1 1 0 0 1 0-2h.06a.83.83 0 0 0 .76-.54.83.83 0 0 0-.17-.92l-.03-.03a1 1 0 1 1 1.42-1.42l.03.03a.83.83 0 0 0 .92.17h.04a.83.83 0 0 0 .5-.76v-.1a1 1 0 1 1 2 0v.06c0 .32.19.6.5.76a.83.83 0 0 0 .92-.17l.03-.03a1 1 0 1 1 1.42 1.42l-.03.03a.83.83 0 0 0-.17.92v.04c.16.31.44.5.76.5h.1a1 1 0 0 1 0 2h-.06a.83.83 0 0 0-.76.5Z"/>
+                                            </svg>
+                                            내 정보 수정
+                                        </button>
+                                        <div className="profile-dropdown-divider" />
+                                        <button
+                                            className="profile-dropdown-item logout"
+                                            onClick={handleLogout}
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                                <path d="M6 14H3.33A1.33 1.33 0 0 1 2 12.67V3.33A1.33 1.33 0 0 1 3.33 2H6"/>
+                                                <polyline points="10.67,11.33 14,8 10.67,4.67"/>
+                                                <line x1="14" y1="8" x2="6" y2="8"/>
+                                            </svg>
+                                            로그아웃
+                                        </button>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <Link to="/login" className="header-login-btn">
+                                로그인
+                            </Link>
                         )}
                     </div>
                 </div>

@@ -203,6 +203,46 @@
     flex-shrink: 0;
 }
 
+.profile-dropdown-title {
+    font-size: 11px;
+    color: #6B7280;
+}
+
+/* 로그인 버튼 */
+.header-login-btn {
+    padding: 8px 16px;
+    background-color: #203C2E;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+
+.header-login-btn:hover {
+    background-color: #162B20;
+}
+
+/* 프로필 스켈레톤 로딩 */
+.header-profile-skeleton {
+    width: 100px;
+    height: 32px;
+    background: linear-gradient(90deg, #F0F0F0 25%, #E0E0E0 50%, #F0F0F0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 8px;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
 /* ==================== 모바일 하단 탭바 ==================== */
 .mobile-tabbar {
     display: none;
