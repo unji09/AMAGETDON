@@ -19,7 +19,7 @@ interface ReviewNoteListProps {
  * - 스크롤 애니메이션
  */
 export const ReviewNoteList = ({ reviewNotes, onSolve, onDelete }: ReviewNoteListProps) => {
-    const listRef = useRef<HTMLDivElement>(null);
+    const listRef = useRef<HTMLDivElement | null>(null);
 
     // 스크롤 애니메이션
     useEffect(() => {
