@@ -1,0 +1,225 @@
+.chapter-quiz-result {
+    min-height: calc(100vh - 80px);
+    background: #F8FBF4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+.chapter-quiz-result__container {
+    width: 100%;
+    max-width: 500px;
+    background: white;
+    border-radius: 24px;
+    padding: 48px 40px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+/* 결과 아이콘 */
+.chapter-quiz-result__icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    font-weight: 700;
+    margin-bottom: 24px;
+}
+
+.chapter-quiz-result__icon.passed {
+    background: linear-gradient(135deg, #C7D8B7 0%, #B8D4A0 100%);
+    color: #203C2E;
+}
+
+.chapter-quiz-result__icon.failed {
+    background: linear-gradient(135deg, #FFE5E0 0%, #FFCEC5 100%);
+    color: #C94A3A;
+}
+
+/* 상태 텍스트 */
+.chapter-quiz-result__status {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.chapter-quiz-result__status.passed {
+    color: #203C2E;
+}
+
+.chapter-quiz-result__status.failed {
+    color: #C94A3A;
+}
+
+/* 챕터 제목 */
+.chapter-quiz-result__chapter {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 32px;
+}
+
+/* 점수 */
+.chapter-quiz-result__score {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.chapter-quiz-result__score-number {
+    font-size: 64px;
+    font-weight: 700;
+    color: #203C2E;
+}
+
+.chapter-quiz-result__score-divider {
+    font-size: 48px;
+    font-weight: 400;
+    color: #CCCCCC;
+}
+
+.chapter-quiz-result__score-total {
+    font-size: 48px;
+    font-weight: 400;
+    color: #999;
+}
+
+/* 정답률 */
+.chapter-quiz-result__rate {
+    font-size: 18px;
+    font-weight: 600;
+    color: #203C2E;
+    margin-bottom: 32px;
+}
+
+/* 구분선 */
+.chapter-quiz-result__divider {
+    width: 100%;
+    height: 1px;
+    background: #E0E0E0;
+    margin-bottom: 32px;
+}
+
+/* 상세 정보 */
+.chapter-quiz-result__details {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.chapter-quiz-result__detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chapter-quiz-result__detail-label {
+    font-size: 15px;
+    color: #666;
+}
+
+.chapter-quiz-result__detail-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1A1A1A;
+}
+
+.chapter-quiz-result__detail-value.reward {
+    color: #2a4f3c;
+    font-size: 16px;
+}
+
+.chapter-quiz-result__detail-value.unlock {
+    color: #203C2E;
+}
+
+/* 메시지 */
+.chapter-quiz-result__message {
+    font-size: 14px;
+    color: #666;
+    padding: 16px;
+    background: #F8FBF4;
+    border-radius: 12px;
+}
+
+/* 버튼 영역 */
+.chapter-quiz-result__actions {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .chapter-quiz-result__container {
+        max-width: 100%;
+        padding: 40px 32px;
+    }
+
+    .chapter-quiz-result__icon {
+        width: 70px;
+        height: 70px;
+        font-size: 40px;
+    }
+
+    .chapter-quiz-result__status {
+        font-size: 28px;
+    }
+
+    .chapter-quiz-result__score-number {
+        font-size: 56px;
+    }
+
+    .chapter-quiz-result__score-divider,
+    .chapter-quiz-result__score-total {
+        font-size: 40px;
+    }
+}
+
+@media (max-width: 480px) {
+    .chapter-quiz-result {
+        padding: 24px 16px;
+    }
+
+    .chapter-quiz-result__container {
+        padding: 32px 24px;
+    }
+
+    .chapter-quiz-result__icon {
+        width: 60px;
+        height: 60px;
+        font-size: 36px;
+        margin-bottom: 20px;
+    }
+
+    .chapter-quiz-result__status {
+        font-size: 24px;
+    }
+
+    .chapter-quiz-result__chapter {
+        font-size: 14px;
+    }
+
+    .chapter-quiz-result__score-number {
+        font-size: 48px;
+    }
+
+    .chapter-quiz-result__score-divider,
+    .chapter-quiz-result__score-total {
+        font-size: 36px;
+    }
+
+    .chapter-quiz-result__rate {
+        font-size: 16px;
+    }
+}

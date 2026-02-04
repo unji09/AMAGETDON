@@ -1,23 +1,27 @@
+/**
+ * Layout 컴포넌트
+ */
+
 import { Header } from './Header';
 import { Footer } from './Footer';
 import './Layout.css';
 
 interface LayoutProps {
     children: React.ReactNode;
+    /** Footer 표시 여부 */
+    showFooter?: boolean;
 }
 
-/**
- * 전체 레이아웃 컴포넌트
- * Header + Main + Footer 조합
- */
-export const Layout = ({ children }: LayoutProps) => {
+export const Layout = ({ children, showFooter = true }: LayoutProps) => {
     return (
         <div className="layout">
             <Header />
             <main className="layout-main">
                 {children}
             </main>
-            <Footer />
+            {showFooter && <Footer />}
         </div>
     );
 };
+
+export default Layout;
