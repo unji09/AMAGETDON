@@ -8,6 +8,8 @@ import { PortfolioCard } from '@/features/investment/components/dashboard/Portfo
 import { MyHoldings } from '@/features/investment/components/dashboard/MyHoldings';
 import { WatchlistSection } from '@/features/investment/components/dashboard/WatchlistSection';
 import { RecentTransactions } from '@/features/investment/components/dashboard/RecentTransactions';
+import { LearnModeProvider } from '@/features/investment/contexts/LearnModeContext';
+import { LearnModeToggle, LearnSpotlight, LearnOverlay } from '@/features/investment/components/common/LearnMode';
 import { getVolumeRankings, getAssets, getHoldings, getAllWatchlist, getTransactions } from '@/api/investmentApi';
 import type { VolumeRankingItem, AssetData, StockHoldingResponse, WatchlistResponse, TransactionResponse } from '@/features/investment/types/investment';
 import './InvestmentPage.css';
@@ -66,37 +68,53 @@ export const InvestmentPage = () => {
     }
 
     return (
-        <Layout>
-            <ContainerContent>
-                <InvestmentSearch />
-                <div className="investment-page__grid">
-                    <div className="investment-page__left">
-                        <PopularStocksTable
-                            rankings={rankings}
-                            watchlistCodes={watchlistCodes}
-                            onWatchlistChange={fetchWatchlist}
-                        />
-                        <RecentTransactions
-                            transactions={transactions?.items ?? []}
-                            totalElements={transactions?.totalElements ?? 0}
-                        />
+        <LearnModeProvider>
+            <Layout>
+                <ContainerContent>
+                    <div className="investment-page__header">
+                        <InvestmentSearch />
+                        <LearnModeToggle />
                     </div>
-                    <div className="investment-page__right">
-                        <PortfolioCard assets={assets} />
-                        <MyHoldings
-                            holdings={holdings?.items ?? []}
-                            totalElements={holdings?.totalElements ?? 0}
-                            watchlistCodes={watchlistCodes}
-                            onWatchlistChange={fetchWatchlist}
-                        />
-                        <WatchlistSection
-                            stocks={watchlist?.items?.slice(0, 3) ?? []}
-                            totalElements={watchlist?.totalElements ?? 0}
-                            onWatchlistChange={fetchWatchlist}
-                        />
+                    <LearnOverlay />
+                    <div className="investment-page__grid">
+                        <div className="investment-page__left">
+                            <LearnSpotlight id="popular-stocks">
+                                <PopularStocksTable
+                                    rankings={rankings}
+                                    watchlistCodes={watchlistCodes}
+                                    onWatchlistChange={fetchWatchlist}
+                                />
+                            </LearnSpotlight>
+                            <LearnSpotlight id="recent-transactions">
+                                <RecentTransactions
+                                    transactions={transactions?.items ?? []}
+                                    totalElements={transactions?.totalElements ?? 0}
+                                />
+                            </LearnSpotlight>
+                        </div>
+                        <div className="investment-page__right">
+                            <LearnSpotlight id="portfolio-card">
+                                <PortfolioCard assets={assets} />
+                            </LearnSpotlight>
+                            <LearnSpotlight id="my-holdings">
+                                <MyHoldings
+                                    holdings={holdings?.items ?? []}
+                                    totalElements={holdings?.totalElements ?? 0}
+                                    watchlistCodes={watchlistCodes}
+                                    onWatchlistChange={fetchWatchlist}
+                                />
+                            </LearnSpotlight>
+                            <LearnSpotlight id="watchlist">
+                                <WatchlistSection
+                                    stocks={watchlist?.items?.slice(0, 3) ?? []}
+                                    totalElements={watchlist?.totalElements ?? 0}
+                                    onWatchlistChange={fetchWatchlist}
+                                />
+                            </LearnSpotlight>
+                        </div>
                     </div>
-                </div>
-            </ContainerContent>
-        </Layout>
+                </ContainerContent>
+            </Layout>
+        </LearnModeProvider>
     );
 };
