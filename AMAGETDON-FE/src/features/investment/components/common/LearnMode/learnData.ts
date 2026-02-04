@@ -39,6 +39,12 @@ export const LEARN_DATA: Record<string, LearnItem> = {
     },
 
     // 종목 상세
+    'market-status': {
+        id: 'market-status',
+        title: '장 운영 상태',
+        description: '한국 주식시장의 운영 시간을 보여줘요. 평일 오전 9시부터 오후 3시 30분까지 거래할 수 있어요.',
+        tip: '장이 마감된 시간에는 주문이 불가능하고, 다음 영업일에 체결돼요.',
+    },
     'stock-header': {
         id: 'stock-header',
         title: '종목 정보',
