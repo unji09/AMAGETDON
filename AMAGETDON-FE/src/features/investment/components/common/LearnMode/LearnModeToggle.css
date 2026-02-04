@@ -1,0 +1,42 @@
+.learn-mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-2) var(--spacing-3);
+    border: 1px solid var(--color-pale-green);
+    border-radius: 20px;
+    background: var(--color-white);
+    color: var(--color-main-green);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.learn-mode-toggle:hover {
+    background: var(--color-pale-green);
+    border-color: var(--color-main-green);
+}
+
+.learn-mode-toggle--active {
+    background: var(--color-main-green);
+    border-color: var(--color-main-green);
+    color: var(--color-white);
+}
+
+.learn-mode-toggle--active:hover {
+    background: #2a4a3a;
+}
+
+.learn-mode-toggle__badge {
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: var(--font-weight-bold);
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.learn-mode-toggle--active .learn-mode-toggle__badge {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-pale-yellow);
+}

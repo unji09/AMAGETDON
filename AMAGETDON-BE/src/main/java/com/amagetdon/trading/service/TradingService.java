@@ -105,7 +105,7 @@ public class TradingService {
             throw new IllegalArgumentException(INVALID_INPUT.getMessage());
         }
 
-        if (!stockCode.matches("\\d{6}")) {
+        if (!stockCode.matches("^[A-Za-z0-9]{6}$")) {
             throw new IllegalArgumentException(INVALID_STOCK_CODE_FORMAT.getMessage());
         }
     }

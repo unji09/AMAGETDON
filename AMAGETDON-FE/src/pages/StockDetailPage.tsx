@@ -6,6 +6,8 @@ import { Loading } from '@/components/common';
 import { StockHeader } from '@/features/investment/components/detail/StockHeader';
 import { CandleChart } from '@/features/investment/components/detail/CandleChart';
 import { TradingPanel } from '@/features/investment/components/detail/TradingPanel';
+import { LearnModeProvider } from '@/features/investment/contexts/LearnModeContext';
+import { LearnModeToggle, LearnSpotlight, LearnOverlay } from '@/features/investment/components/common/LearnMode';
 import { getStockDetail, getStockChart, getAssets, getAllWatchlist, getSingleHolding } from '@/api/investmentApi';
 import type { StockDetailData, CandleChartResponse, AssetData, WatchlistResponse, ChartPeriod, SingleHoldingData } from '@/features/investment/types/investment';
 import './StockDetailPage.css';
@@ -79,33 +81,45 @@ export const StockDetailPage = () => {
     }
 
     return (
-        <Layout>
-            <ContainerContent>
-                <StockHeader
-                    stockCode={stockCode}
-                    detail={detail}
-                    isFavorite={isFavorite}
-                    onWatchlistChange={fetchWatchlist}
-                />
-                <div className="stock-detail__grid">
-                    <div className="stock-detail__left">
-                        <CandleChart
-                            candles={chart?.candles ?? []}
-                            period={period}
-                            onPeriodChange={handlePeriodChange}
-                        />
+        <LearnModeProvider>
+            <Layout>
+                <ContainerContent>
+                    <div className="stock-detail__header">
+                        <LearnModeToggle />
                     </div>
-                    <div className="stock-detail__right">
-                        <TradingPanel
+                    <LearnOverlay />
+                    <LearnSpotlight id="stock-header">
+                        <StockHeader
                             stockCode={stockCode}
-                            currentPrice={Number(detail.currentPrice)}
-                            balance={assets?.balance ?? 0}
-                            holding={holding}
-                            onTradeComplete={refreshAfterTrade}
+                            detail={detail}
+                            isFavorite={isFavorite}
+                            onWatchlistChange={fetchWatchlist}
                         />
+                    </LearnSpotlight>
+                    <div className="stock-detail__grid">
+                        <div className="stock-detail__left">
+                            <LearnSpotlight id="candle-chart">
+                                <CandleChart
+                                    candles={chart?.candles ?? []}
+                                    period={period}
+                                    onPeriodChange={handlePeriodChange}
+                                />
+                            </LearnSpotlight>
+                        </div>
+                        <div className="stock-detail__right">
+                            <LearnSpotlight id="trading-panel">
+                                <TradingPanel
+                                    stockCode={stockCode}
+                                    currentPrice={Number(detail.currentPrice)}
+                                    balance={assets?.balance ?? 0}
+                                    holding={holding}
+                                    onTradeComplete={refreshAfterTrade}
+                                />
+                            </LearnSpotlight>
+                        </div>
                     </div>
-                </div>
-            </ContainerContent>
-        </Layout>
+                </ContainerContent>
+            </Layout>
+        </LearnModeProvider>
     );
 };

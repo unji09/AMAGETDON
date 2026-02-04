@@ -39,6 +39,12 @@ export const Header = () => {
                         투자 강의
                     </Link>
                     <Link
+                        to="/learning/quiz"
+                        className={`header-nav-link ${location.pathname === '/learning/quiz' ? 'active' : ''}`}
+                    >
+                        오늘의 퀴즈
+                    </Link>
+                    <Link
                         to="/mypage"
                         className={`header-nav-link ${location.pathname === '/mypage' ? 'active' : ''}`}
                     >

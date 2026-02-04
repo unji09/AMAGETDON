@@ -1,3 +1,9 @@
+.stock-detail__header {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: var(--spacing-5);
+}
+
 .stock-detail__grid {
     display: grid;
     grid-template-columns: 3fr 2fr;

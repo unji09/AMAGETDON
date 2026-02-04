@@ -1,0 +1,13 @@
+.learn-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0);
+    pointer-events: none;
+    z-index: 999;
+    transition: background 0.3s ease;
+}
+
+.learn-overlay--active {
+    background: rgba(0, 0, 0, 0.5);
+    pointer-events: auto;
+}

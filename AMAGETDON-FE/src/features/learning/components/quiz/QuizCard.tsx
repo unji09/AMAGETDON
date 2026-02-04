@@ -1,25 +1,43 @@
-import { useState } from 'react';
-import { Button } from '@/components/common';
-import type { QuizDetail } from '@/types/quiz';
+import {useState} from 'react';
+import {Button} from '@/components/common';
+import type {QuizDetail} from '@/types/quiz';
 import './QuizCard.css';
 
 interface QuizCardProps {
     quiz: QuizDetail;
     sequence?: number;
-    onSubmit: (answer: { oxAnswer?: boolean; choiceId?: number }) => void;
+    onSubmit: (answer: {
+        oxAnswer?: boolean;
+        choiceId?: number;
+        shuffledChoices?: any[];
+    }) => void;
     disabled?: boolean;
 }
 
 /**
  * 퀴즈 카드 컴포넌트
- * - OX 퀴즈: 큰 O/X 버튼
- * - MCQ 퀴즈: 선택지 목록
+ * - OX 퀴즈: O/X 버튼 표시
+ * - 객관식 퀴즈: 4지선다 선택지 표시 (랜덤 순서)
  */
-export const QuizCard = ({ quiz, sequence, onSubmit, disabled = false }: QuizCardProps) => {
+export const QuizCard = ({quiz, sequence, onSubmit, disabled = false}: QuizCardProps) => {
+    if (!quiz) {
+        return <div className="quiz-card__error">
+            선택지 데이터를 불러올 수 없습니다.
+        </div>
+    }
+
     const [selectedAnswer, setSelectedAnswer] = useState<{
         oxAnswer?: boolean;
         choiceId?: number;
     } | null>(null);
+
+    // 선택지 순서 랜덤화 (객관식만, choices가 존재할 때만)
+    const [shuffledChoices] = useState(() => {
+        if (quiz.quizType === 'MCQ' && quiz.choices && quiz.choices.length > 0) {
+            return [...quiz.choices].sort(() => Math.random() - 0.5);
+        }
+        return null;
+    });
 
     const isOX = quiz.quizType === 'OX';
     const canSubmit = selectedAnswer !== null && !disabled;
@@ -31,7 +49,13 @@ export const QuizCard = ({ quiz, sequence, onSubmit, disabled = false }: QuizCar
 
     const handleSubmit = () => {
         if (!canSubmit || !selectedAnswer) return;
-        onSubmit(selectedAnswer);
+
+        // 객관식이고 섞인 선택지가 있으면 함께 전달
+        if (!isOX && shuffledChoices) {
+            onSubmit({...selectedAnswer, shuffledChoices});
+        } else {
+            onSubmit(selectedAnswer);
+        }
     };
 
     return (
@@ -49,7 +73,7 @@ export const QuizCard = ({ quiz, sequence, onSubmit, disabled = false }: QuizCar
             </div>
 
             {/* 문제 */}
-            <p className="quiz-card__question">{quiz.quizContent}</p>
+            <p className="quiz-card__question">{quiz.content}</p>
 
             {/* 선택지 */}
             <div className={`quiz-card__options ${isOX ? 'quiz-card__options--ox' : ''}`}>
@@ -61,7 +85,7 @@ export const QuizCard = ({ quiz, sequence, onSubmit, disabled = false }: QuizCar
                             className={`quiz-card__option quiz-card__option--ox ${
                                 selectedAnswer?.oxAnswer === true ? 'quiz-card__option--selected' : ''
                             }`}
-                            onClick={() => handleOptionClick({ oxAnswer: true })}
+                            onClick={() => handleOptionClick({oxAnswer: true})}
                             disabled={disabled}
                         >
                             <span className="quiz-card__option-text">O</span>
@@ -71,15 +95,15 @@ export const QuizCard = ({ quiz, sequence, onSubmit, disabled = false }: QuizCar
                             className={`quiz-card__option quiz-card__option--ox ${
                                 selectedAnswer?.oxAnswer === false ? 'quiz-card__option--selected' : ''
                             }`}
-                            onClick={() => handleOptionClick({ oxAnswer: false })}
+                            onClick={() => handleOptionClick({oxAnswer: false})}
                             disabled={disabled}
                         >
                             <span className="quiz-card__option-text">X</span>
                         </button>
                     </>
-                ) : (
-                    /* MCQ 퀴즈 */
-                    quiz.choices?.map((choice) => (
+                ) : shuffledChoices && shuffledChoices.length > 0 ? (
+                    /* MCQ 퀴즈 - 선택지 렌더링 */
+                    shuffledChoices.map((choice, index) => (
                         <button
                             key={choice.choiceId}
                             type="button"
@@ -88,13 +112,18 @@ export const QuizCard = ({ quiz, sequence, onSubmit, disabled = false }: QuizCar
                                     ? 'quiz-card__option--selected'
                                     : ''
                             }`}
-                            onClick={() => handleOptionClick({ choiceId: choice.choiceId })}
+                            onClick={() => handleOptionClick({choiceId: choice.choiceId})}
                             disabled={disabled}
                         >
-                            <span className="quiz-card__option-no">{choice.choiceNo}</span>
+                            <span className="quiz-card__option-no">{index + 1}</span>
                             <span className="quiz-card__option-text">{choice.choiceText}</span>
                         </button>
                     ))
+                ) : (
+                    /* 객관식인데 선택지가 없는 경우 (에러 상태) */
+                    <div className="quiz-card__error">
+                        선택지 데이터를 불러올 수 없습니다.
+                    </div>
                 )}
             </div>
 

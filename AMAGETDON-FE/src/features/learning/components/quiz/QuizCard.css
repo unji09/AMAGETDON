@@ -1,103 +1,84 @@
-/* 퀴즈 카드 */
 .quiz-card {
-    background: var(--color-white);
-    border-radius: 16px;
-    padding: var(--spacing-8);
+    width: 100%;
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-    animation: fadeIn 0.5s ease-out;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* 퀴즈 헤더 */
+/* 헤더 */
 .quiz-card__header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--spacing-6);
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
 }
 
 .quiz-card__sequence {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-2);
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-main-green);
-    background: rgba(199, 216, 183, 0.2);
-    padding: var(--spacing-2) var(--spacing-4);
-    border-radius: 20px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #666;
 }
 
 .quiz-card__type-badge {
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-bold);
-    color: var(--color-white);
-    background: var(--color-brown);
-    padding: 4px 10px;
-    border-radius: 4px;
-    letter-spacing: 0.5px;
+    padding: 6px 14px;
+    background: #96773D;
+    color: white;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
 }
 
-/* 퀴즈 문제 */
+/* 문제 */
 .quiz-card__question {
-    font-size: var(--font-size-xl);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-dark-gray);
-    line-height: var(--line-height-relaxed);
-    margin-bottom: var(--spacing-8);
-    word-break: keep-all;
+    font-size: 19px;
+    font-weight: 600;
+    color: #1a1a1a;
+    line-height: 1.6;
+    margin: 0;
+    padding: 8px 0;
 }
 
-/* 선택지 컨테이너 */
+/* 선택지 */
 .quiz-card__options {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-4);
+    gap: 12px;
 }
 
-/* OX 선택지 (가로 배치) */
 .quiz-card__options--ox {
     flex-direction: row;
-    gap: var(--spacing-5);
+    gap: 16px;
 }
 
-/* 선택지 버튼 */
 .quiz-card__option {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-3);
-    width: 100%;
-    padding: var(--spacing-5);
-    background: var(--color-white);
-    border: 2px solid #e5e5e5;
-    border-radius: 12px;
+    padding: 16px 20px;
+    background: #f8f9fa;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 16px;
+    color: #333;
     text-align: left;
 }
 
-.quiz-card__option:hover {
-    border-color: var(--color-main-green);
-    background: rgba(199, 216, 183, 0.1);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(32, 60, 46, 0.1);
+.quiz-card__option:hover:not(:disabled) {
+    background: #f0f0f0;
+    border-color: #8FAE5D;
 }
 
 .quiz-card__option--selected {
-    border-color: var(--color-main-green);
-    background: rgba(199, 216, 183, 0.2);
-    box-shadow: 0 2px 8px rgba(32, 60, 46, 0.15);
+    background: #E8F4D8;
+    border-color: #8FAE5D;
+    font-weight: 600;
 }
 
 .quiz-card__option:disabled {
@@ -105,74 +86,105 @@
     opacity: 0.6;
 }
 
-/* OX 선택지 (특수 스타일) */
+/* OX 버튼 */
 .quiz-card__option--ox {
+    flex: 1;
     justify-content: center;
-    min-height: 100px;
+    font-size: 32px;
+    font-weight: 700;
+    padding: 24px;
 }
 
-.quiz-card__option--ox .quiz-card__option-text {
-    font-size: var(--font-size-4xl);
-    font-weight: var(--font-weight-bold);
-}
-
-/* 선택지 번호 */
 .quiz-card__option-no {
-    flex-shrink: 0;
-    width: 32px;
-    height: 32px;
+    min-width: 28px;
+    height: 28px;
+    background: #203C2E;
+    color: white;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f5f5f5;
-    border-radius: 50%;
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-bold);
-    color: #666;
-    transition: all 0.2s ease;
+    font-size: 14px;
+    font-weight: 600;
+    flex-shrink: 0;
 }
 
-.quiz-card__option--selected .quiz-card__option-no {
-    background: var(--color-main-green);
-    color: var(--color-white);
-}
-
-/* 선택지 텍스트 */
 .quiz-card__option-text {
     flex: 1;
-    font-size: var(--font-size-base);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-dark-gray);
-    line-height: var(--line-height-normal);
-    word-break: keep-all;
+    line-height: 1.5;
 }
 
-/* 제출 버튼 영역 */
+/* 제출 버튼 */
 .quiz-card__submit {
-    margin-top: var(--spacing-8);
-    padding-top: var(--spacing-6);
-    border-top: 1px solid #e5e5e5;
+    margin-top: 8px;
+}
+
+.quiz-card__error {
+    padding: 40px;
+    text-align: center;
+    color: #C94A3A;
+    font-size: 16px;
 }
 
 /* 반응형 */
 @media (max-width: 768px) {
     .quiz-card {
-        padding: var(--spacing-6);
+        padding: 20px;
+        gap: 16px;
     }
 
     .quiz-card__question {
-        font-size: var(--font-size-lg);
+        font-size: 17px;
     }
 
-    .quiz-card__options--ox {
-        flex-direction: column;
+    .quiz-card__option {
+        padding: 14px 18px;
+        font-size: 15px;
     }
 
     .quiz-card__option--ox {
-        min-height: 80px;
+        font-size: 28px;
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .quiz-card {
+        padding: 18px;
+        gap: 14px;
     }
 
-    .quiz-card__option--ox .quiz-card__option-text {
-        font-size: var(--font-size-3xl);
+    .quiz-card__header {
+        padding-bottom: 12px;
+    }
+
+    .quiz-card__question {
+        font-size: 16px;
+        padding: 4px 0;
+    }
+
+    .quiz-card__options {
+        gap: 10px;
+    }
+
+    .quiz-card__options--ox {
+        gap: 12px;
+    }
+
+    .quiz-card__option {
+        padding: 12px 16px;
+        font-size: 14px;
+        gap: 10px;
+    }
+
+    .quiz-card__option--ox {
+        font-size: 24px;
+        padding: 18px;
+    }
+
+    .quiz-card__option-no {
+        min-width: 24px;
+        height: 24px;
+        font-size: 13px;
     }
 }
