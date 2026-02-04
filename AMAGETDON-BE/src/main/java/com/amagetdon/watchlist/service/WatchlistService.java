@@ -33,6 +33,7 @@ import static com.amagetdon.common.ErrorCode.*;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class WatchlistService {
+    private static final String USER_STOCKS_KEY = "kis:user_stocks";
 
     private final WatchlistRepository watchlistRepository;
     private final UserRepository userRepository;
@@ -40,8 +41,6 @@ public class WatchlistService {
     private final StockPriceRepository stockPriceRepository;
     private final AchievementService achievementService;
     private final RedisTemplate<String, String> redisTemplate;
-
-    private static final String USER_STOCKS_KEY = "kis:user_stocks";
 
     public WatchlistResponse getWatchlist(Long userId, Pageable pageable) {
         Page<Watchlist> watchlistPage = watchlistRepository.findByUserUserId(userId, pageable);
@@ -71,7 +70,7 @@ public class WatchlistService {
     }
 
     @Transactional
-    public void addToWatchlist(Long userId, String stockCode) {
+    public WatchlistItem addToWatchlist(Long userId, String stockCode) {
         validateStockCode(stockCode);
 
         if (watchlistRepository.existsByUserUserIdAndStockStockCode(userId, stockCode)) {
@@ -93,6 +92,8 @@ public class WatchlistService {
 
         long watchlistCount = watchlistRepository.countByUserUserId(userId);
         achievementService.checkAndAwardAchievements(userId, watchlistCount, DIVERSIFY_EGGS);
+
+        return convertToItem(watchlist);
     }
 
     @Transactional
