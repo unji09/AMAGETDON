@@ -16,7 +16,7 @@ import type { VolumeRankingItem, AssetData, StockHoldingResponse, WatchlistRespo
 import './InvestmentPage.css';
 
 // 폴링 간격 상수
-const RANKINGS_POLL_INTERVAL = 1000;    // 인기 종목: 1초
+const RANKINGS_POLL_INTERVAL = 1500;    // 인기 종목: 1초
 const HOLDINGS_POLL_INTERVAL = 7000;    // 내 종목/관심 종목: 7초
 
 export const InvestmentPage = () => {

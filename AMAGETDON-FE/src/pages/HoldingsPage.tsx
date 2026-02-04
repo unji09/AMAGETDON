@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout';
 import { ContainerContent } from '@/components/layout';
-import { Loading } from '@/components/common';
+import { Loading, FlipText } from '@/components/common';
 import { RefreshCw, ArrowLeft, Heart } from 'lucide-react';
 import { Pagination } from '@/features/investment/components/common/Pagination';
 import { usePolling } from '@/hooks/usePolling';
@@ -29,13 +29,13 @@ const HoldingRow = memo(({
     onNavigate: (stockCode: string) => void;
 }) => {
     const [prevPrice, setPrevPrice] = useState(item.currentPrice);
-    const [priceFlash, setPriceFlash] = useState<'up' | 'down' | null>(null);
+    const [priceDirection, setPriceDirection] = useState<'up' | 'down' | null>(null);
 
     useEffect(() => {
         if (item.currentPrice !== prevPrice) {
-            setPriceFlash(item.currentPrice > prevPrice ? 'up' : 'down');
+            setPriceDirection(item.currentPrice > prevPrice ? 'up' : 'down');
             setPrevPrice(item.currentPrice);
-            const timer = setTimeout(() => setPriceFlash(null), 600);
+            const timer = setTimeout(() => setPriceDirection(null), 500);
             return () => clearTimeout(timer);
         }
     }, [item.currentPrice, prevPrice]);
@@ -52,24 +52,32 @@ const HoldingRow = memo(({
             <td className="holdings-page__right">{item.quantity.toLocaleString()}</td>
             <td className="holdings-page__right">{formatWon(item.avgPrice)}</td>
             <td className="holdings-page__right">
-                <span className={`holdings-page__animated ${priceFlash ? `holdings-page__flash--${priceFlash}` : ''}`}>
-                    {formatWon(item.currentPrice)}
-                </span>
+                <FlipText
+                    value={formatWon(item.currentPrice)}
+                    highlightUp={priceDirection === 'up'}
+                    highlightDown={priceDirection === 'down'}
+                />
             </td>
             <td className="holdings-page__right">
-                <span className={`holdings-page__animated ${priceFlash ? `holdings-page__flash--${priceFlash}` : ''}`}>
-                    {formatWon(item.totalValue)}
-                </span>
+                <FlipText
+                    value={formatWon(item.totalValue)}
+                    highlightUp={priceDirection === 'up'}
+                    highlightDown={priceDirection === 'down'}
+                />
             </td>
             <td className={`holdings-page__right ${item.profitAmount >= 0 ? 'holdings-page__up' : 'holdings-page__down'}`}>
-                <span className={`holdings-page__animated ${priceFlash ? `holdings-page__flash--${priceFlash}` : ''}`}>
-                    {item.profitAmount >= 0 ? '+' : ''}{formatWon(item.profitAmount)}
-                </span>
+                <FlipText
+                    value={`${item.profitAmount >= 0 ? '+' : ''}${formatWon(item.profitAmount)}`}
+                    highlightUp={priceDirection === 'up'}
+                    highlightDown={priceDirection === 'down'}
+                />
             </td>
             <td className={`holdings-page__right ${item.profitRate >= 0 ? 'holdings-page__up' : 'holdings-page__down'}`}>
-                <span className={`holdings-page__animated ${priceFlash ? `holdings-page__flash--${priceFlash}` : ''}`}>
-                    {formatRate(item.profitRate)}
-                </span>
+                <FlipText
+                    value={formatRate(item.profitRate)}
+                    highlightUp={priceDirection === 'up'}
+                    highlightDown={priceDirection === 'down'}
+                />
             </td>
             <td className="holdings-page__center">
                 <button

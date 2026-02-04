@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout';
 import { ContainerContent } from '@/components/layout';
-import { Loading } from '@/components/common';
+import { Loading, FlipText } from '@/components/common';
 import { RefreshCw, Heart, ArrowLeft } from 'lucide-react';
 import { Pagination } from '@/features/investment/components/common/Pagination';
 import { usePolling } from '@/hooks/usePolling';
@@ -27,14 +27,14 @@ const WatchlistRow = memo(({
     onNavigate: (stockCode: string) => void;
 }) => {
     const [prevPrice, setPrevPrice] = useState(item.currentPrice);
-    const [priceFlash, setPriceFlash] = useState<'up' | 'down' | null>(null);
+    const [priceDirection, setPriceDirection] = useState<'up' | 'down' | null>(null);
     const isUp = item.changeRate >= 0;
 
     useEffect(() => {
         if (item.currentPrice !== prevPrice) {
-            setPriceFlash(item.currentPrice > prevPrice ? 'up' : 'down');
+            setPriceDirection(item.currentPrice > prevPrice ? 'up' : 'down');
             setPrevPrice(item.currentPrice);
-            const timer = setTimeout(() => setPriceFlash(null), 600);
+            const timer = setTimeout(() => setPriceDirection(null), 500);
             return () => clearTimeout(timer);
         }
     }, [item.currentPrice, prevPrice]);
@@ -54,14 +54,18 @@ const WatchlistRow = memo(({
                 </span>
             </td>
             <td className="watchlist-page__right">
-                <span className={`watchlist-page__animated ${priceFlash ? `watchlist-page__flash--${priceFlash}` : ''}`}>
-                    {formatPrice(item.currentPrice)}
-                </span>
+                <FlipText
+                    value={formatPrice(item.currentPrice)}
+                    highlightUp={priceDirection === 'up'}
+                    highlightDown={priceDirection === 'down'}
+                />
             </td>
             <td className={`watchlist-page__right ${isUp ? 'watchlist-page__up' : 'watchlist-page__down'}`}>
-                <span className={`watchlist-page__animated ${priceFlash ? `watchlist-page__flash--${priceFlash}` : ''}`}>
-                    {isUp ? '+' : ''}{item.changeRate.toFixed(2)}%
-                </span>
+                <FlipText
+                    value={`${isUp ? '+' : ''}${item.changeRate.toFixed(2)}%`}
+                    highlightUp={priceDirection === 'up'}
+                    highlightDown={priceDirection === 'down'}
+                />
             </td>
             <td className="watchlist-page__center">
                 <button
