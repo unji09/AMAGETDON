@@ -1,0 +1,560 @@
+/* 페이지 배경 */
+.community-page {
+    min-height: calc(100vh - 100px);
+    background: #F8F8F8;
+    padding: 30px 0 40px;
+}
+
+/* 컨테이너 (1200px) */
+.community-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* ==================== 헤더 ==================== */
+.community-header {
+    margin-bottom: 64px;
+}
+
+.community-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1A1A1A;
+    margin: 0 0 8px 0;
+    font-family: 'Inter', sans-serif;
+}
+
+.community-desc {
+    font-size: 15px;
+    color: #8B8B8B;
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+}
+
+/* ==================== 내 그룹 배너 ==================== */
+.my-room-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #203C2E, #2A5038);
+    margin-bottom: 24px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.my-room-banner:hover {
+    transform: translateY(-2px);
+}
+
+.my-room-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.my-room-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+}
+
+.my-room-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #FFFFFF;
+    font-family: 'Inter', sans-serif;
+}
+
+.my-room-btn {
+    padding: 8px 24px;
+    background: #FFFFFF;
+    color: #203C2E;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+}
+
+/* ==================== 검색 영역 ==================== */
+.community-search-area {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 27px;
+}
+
+/* 검색 입력 */
+.search-input-wrapper {
+    width: 540px;
+    height: 52px;
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.search-input-wrapper.focused {
+    border: 2px solid #203C2E;
+}
+
+.search-icon {
+    flex-shrink: 0;
+}
+
+.search-input {
+    flex: 1;
+    height: 100%;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    color: #1A1A1A;
+    font-family: 'Inter', sans-serif;
+    background: transparent;
+}
+
+.search-input::placeholder {
+    color: #9CA3AF;
+}
+
+/* 참여코드 입력 버튼 (200px × 52px) */
+.join-code-btn {
+    width: 140px;
+    height: 52px;
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #203C2E;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.2s ease;
+}
+
+.join-code-btn:hover {
+    background: #F8F8F8;
+}
+
+/* 그룹 생성 버튼 (140px × 52px) */
+.create-group-btn {
+    width: 140px;
+    height: 52px;
+    background: #203C2E;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.2s ease;
+}
+
+.create-group-btn:hover {
+    background: #162B20;
+}
+
+/* ==================== 공개 그룹 영역 ==================== */
+.public-groups-section {
+    background: white;
+    margin-bottom: 12px;
+}
+
+/* 공개 그룹 헤더 (44px) */
+.public-groups-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 44px;
+    padding: 0 20px;
+    background: #FAFAFA;
+}
+
+.public-groups-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #6B7280;
+    font-family: 'Inter', sans-serif;
+}
+
+.public-groups-count-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #6B7280;
+    font-family: 'Inter', sans-serif;
+    margin-right: 110px;
+}
+
+/* 그룹 목록 (68px × 5 = 340px 고정) */
+.public-groups-list {
+    height: 340px;
+    overflow-y: auto;
+}
+
+/* 스크롤바 스타일 */
+.public-groups-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.public-groups-list::-webkit-scrollbar-track {
+    background: #F0F0F0;
+}
+
+.public-groups-list::-webkit-scrollbar-thumb {
+    background: #CCCCCC;
+    border-radius: 3px;
+}
+
+.public-groups-list::-webkit-scrollbar-thumb:hover {
+    background: #AAAAAA;
+}
+
+/* 그룹 아이템 (68px) */
+.group-item {
+    display: flex;
+    align-items: center;
+    height: 68px;
+    padding: 0 20px;
+    background: white;
+    border: 1px solid #F0F0F0;
+    border-top: none;
+    box-sizing: border-box;
+}
+
+.group-item:first-child {
+    border-top: 1px solid #F0F0F0;
+}
+
+/* 체크박스 (12 × 12) */
+.group-checkbox {
+    width: 12px;
+    height: 12px;
+    border: 1.5px solid #D1D5DB;
+    background: white;
+    margin-right: 20px;
+    flex-shrink: 0;
+}
+
+/* 그룹 이름 */
+.group-name {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 400;
+    color: #1A1A1A;
+    font-family: 'Inter', sans-serif;
+}
+
+/* 인원 수 */
+.group-count {
+    font-size: 15px;
+    font-weight: 400;
+    color: #6B7280;
+    font-family: 'Inter', sans-serif;
+    margin-right: 20px;
+    min-width: 60px;
+    text-align: right;
+}
+
+.group-count--full {
+    color: #9CA3AF;
+}
+
+/* 참여하기 버튼 (90 × 24) */
+.group-join-btn {
+    width: 90px;
+    height: 24px;
+    background: #203C2E;
+    border: none;
+    font-size: 12px;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.2s ease;
+}
+
+.group-join-btn:hover:not(:disabled) {
+    background: #162B20;
+}
+
+.group-join-btn--disabled {
+    background: #F0F0F0;
+    color: #9CA3AF;
+    cursor: not-allowed;
+}
+
+/* ==================== 빈 상태 ==================== */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 340px;
+    padding: 0 20px;
+}
+
+.empty-icon {
+    width: 120px;
+    height: 120px;
+    background: #F8F8F8;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.empty-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #282828;
+    margin: 0 0 12px 0;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+}
+
+.empty-desc {
+    font-size: 15px;
+    font-weight: 400;
+    color: #666666;
+    margin: 0;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+}
+
+.empty-create-btn {
+    width: 200px;
+    height: 48px;
+    background: #203C2E;
+    border: none;
+    border-radius: 24px;
+    font-size: 15px;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    margin-top: 24px;
+    transition: background 0.2s ease;
+}
+
+.empty-create-btn:hover {
+    background: #162B20;
+}
+
+.empty-search-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    padding: 8px 24px;
+    background: #F8F8F8;
+    font-size: 14px;
+    color: #999999;
+    font-family: 'Inter', sans-serif;
+}
+
+.empty-search-info .separator {
+    color: #CCCCCC;
+}
+
+.reset-link {
+    color: #203C2E;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.reset-link:hover {
+    color: #162B20;
+}
+
+/* ==================== 스켈레톤 로딩 ==================== */
+.skeleton {
+    background: #E0E0E0;
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+.skeleton-checkbox {
+    width: 16px;
+    height: 16px;
+    margin-right: 24px;
+}
+
+.skeleton-name {
+    height: 16px;
+    max-width: 220px;
+}
+
+.skeleton-count {
+    width: 48px;
+    height: 16px;
+    margin-right: 16px;
+    margin-left: auto;
+}
+
+.skeleton-btn {
+    width: 91px;
+    height: 28px;
+}
+
+@keyframes skeleton-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* ==================== 랭킹 섹션 ==================== */
+/* 580px × 280px, gap 40px */
+.ranking-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+}
+
+/* ==================== 토스트 알림 ==================== */
+.community-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 16px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    animation: slideIn 0.3s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.community-toast--success {
+    background: #4CAF50;
+}
+
+.community-toast--error {
+    background: #DC0000;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ==================== 반응형 ==================== */
+@media (max-width: 1024px) {
+    .community-search-area {
+        flex-wrap: wrap;
+    }
+
+    .search-input-wrapper {
+        width: 100%;
+        order: 1;
+    }
+
+    .join-code-btn {
+        flex: 1;
+        width: auto;
+        order: 2;
+    }
+
+    .create-group-btn {
+        flex: 1;
+        width: auto;
+        order: 3;
+    }
+
+    .ranking-section {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .public-groups-count-label {
+        margin-right: 100px;
+    }
+}
+
+@media (max-width: 768px) {
+    .community-page {
+        padding: 20px 0 30px;
+    }
+
+    .community-header {
+        margin-bottom: 40px;
+    }
+
+    .community-title {
+        font-size: 24px;
+    }
+
+    .community-search-area {
+        gap: 12px;
+    }
+
+    .search-input-wrapper,
+    .join-code-btn,
+    .create-group-btn {
+        height: 48px;
+    }
+
+    .public-groups-list {
+        height: 272px; /* 4개 */
+    }
+
+    .empty-state {
+        height: 272px;
+    }
+
+    .group-item {
+        padding: 0 16px;
+    }
+
+    .group-name {
+        font-size: 14px;
+    }
+
+    .group-count {
+        font-size: 13px;
+        min-width: 50px;
+    }
+
+    .group-join-btn {
+        width: 80px;
+        font-size: 11px;
+    }
+
+    .public-groups-count-label {
+        margin-right: 90px;
+    }
+
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+    }
+
+    .empty-icon svg {
+        width: 64px;
+        height: 64px;
+    }
+
+    .empty-title {
+        font-size: 18px;
+    }
+
+    .empty-desc {
+        font-size: 14px;
+    }
+}

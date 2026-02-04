@@ -1,12 +1,10 @@
 /**
  * 커뮤니티 페이지
- * 그룹 목록 조회, 생성, 참여 기능 (실제 API 연동)
  */
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Layout, ContainerContent } from '@/components/layout';
-import GroupCard from '@/features/community/components/GroupCard';
+import { Layout } from '@/components/layout/Layout';
 import GroupCreateModal from '@/features/community/components/GroupCreateModal';
 import JoinCodeModal from '@/features/community/components/JoinCodeModal';
 import RankingCard from '@/features/ranking/components/RankingCard';
@@ -22,6 +20,7 @@ import type {
     RoomCreateRequest,
     MemberResponse
 } from '@/features/community/types/CommunityTypes';
+import './CommunityPage.css';
 
 export const CommunityPage = () => {
     const navigate = useNavigate();
@@ -34,6 +33,7 @@ export const CommunityPage = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
 
     // 초기 데이터 로드
     useEffect(() => {
@@ -60,14 +60,9 @@ export const CommunityPage = () => {
 
     // 검색
     const handleSearch = async () => {
-        if (!searchQuery.trim()) {
-            loadData();
-            return;
-        }
-
         try {
             setLoading(true);
-            const data = await getPublicRooms(searchQuery);
+            const data = await getPublicRooms(searchQuery.trim() || undefined);
             setRooms(data.rooms);
         } catch (error) {
             console.error('검색 실패:', error);
@@ -77,6 +72,12 @@ export const CommunityPage = () => {
         }
     };
 
+    // 검색 초기화
+    const handleResetSearch = () => {
+        setSearchQuery('');
+        loadData();
+    };
+
     // 그룹 생성
     const handleCreateRoom = async (data: RoomCreateRequest) => {
         try {
@@ -84,10 +85,7 @@ export const CommunityPage = () => {
             showToast('그룹이 생성되었습니다!', 'success');
             setMyRoom(newRoom);
             setIsCreateModalOpen(false);
-
-            // ✅ 그룹 생성 후 바로 채팅방으로 이동
             navigate(`/community/chat/${newRoom.roomId}`);
-
         } catch (error: unknown) {
             console.error('그룹 생성 실패:', error);
             const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || '그룹 생성에 실패했습니다';
@@ -98,6 +96,7 @@ export const CommunityPage = () => {
 
     // 공개 방 참여
     const handleJoin = async (roomId: number) => {
+        if (myRoom) return; // 이미 그룹이 있으면 참여 불가
         try {
             await joinPublicRoom(roomId);
             showToast('그룹에 참여했습니다!', 'success');
@@ -137,219 +136,174 @@ export const CommunityPage = () => {
         }
     };
 
+    // 검색 결과가 없는지 확인
+    const isSearchEmpty = searchQuery.trim() && rooms.length === 0 && !loading;
+
     return (
         <Layout>
-            <ContainerContent>
-                <div style={{ padding: '40px 0' }}>
+            <div className="community-page">
+                <div className="community-container">
                     {/* 헤더 */}
-                    <div style={{ marginBottom: '32px' }}>
-                        <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1A1A1A', marginBottom: '8px', margin: 0 }}>
-                            커뮤니티
-                        </h1>
-                        <p style={{ fontSize: '16px', color: '#666666', margin: 0 }}>
-                            그룹에 참여하여 다른 투자자들과 소통하세요
-                        </p>
+                    <div className="community-header">
+                        <h1 className="community-title">커뮤니티</h1>
+                        <p className="community-desc">그룹에 참여하여 다른 투자자들과 소통하세요</p>
                     </div>
 
                     {/* 내가 속한 그룹 표시 */}
                     {myRoom && (
-                        <div
-                            onClick={goToMyRoom}
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                padding: '20px 24px',
-                                background: 'linear-gradient(135deg, #203C2E, #2A5038)',
-                                borderRadius: '8px',
-                                marginBottom: '32px',
-                                cursor: 'pointer',
-                                transition: 'transform 0.2s ease',
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-2px)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'translateY(0)';
-                            }}
-                        >
-                            <div>
-                                <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.8)', fontWeight: '500', marginBottom: '8px' }}>
-                                    참여 중인 그룹
-                                </div>
-                                <div style={{ fontSize: '18px', fontWeight: '700', color: '#FFFFFF' }}>
-                                    {myRoom.name}
-                                </div>
+                        <div className="my-room-banner" onClick={goToMyRoom}>
+                            <div className="my-room-info">
+                                <span className="my-room-label">참여 중인 그룹</span>
+                                <span className="my-room-name">{myRoom.name}</span>
                             </div>
-                            <button
-                                style={{
-                                    padding: '8px 24px',
-                                    background: '#FFFFFF',
-                                    color: '#203C2E',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    fontSize: '14px',
-                                    fontWeight: '600',
-                                    cursor: 'pointer',
-                                }}
-                            >
-                                입장하기 →
+                            <button className="my-room-btn">
+                                채팅방 입장 →
                             </button>
                         </div>
                     )}
 
-                    {/* 검색바 및 액션 버튼 */}
-                    <div style={{
-                        display: 'flex',
-                        gap: '16px',
-                        marginBottom: '32px',
-                        flexWrap: 'wrap',
-                    }}>
-                        {/* 검색바 */}
-                        <div style={{ flex: 1, display: 'flex', gap: '8px', minWidth: '300px' }}>
+                    {/* 검색 영역 */}
+                    <div className="community-search-area">
+                        {/* 검색창 (540px) */}
+                        <div className={`search-input-wrapper ${isSearchFocused ? 'focused' : ''}`}>
+                            <svg className="search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <circle cx="7" cy="7" r="5.5" stroke="#9CA3AF" strokeWidth="1.5"/>
+                                <path d="M11 11L14 14" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round"/>
+                            </svg>
                             <input
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                                onFocus={() => setIsSearchFocused(true)}
+                                onBlur={() => setIsSearchFocused(false)}
                                 placeholder="그룹 검색"
-                                style={{
-                                    flex: 1,
-                                    height: '48px',
-                                    padding: '0 16px',
-                                    border: '1px solid #E5E5E5',
-                                    borderRadius: '4px',
-                                    fontSize: '14px',
-                                }}
+                                className="search-input"
                             />
-                            <button
-                                onClick={handleSearch}
-                                style={{
-                                    padding: '0 24px',
-                                    background: '#203C2E',
-                                    color: '#FFFFFF',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    fontSize: '14px',
-                                    fontWeight: '600',
-                                    cursor: 'pointer',
-                                    whiteSpace: 'nowrap',
-                                }}
-                            >
-                                검색
-                            </button>
                         </div>
 
-                        {/* 액션 버튼 (내 그룹이 없을 때만) */}
+                        {/* 참여코드 입력 */}
                         {!myRoom && (
-                            <div style={{ display: 'flex', gap: '12px' }}>
-                                <button
-                                    onClick={() => setIsJoinModalOpen(true)}
-                                    style={{
-                                        padding: '12px 24px',
-                                        background: '#FFFFFF',
-                                        color: '#203C2E',
-                                        border: '2px solid #203C2E',
-                                        borderRadius: '4px',
-                                        fontSize: '14px',
-                                        fontWeight: '600',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s ease',
-                                        whiteSpace: 'nowrap',
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.background = '#F8F8F8';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.background = '#FFFFFF';
-                                    }}
-                                >
-                                    참여코드 입력
-                                </button>
-                                <button
-                                    onClick={() => setIsCreateModalOpen(true)}
-                                    style={{
-                                        padding: '12px 24px',
-                                        background: '#203C2E',
-                                        color: '#FFFFFF',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        fontSize: '14px',
-                                        fontWeight: '600',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s ease',
-                                        whiteSpace: 'nowrap',
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.background = '#162B20';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.background = '#203C2E';
-                                    }}
-                                >
-                                    그룹 생성
-                                </button>
-                            </div>
+                            <button
+                                className="join-code-btn"
+                                onClick={() => setIsJoinModalOpen(true)}
+                            >
+                                참여코드 입력
+                            </button>
+                        )}
+
+                        {/* 그룹 생성 */}
+                        {!myRoom && (
+                            <button
+                                className="create-group-btn"
+                                onClick={() => setIsCreateModalOpen(true)}
+                            >
+                                그룹 생성
+                            </button>
                         )}
                     </div>
 
-                    {/* 그룹 목록 */}
-                    <div style={{ marginBottom: '48px' }}>
-                        <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1A1A1A', marginBottom: '16px' }}>
-                            공개 그룹
-                        </h2>
+                    {/* 공개 그룹 영역 */}
+                    <div className="public-groups-section">
+                        {/* 헤더 (44px) */}
+                        <div className="public-groups-header">
+                            <span className="public-groups-label">공개 그룹</span>
+                            <span className="public-groups-count-label">인원</span>
+                        </div>
 
-                        {loading ? (
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                minHeight: '200px',
-                            }}>
-                                <div style={{ fontSize: '16px', color: '#666666' }}>로딩 중...</div>
-                            </div>
-                        ) : rooms.length === 0 ? (
-                            <div style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                minHeight: '200px',
-                                padding: '40px 20px',
-                            }}>
-                                <div style={{ fontSize: '64px', marginBottom: '16px' }}>🏠</div>
-                                <div style={{
-                                    fontSize: '14px',
-                                    color: '#666666',
-                                    textAlign: 'center',
-                                    lineHeight: '1.6',
-                                    whiteSpace: 'pre-line',
-                                }}>
-                                    {searchQuery
-                                        ? `"${searchQuery}" 검색 결과가 없습니다\n다른 키워드로 검색하거나 새로운 그룹을 만들어보세요`
-                                        : '공개 그룹이 아직 없습니다\n첫 번째 그룹을 만들어보세요!'}
+                        {/* 그룹 목록 */}
+                        <div className="public-groups-list">
+                            {loading ? (
+                                <>
+                                    {[1, 2, 3, 4, 5].map((i) => (
+                                        <div key={i} className="group-item">
+                                            <div className="skeleton skeleton-checkbox" />
+                                            <div className="skeleton skeleton-name" style={{ width: `${180 + i * 10}px` }} />
+                                            <div className="skeleton skeleton-count" />
+                                            <div className="skeleton skeleton-btn" />
+                                        </div>
+                                    ))}
+                                </>
+                            ) : rooms.length === 0 ? (
+                                // 빈 상태
+                                <div className="empty-state">
+                                    <div className="empty-icon">
+                                        {isSearchEmpty ? (
+                                            // 검색 결과 없음 아이콘
+                                            <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                                                <circle cx="35" cy="35" r="20" stroke="#D1D5DB" strokeWidth="2"/>
+                                                <path d="M50 50L65 65" stroke="#D1D5DB" strokeWidth="2" strokeLinecap="round"/>
+                                            </svg>
+                                        ) : (
+                                            // 그룹 없음 아이콘
+                                            <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                                                <circle cx="40" cy="40" r="36" stroke="#E5E7EB" strokeWidth="2"/>
+                                                <rect x="24" y="28" width="32" height="20" rx="4" stroke="#D1D5DB" strokeWidth="2"/>
+                                                <line x1="30" y1="35" x2="50" y2="35" stroke="#D1D5DB" strokeWidth="2" strokeLinecap="round"/>
+                                                <line x1="30" y1="41" x2="44" y2="41" stroke="#D1D5DB" strokeWidth="2" strokeLinecap="round"/>
+                                            </svg>
+                                        )}
+                                    </div>
+
+                                    {isSearchEmpty ? (
+                                        <>
+                                            <p className="empty-title">"{searchQuery}" 검색 결과가 없습니다</p>
+                                            <p className="empty-desc">다른 키워드로 검색하거나</p>
+                                            <p className="empty-desc">새로운 그룹을 만들어보세요</p>
+                                            <div className="empty-search-info">
+                                                <span>총 0개의 그룹</span>
+                                                <span className="separator">•</span>
+                                                <span className="reset-link" onClick={handleResetSearch}>검색 조건 초기화</span>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p className="empty-title">공개 그룹이 아직 없습니다</p>
+                                            <p className="empty-desc">첫 번째 그룹을 만들어보세요!</p>
+                                            <p className="empty-desc">다른 투자자들과 정보를 공유하고 함께 성장하세요</p>
+                                            {!myRoom && (
+                                                <button
+                                                    className="empty-create-btn"
+                                                    onClick={() => setIsCreateModalOpen(true)}
+                                                >
+                                                    첫 그룹 만들기
+                                                </button>
+                                            )}
+                                        </>
+                                    )}
                                 </div>
-                            </div>
-                        ) : (
-                            <div>
-                                {rooms.map((room) => (
-                                    <GroupCard key={room.roomId} room={room} onJoin={handleJoin} />
-                                ))}
-                            </div>
-                        )}
+                            ) : (
+                                // 그룹 목록
+                                rooms.map((room) => {
+                                    const isFull = room.currentMemberCount >= room.maxMemberCount;
+                                    return (
+                                        <div key={room.roomId} className="group-item">
+                                            <div className="group-checkbox" />
+                                            <span className="group-name">{room.name}</span>
+                                            <span className={`group-count ${isFull ? 'group-count--full' : ''}`}>
+                                                {room.currentMemberCount}/{room.maxMemberCount}
+                                            </span>
+                                            <button
+                                                className={`group-join-btn ${isFull ? 'group-join-btn--disabled' : ''}`}
+                                                onClick={() => !isFull && !myRoom && handleJoin(room.roomId)}
+                                                disabled={isFull || !!myRoom}
+                                            >
+                                                {isFull ? '정원 마감' : '참여하기'}
+                                            </button>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
                     </div>
 
                     {/* 랭킹 카드 섹션 */}
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(2, 1fr)',
-                        gap: '24px',
-                    }}>
+                    <div className="ranking-section">
                         <RankingCard type="profit" />
                         <RankingCard type="learning" />
                     </div>
                 </div>
-            </ContainerContent>
+            </div>
 
             {/* 그룹 생성 모달 */}
             <GroupCreateModal
@@ -367,25 +321,12 @@ export const CommunityPage = () => {
 
             {/* 토스트 알림 */}
             {toast && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        bottom: '24px',
-                        right: '24px',
-                        padding: '16px 24px',
-                        background: toast.type === 'success' ? '#4CAF50' : '#DC0000',
-                        color: '#FFFFFF',
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                        zIndex: 9999,
-                        animation: 'slideIn 0.3s ease',
-                    }}
-                >
+                <div className={`community-toast community-toast--${toast.type}`}>
                     {toast.message}
                 </div>
             )}
         </Layout>
     );
 };
+
+export default CommunityPage;
