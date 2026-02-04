@@ -11,9 +11,10 @@ interface StockHeaderProps {
     detail: StockDetailData;
     isFavorite: boolean;
     onWatchlistChange: () => void;
+    priceDirection?: 'up' | 'down' | null;
 }
 
-export const StockHeader = ({ stockCode, detail, isFavorite, onWatchlistChange }: StockHeaderProps) => {
+export const StockHeader = ({ stockCode, detail, isFavorite, onWatchlistChange, priceDirection }: StockHeaderProps) => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const isUp = detail.changeRate >= 0;
@@ -55,8 +56,10 @@ export const StockHeader = ({ stockCode, detail, isFavorite, onWatchlistChange }
             </div>
             <h1 className="stock-header__name">{detail.stockName}</h1>
             <div className="stock-header__price-row">
-                <span className="stock-header__price">{formatPrice(detail.currentPrice)}</span>
-                <span className={`stock-header__change ${isUp ? 'stock-header__change--up' : 'stock-header__change--down'}`}>
+                <span className={`stock-header__price ${priceDirection ? `stock-header__price--flash-${priceDirection}` : ''}`}>
+                    {formatPrice(detail.currentPrice)}
+                </span>
+                <span className={`stock-header__change ${isUp ? 'stock-header__change--up' : 'stock-header__change--down'} ${priceDirection ? `stock-header__change--flash-${priceDirection}` : ''}`}>
                     {isUp ? '+' : '-'}{changeAmount.toLocaleString()} ({isUp ? '+' : ''}{detail.changeRate.toFixed(2)}%)
                 </span>
             </div>

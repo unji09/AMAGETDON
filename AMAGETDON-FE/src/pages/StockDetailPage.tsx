@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { Layout } from '@/components/layout';
 import { ContainerContent } from '@/components/layout';
@@ -8,9 +8,14 @@ import { CandleChart } from '@/features/investment/components/detail/CandleChart
 import { TradingPanel } from '@/features/investment/components/detail/TradingPanel';
 import { LearnModeProvider } from '@/features/investment/contexts/LearnModeContext';
 import { LearnModeToggle, LearnSpotlight, LearnOverlay } from '@/features/investment/components/common/LearnMode';
+import { usePolling } from '@/hooks/usePolling';
 import { getStockDetail, getStockChart, getAssets, getAllWatchlist, getSingleHolding } from '@/api/investmentApi';
 import type { StockDetailData, CandleChartResponse, AssetData, WatchlistResponse, ChartPeriod, SingleHoldingData } from '@/features/investment/types/investment';
 import './StockDetailPage.css';
+
+// 폴링 간격 상수
+const DETAIL_POLL_INTERVAL = 7000;      // 현재가: 7초
+const CHART_1D_POLL_INTERVAL = 360000;  // 1일 차트: 6분
 
 export const StockDetailPage = () => {
     const { stockCode } = useParams<{ stockCode: string }>();
@@ -21,6 +26,10 @@ export const StockDetailPage = () => {
     const [holding, setHolding] = useState<SingleHoldingData | null>(null);
     const [period, setPeriod] = useState<ChartPeriod>('1D');
     const [loading, setLoading] = useState(true);
+
+    // 이전 가격 저장 (애니메이션용)
+    const prevPriceRef = useRef<number | null>(null);
+    const [priceDirection, setPriceDirection] = useState<'up' | 'down' | null>(null);
 
     const fetchAll = useCallback(async () => {
         if (!stockCode) return;
@@ -40,6 +49,51 @@ export const StockDetailPage = () => {
     }, [stockCode, period]);
 
     useEffect(() => { fetchAll(); }, [fetchAll]);
+
+    // 현재가/자산 정보 폴링 (7초)
+    const fetchDetailSilent = useCallback(async () => {
+        if (!stockCode) return;
+        try {
+            const [detailRes, assetsRes, holdingRes] = await Promise.allSettled([
+                getStockDetail(stockCode),
+                getAssets(),
+                getSingleHolding(stockCode),
+            ]);
+            if (detailRes.status === 'fulfilled') {
+                const newDetail = detailRes.value;
+                const newPrice = Number(newDetail.currentPrice);
+                const prevPrice = prevPriceRef.current;
+
+                if (prevPrice !== null && newPrice !== prevPrice) {
+                    setPriceDirection(newPrice > prevPrice ? 'up' : 'down');
+                    setTimeout(() => setPriceDirection(null), 600);
+                }
+                prevPriceRef.current = newPrice;
+                setDetail(newDetail);
+            }
+            if (assetsRes.status === 'fulfilled') setAssets(assetsRes.value);
+            if (holdingRes.status === 'fulfilled') setHolding(holdingRes.value);
+        } catch { /* */ }
+    }, [stockCode]);
+
+    // 1일 차트 폴링 (6분) - 1D period일 때만
+    const fetch1DChartSilent = useCallback(async () => {
+        if (!stockCode || period !== '1D') return;
+        try {
+            const chartRes = await getStockChart(stockCode, '1D');
+            setChart(chartRes);
+        } catch { /* */ }
+    }, [stockCode, period]);
+
+    usePolling(fetchDetailSilent, {
+        interval: DETAIL_POLL_INTERVAL,
+        enabled: !loading,
+    });
+
+    usePolling(fetch1DChartSilent, {
+        interval: CHART_1D_POLL_INTERVAL,
+        enabled: !loading && period === '1D',
+    });
 
     const handlePeriodChange = async (newPeriod: ChartPeriod) => {
         setPeriod(newPeriod);
@@ -76,6 +130,13 @@ export const StockDetailPage = () => {
         return watchlist.items.some((s) => s.stockCode === stockCode);
     }, [watchlist, stockCode]);
 
+    // 초기 가격 저장
+    useEffect(() => {
+        if (detail && prevPriceRef.current === null) {
+            prevPriceRef.current = Number(detail.currentPrice);
+        }
+    }, [detail]);
+
     if (loading || !detail || !stockCode) {
         return <Layout><Loading fullScreen /></Layout>;
     }
@@ -85,6 +146,10 @@ export const StockDetailPage = () => {
             <Layout>
                 <ContainerContent>
                     <div className="stock-detail__header">
+                        <div className="stock-detail__poll-indicator">
+                            <span className="stock-detail__poll-dot"></span>
+                            실시간 갱신
+                        </div>
                         <LearnModeToggle />
                     </div>
                     <LearnOverlay />
@@ -94,6 +159,7 @@ export const StockDetailPage = () => {
                             detail={detail}
                             isFavorite={isFavorite}
                             onWatchlistChange={fetchWatchlist}
+                            priceDirection={priceDirection}
                         />
                     </LearnSpotlight>
                     <div className="stock-detail__grid">
@@ -114,6 +180,7 @@ export const StockDetailPage = () => {
                                     balance={assets?.balance ?? 0}
                                     holding={holding}
                                     onTradeComplete={refreshAfterTrade}
+                                    priceDirection={priceDirection}
                                 />
                             </LearnSpotlight>
                         </div>

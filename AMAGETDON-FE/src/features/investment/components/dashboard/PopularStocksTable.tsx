@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import type { VolumeRankingItem } from '../../types/investment';
@@ -12,10 +12,90 @@ interface PopularStocksTableProps {
     onWatchlistChange: () => void;
 }
 
+// 개별 행 컴포넌트 (메모이제이션으로 불필요한 리렌더 방지)
+const StockRow = memo(({
+    item,
+    isFav,
+    loadingCode,
+    onToggleWatchlist,
+    onNavigate,
+}: {
+    item: VolumeRankingItem;
+    isFav: boolean;
+    loadingCode: string | null;
+    onToggleWatchlist: (e: React.MouseEvent, stockCode: string) => void;
+    onNavigate: (stockCode: string) => void;
+}) => {
+    const [prevPrice, setPrevPrice] = useState(item.currentPrice);
+    const [priceFlash, setPriceFlash] = useState<'up' | 'down' | null>(null);
+    const [prevRate, setPrevRate] = useState(item.changeRate);
+    const [rateFlash, setRateFlash] = useState<'up' | 'down' | null>(null);
+
+    useEffect(() => {
+        if (item.currentPrice !== prevPrice) {
+            setPriceFlash(item.currentPrice > prevPrice ? 'up' : 'down');
+            setPrevPrice(item.currentPrice);
+            const timer = setTimeout(() => setPriceFlash(null), 600);
+            return () => clearTimeout(timer);
+        }
+    }, [item.currentPrice, prevPrice]);
+
+    useEffect(() => {
+        if (item.changeRate !== prevRate) {
+            setRateFlash(item.changeRate > prevRate ? 'up' : 'down');
+            setPrevRate(item.changeRate);
+            const timer = setTimeout(() => setRateFlash(null), 600);
+            return () => clearTimeout(timer);
+        }
+    }, [item.changeRate, prevRate]);
+
+    return (
+        <tr
+            className="popular-stocks__row"
+            onClick={() => onNavigate(item.stockCode)}
+        >
+            <td className="popular-stocks__td popular-stocks__td--rank">{item.rank}</td>
+            <td className="popular-stocks__td popular-stocks__td--name">{item.stockName}</td>
+            <td className="popular-stocks__td popular-stocks__td--price">
+                <span className={`popular-stocks__animated ${priceFlash ? `popular-stocks__flash--${priceFlash}` : ''}`}>
+                    {formatPrice(item.currentPrice)}
+                </span>
+            </td>
+            <td className="popular-stocks__td popular-stocks__td--volume">{formatVolume(item.volume)}</td>
+            <td className={`popular-stocks__td popular-stocks__td--rate ${item.changeRate >= 0 ? 'popular-stocks__td--up' : 'popular-stocks__td--down'}`}>
+                <span className={`popular-stocks__animated ${rateFlash ? `popular-stocks__flash--${rateFlash}` : ''}`}>
+                    {item.changeRate >= 0 ? '+' : ''}{item.changeRate.toFixed(2)}%
+                </span>
+            </td>
+            <td className="popular-stocks__td popular-stocks__td--fav">
+                <button
+                    type="button"
+                    className={`popular-stocks__fav-btn ${isFav ? 'popular-stocks__fav-btn--active' : ''}`}
+                    onClick={(e) => onToggleWatchlist(e, item.stockCode)}
+                    disabled={loadingCode === item.stockCode}
+                >
+                    <Heart size={16} fill={isFav ? 'currentColor' : 'none'} />
+                </button>
+            </td>
+        </tr>
+    );
+});
+
+StockRow.displayName = 'StockRow';
+
 export const PopularStocksTable = ({ rankings, watchlistCodes, onWatchlistChange }: PopularStocksTableProps) => {
     const navigate = useNavigate();
     const displayItems = rankings.slice(0, 10);
     const [loadingCode, setLoadingCode] = useState<string | null>(null);
+
+    // 이전 rankings를 저장하여 순위 변동 감지
+    const prevRankingsRef = useRef<Map<string, number>>(new Map());
+
+    useEffect(() => {
+        const newMap = new Map<string, number>();
+        rankings.forEach(item => newMap.set(item.stockCode, item.rank));
+        prevRankingsRef.current = newMap;
+    }, [rankings]);
 
     const handleToggleWatchlist = async (e: React.MouseEvent, stockCode: string) => {
         e.stopPropagation();
@@ -35,10 +115,18 @@ export const PopularStocksTable = ({ rankings, watchlistCodes, onWatchlistChange
         }
     };
 
+    const handleNavigate = (stockCode: string) => {
+        navigate(`/investment/${stockCode}`);
+    };
+
     return (
         <div className="popular-stocks">
             <div className="popular-stocks__header">
                 <h2 className="popular-stocks__title">실시간 인기 종목</h2>
+                <span className="popular-stocks__live-badge">
+                    <span className="popular-stocks__live-dot"></span>
+                    LIVE
+                </span>
             </div>
             <div className="popular-stocks__table-wrapper">
                 <table className="popular-stocks__table">
@@ -53,34 +141,16 @@ export const PopularStocksTable = ({ rankings, watchlistCodes, onWatchlistChange
                         </tr>
                     </thead>
                     <tbody>
-                        {displayItems.map((item) => {
-                            const isFav = watchlistCodes.has(item.stockCode);
-                            return (
-                                <tr
-                                    key={item.stockCode}
-                                    className="popular-stocks__row"
-                                    onClick={() => navigate(`/investment/${item.stockCode}`)}
-                                >
-                                    <td className="popular-stocks__td popular-stocks__td--rank">{item.rank}</td>
-                                    <td className="popular-stocks__td popular-stocks__td--name">{item.stockName}</td>
-                                    <td className="popular-stocks__td popular-stocks__td--price">{formatPrice(item.currentPrice)}</td>
-                                    <td className="popular-stocks__td popular-stocks__td--volume">{formatVolume(item.volume)}</td>
-                                    <td className={`popular-stocks__td popular-stocks__td--rate ${item.changeRate >= 0 ? 'popular-stocks__td--up' : 'popular-stocks__td--down'}`}>
-                                        {item.changeRate >= 0 ? '+' : ''}{item.changeRate.toFixed(2)}%
-                                    </td>
-                                    <td className="popular-stocks__td popular-stocks__td--fav">
-                                        <button
-                                            type="button"
-                                            className={`popular-stocks__fav-btn ${isFav ? 'popular-stocks__fav-btn--active' : ''}`}
-                                            onClick={(e) => handleToggleWatchlist(e, item.stockCode)}
-                                            disabled={loadingCode === item.stockCode}
-                                        >
-                                            <Heart size={16} fill={isFav ? 'currentColor' : 'none'} />
-                                        </button>
-                                    </td>
-                                </tr>
-                            );
-                        })}
+                        {displayItems.map((item) => (
+                            <StockRow
+                                key={item.stockCode}
+                                item={item}
+                                isFav={watchlistCodes.has(item.stockCode)}
+                                loadingCode={loadingCode}
+                                onToggleWatchlist={handleToggleWatchlist}
+                                onNavigate={handleNavigate}
+                            />
+                        ))}
                     </tbody>
                 </table>
             </div>

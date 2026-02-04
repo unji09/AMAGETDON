@@ -89,6 +89,34 @@
     padding: var(--spacing-2) var(--spacing-3);
     background: var(--color-background);
     border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+/* 가격 변동 플래시 애니메이션 */
+.trading-panel__price-display--flash-up {
+    animation: tradingPriceFlashUp 0.6s ease;
+}
+
+.trading-panel__price-display--flash-down {
+    animation: tradingPriceFlashDown 0.6s ease;
+}
+
+@keyframes tradingPriceFlashUp {
+    0% {
+        background-color: rgba(231, 76, 60, 0.2);
+    }
+    100% {
+        background-color: var(--color-background);
+    }
+}
+
+@keyframes tradingPriceFlashDown {
+    0% {
+        background-color: rgba(52, 152, 219, 0.2);
+    }
+    100% {
+        background-color: var(--color-background);
+    }
 }
 
 .trading-panel__input {

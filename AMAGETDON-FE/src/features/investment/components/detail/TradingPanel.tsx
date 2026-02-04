@@ -10,6 +10,7 @@ interface TradingPanelProps {
     balance: number;
     holding: SingleHoldingData | null;
     onTradeComplete: () => void;
+    priceDirection?: 'up' | 'down' | null;
 }
 
 type TradeMode = 'buy' | 'sell';
@@ -28,7 +29,7 @@ const SELL_RATIO_BUTTONS = [
     { label: '전량', value: 1 },
 ];
 
-export const TradingPanel = ({ stockCode, currentPrice, balance, holding, onTradeComplete }: TradingPanelProps) => {
+export const TradingPanel = ({ stockCode, currentPrice, balance, holding, onTradeComplete, priceDirection }: TradingPanelProps) => {
     const [mode, setMode] = useState<TradeMode>('buy');
     const [quantity, setQuantity] = useState<number | ''>('');
     const [loading, setLoading] = useState(false);
@@ -129,7 +130,9 @@ export const TradingPanel = ({ stockCode, currentPrice, balance, holding, onTrad
 
             <div className="trading-panel__field">
                 <label className="trading-panel__label">주문단가 (KRW)</label>
-                <div className="trading-panel__price-display">{formatWon(currentPrice)}</div>
+                <div className={`trading-panel__price-display ${priceDirection ? `trading-panel__price-display--flash-${priceDirection}` : ''}`}>
+                    {formatWon(currentPrice)}
+                </div>
             </div>
 
             <div className="trading-panel__field">
