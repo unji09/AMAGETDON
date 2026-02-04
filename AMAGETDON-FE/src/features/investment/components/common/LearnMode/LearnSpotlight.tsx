@@ -12,11 +12,12 @@ interface LearnSpotlightProps {
 export const LearnSpotlight = ({ id, children }: LearnSpotlightProps) => {
     const { isLearnMode, activeSpotlight, setActiveSpotlight } = useLearnMode();
     const ref = useRef<HTMLDivElement>(null);
+    const cardRef = useRef<HTMLDivElement>(null);
     const [edge, setEdge] = useState<'left' | 'right' | null>(null);
     const learnItem = LEARN_DATA[id];
     const isActive = activeSpotlight === id;
 
-    // 요소 위치에 따라 edge 자동 감지
+    // 요소 위치에 따라 edge 자동 감지 + 카드가 보이도록 스크롤
     useEffect(() => {
         if (isActive && ref.current) {
             const rect = ref.current.getBoundingClientRect();
@@ -25,18 +26,24 @@ export const LearnSpotlight = ({ id, children }: LearnSpotlightProps) => {
             const cardHalfWidth = cardWidth / 2;
             const elementCenter = rect.left + rect.width / 2;
 
-            // 카드가 왼쪽으로 넘어가는 경우
+            // 가로 위치 감지
             if (elementCenter - cardHalfWidth < 16) {
                 setEdge('left');
-            }
-            // 카드가 오른쪽으로 넘어가는 경우
-            else if (elementCenter + cardHalfWidth > viewportWidth - 16) {
+            } else if (elementCenter + cardHalfWidth > viewportWidth - 16) {
                 setEdge('right');
-            }
-            // 중앙에 있는 경우
-            else {
+            } else {
                 setEdge(null);
             }
+
+            // 카드가 화면에 보이도록 스크롤 (약간의 딜레이 후)
+            setTimeout(() => {
+                if (cardRef.current) {
+                    cardRef.current.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest',
+                    });
+                }
+            }, 100);
         }
     }, [isActive]);
 
@@ -71,7 +78,7 @@ export const LearnSpotlight = ({ id, children }: LearnSpotlightProps) => {
 
             {/* 활성화된 설명 카드 */}
             {isActive && (
-                <div className="learn-spotlight__card">
+                <div ref={cardRef} className="learn-spotlight__card">
                     <button className="learn-spotlight__close" onClick={handleClose}>
                         <X size={16} />
                     </button>

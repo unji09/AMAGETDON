@@ -79,6 +79,13 @@
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
     z-index: 1001;
     animation: cardFadeIn 0.2s ease-out;
+    scroll-margin-bottom: 80px;
+}
+
+@media (max-width: 768px) {
+    .learn-spotlight__card {
+        scroll-margin-bottom: 80px;
+    }
 }
 
 /* 왼쪽 가장자리 요소용 - 카드를 오른쪽으로 정렬 */
@@ -103,6 +110,32 @@
     left: auto;
     right: 20px;
     transform: none;
+}
+
+/* 위쪽에 카드 표시 (아래 공간이 부족할 때) */
+.learn-spotlight--position-top .learn-spotlight__card {
+    top: auto;
+    bottom: 100%;
+    margin-top: 0;
+    margin-bottom: var(--spacing-3);
+}
+
+.learn-spotlight--position-top .learn-spotlight__card::before {
+    top: auto;
+    bottom: -8px;
+    border-width: 8px 8px 0 8px;
+    border-color: var(--color-white) transparent transparent transparent;
+}
+
+/* 위쪽 + 왼쪽 가장자리 */
+.learn-spotlight--position-top.learn-spotlight--edge-left .learn-spotlight__card::before {
+    left: 20px;
+}
+
+/* 위쪽 + 오른쪽 가장자리 */
+.learn-spotlight--position-top.learn-spotlight--edge-right .learn-spotlight__card::before {
+    left: auto;
+    right: 20px;
 }
 
 @keyframes cardFadeIn {
