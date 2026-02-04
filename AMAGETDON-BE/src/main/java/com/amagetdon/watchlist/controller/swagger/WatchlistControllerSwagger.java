@@ -3,6 +3,7 @@ package com.amagetdon.watchlist.controller.swagger;
 import com.amagetdon.watchlist.dto.request.WatchlistAddRequest;
 import com.amagetdon.watchlist.dto.response.WatchlistCheckResponse;
 import com.amagetdon.watchlist.dto.response.WatchlistResponse;
+import com.amagetdon.watchlist.dto.response.WatchlistResponse.WatchlistItem;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -121,7 +122,7 @@ public interface WatchlistControllerSwagger {
                     content = @Content(schema = @Schema(hidden = true))
             )
     })
-    ResponseEntity<Void> addToWatchlist(
+    ResponseEntity<WatchlistItem> addToWatchlist(
             @RequestBody(
                     description = "관심 종목 추가 요청",
                     required = true,

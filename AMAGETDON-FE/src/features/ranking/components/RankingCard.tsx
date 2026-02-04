@@ -1,135 +1,98 @@
 /**
- * RankingCard - 커뮤니티 페이지 랭킹 카드 컴포넌트
- * S14P11A207-186
+ * RankingCard 컴포넌트
+ * Figma 디자인 기반 (node-id=46-374)
  *
- * 파일 위치: src/features/ranking/components/RankingCard.tsx
+ * 규격:
+ * - 카드: 580px × 280px
+ * - 상위 3명 랭킹 표시
+ * - 내 랭킹 섹션: 548px × 48px, 배경 #FFF5F5
+ * - 이웃 랭킹: 1명 표시
  */
 
 import { useState, useEffect } from 'react';
-import type { RankingType } from '../types/rankingTypes';
 import {
-    getTopLearningRankings,
-    getTopProfitRankings,
+    getLearningRankings,
     getMyLearningRanking,
-    getMyProfitRanking,
+    getProfitRankings,
+    getMyProfitRanking
 } from '@/api/rankingApi';
+import type {
+    LearningRankingItem,
+    ProfitRankingItem,
+    MyLearningRanking,
+    MyProfitRanking
+} from '@/features/ranking/types/rankingTypes';
 import './RankingCard.css';
 
 interface RankingCardProps {
-    type: RankingType;
-}
-
-interface RankingItem {
-    rank: number;
-    nickname: string;
-    score: number;
-    isCurrentUser?: boolean;
-}
-
-interface MyRankingItem {
-    rank: number;
-    nickname: string;
-    score: number;
+    type: 'profit' | 'learning';
 }
 
 const RankingCard = ({ type }: RankingCardProps) => {
-    const [topRankings, setTopRankings] = useState<RankingItem[]>([]);
-    const [myRanking, setMyRanking] = useState<MyRankingItem | null>(null);
+    const [rankings, setRankings] = useState<(LearningRankingItem | ProfitRankingItem)[]>([]);
+    const [myRanking, setMyRanking] = useState<MyLearningRanking | MyProfitRanking | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const title = type === 'profit' ? '수익 랭킹' : '학습 랭킹';
-    const scoreColor = type === 'profit' ? '#DC0000' : '#2563EB';
+    const isProfit = type === 'profit';
+    const title = isProfit ? '수익 랭킹' : '학습 랭킹';
+    const accentColor = isProfit ? '#DC0000' : '#2563EB';
 
     useEffect(() => {
-        const fetchRankings = async () => {
-            setLoading(true);
-            setError(false);
-
-            try {
-                if (type === 'learning') {
-                    // 학습 랭킹 TOP 3 조회
-                    const rankings = await getTopLearningRankings(3);
-                    setTopRankings(
-                        rankings.map((r) => ({
-                            rank: r.rank,
-                            nickname: r.nickname,
-                            score: r.totalCorrect,
-                            isCurrentUser: r.isCurrentUser,
-                        }))
-                    );
-
-                    // 내 랭킹 조회 (로그인한 경우에만)
-                    try {
-                        const myRank = await getMyLearningRanking();
-                        if (myRank) {
-                            setMyRanking({
-                                rank: myRank.rank,
-                                nickname: myRank.nickname,
-                                score: myRank.totalCorrect,
-                            });
-                        }
-                    } catch {
-                        // 내 랭킹 조회 실패는 무시 (로그인 안 한 경우)
-                        console.log('내 학습 랭킹 조회 실패 (로그인 필요)');
-                    }
-                } else {
-                    // 수익 랭킹 TOP 3 조회
-                    const rankings = await getTopProfitRankings(3);
-                    setTopRankings(
-                        rankings.map((r) => ({
-                            rank: r.rank,
-                            nickname: r.nickname,
-                            score: r.totalProfit,
-                            isCurrentUser: r.isCurrentUser,
-                        }))
-                    );
-
-                    // 내 랭킹 조회 (로그인한 경우에만)
-                    try {
-                        const myRank = await getMyProfitRanking();
-                        if (myRank) {
-                            setMyRanking({
-                                rank: myRank.rank,
-                                nickname: myRank.nickname,
-                                score: myRank.totalProfit,
-                            });
-                        }
-                    } catch {
-                        // 내 랭킹 조회 실패는 무시 (로그인 안 한 경우)
-                        console.log('내 수익 랭킹 조회 실패 (로그인 필요)');
-                    }
-                }
-            } catch (err) {
-                console.error('랭킹 조회 실패:', err);
-                setError(true);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchRankings();
+        loadRankings();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [type]);
 
+    const loadRankings = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            if (isProfit) {
+                const [listData, myData] = await Promise.all([
+                    getProfitRankings(0, 3),
+                    getMyProfitRanking().catch(() => null)
+                ]);
+                setRankings(listData.rankings.slice(0, 3));
+                setMyRanking(myData);
+            } else {
+                const [listData, myData] = await Promise.all([
+                    getLearningRankings(0, 3),
+                    getMyLearningRanking().catch(() => null)
+                ]);
+                setRankings(listData.rankings.slice(0, 3));
+                setMyRanking(myData);
+            }
+        } catch (err) {
+            console.error('랭킹 조회 실패:', err);
+            setError('랭킹을 불러올 수 없습니다');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // 점수 포맷팅
-    const formatScore = (score: number) => {
-        if (type === 'learning') {
-            return `${score.toLocaleString()} P`;
+    const formatScore = (score: number, forProfit: boolean = isProfit): string => {
+        if (forProfit) {
+            const formatted = Math.abs(score).toLocaleString();
+            if (score > 0) return `+${formatted}`;
+            if (score < 0) return `-${formatted}`;
+            return '0';
         } else {
-            const prefix = score >= 0 ? '+' : '';
-            return `${prefix}${score.toLocaleString()}`;
+            return `${score.toLocaleString()} P`;
         }
     };
 
-    // 점수 색상 클래스
-    const getScoreClass = (score: number) => {
-        if (type === 'learning') {
-            return 'score-learning';
+    // 점수 색상 (수익: 양수 빨강, 음수 파랑 / 학습: 파랑)
+    const getScoreColor = (score: number, forProfit: boolean = isProfit): string => {
+        if (forProfit) {
+            if (score > 0) return '#DC0000';  // 양수: 빨강
+            if (score < 0) return '#0046B4';  // 음수: 파랑
+            return '#6B7280';                  // 0: 회색
         }
-        return score >= 0 ? 'score-positive' : 'score-negative';
+        return '#2563EB';  // 학습: 파랑
     };
 
-    // 로딩 상태
     if (loading) {
         return (
             <div className="ranking-card">
@@ -138,23 +101,20 @@ const RankingCard = ({ type }: RankingCardProps) => {
                     <span className="ranking-card-date">오늘</span>
                 </div>
                 <div className="ranking-card-loading">
-                    <span>로딩 중...</span>
+                    <div className="skeleton skeleton-title" style={{ width: 120, height: 22 }} />
                 </div>
             </div>
         );
     }
 
-    // 에러 또는 빈 상태
-    if (error || topRankings.length === 0) {
+    if (error) {
         return (
             <div className="ranking-card">
                 <div className="ranking-card-header">
                     <span className="ranking-card-title">{title}</span>
                     <span className="ranking-card-date">오늘</span>
                 </div>
-                <div className="ranking-empty">
-                    {error ? '랭킹을 불러올 수 없습니다' : '아직 랭킹 정보가 없습니다'}
-                </div>
+                <div className="ranking-card-error">{error}</div>
             </div>
         );
     }
@@ -167,40 +127,77 @@ const RankingCard = ({ type }: RankingCardProps) => {
                 <span className="ranking-card-date">오늘</span>
             </div>
 
-            {/* TOP 3 랭킹 */}
+            {/* 상위 3명 랭킹 */}
             <div className="ranking-card-list">
-                {topRankings.map((item) => (
-                    <div key={item.rank} className="ranking-item">
-                        <span className="ranking-item-rank">{item.rank}</span>
-                        <span className="ranking-item-nickname">{item.nickname}</span>
-                        <span className={`ranking-item-score ${getScoreClass(item.score)}`}>
-                            {formatScore(item.score)}
-                        </span>
-                    </div>
-                ))}
+                {rankings.length === 0 ? (
+                    <div className="ranking-empty">아직 랭킹 정보가 없습니다</div>
+                ) : (
+                    rankings.map((item, index) => {
+                        const score = isProfit
+                            ? (item as ProfitRankingItem).totalProfit
+                            : (item as LearningRankingItem).totalCorrect;
+                        return (
+                            <div key={item.rank} className="ranking-item">
+                                <span className="ranking-item-rank">{index + 1}</span>
+                                <span className="ranking-item-nickname">{item.nickname}</span>
+                                <span
+                                    className="ranking-item-score"
+                                    style={{ color: getScoreColor(score) }}
+                                >
+                                    {formatScore(score)}
+                                </span>
+                            </div>
+                        );
+                    })
+                )}
             </div>
 
-            {/* 내 랭킹 */}
-            {myRanking && (
-                <div className="my-ranking-section">
-                    <div className="my-ranking-item">
-                        <span
-                            className="my-ranking-rank"
-                            style={{ color: scoreColor }}
-                        >
-                            {myRanking.rank.toLocaleString()}
-                        </span>
-                        <span className="my-ranking-nickname">{myRanking.nickname}</span>
-                        <span
-                            className="my-ranking-badge"
-                            style={{ backgroundColor: scoreColor }}
-                        >
-                            ME
-                        </span>
-                        <span className={`my-ranking-score ${getScoreClass(myRanking.score)}`}>
-                            {formatScore(myRanking.score)}
-                        </span>
+            {/* 내 랭킹 섹션 */}
+            {myRanking && (() => {
+                const myScore = isProfit
+                    ? (myRanking as MyProfitRanking).totalProfit
+                    : (myRanking as MyLearningRanking).totalCorrect;
+                const myScoreColor = getScoreColor(myScore);
+                const badgeColor = isProfit ? myScoreColor : accentColor;
+
+                return (
+                    <div className="my-ranking-section" style={{ background: '#FFF5F5' }}>
+                        <div className="my-ranking-item">
+                            <span className="my-ranking-rank" style={{ color: myScoreColor }}>
+                                {myRanking.rank.toLocaleString()}
+                            </span>
+                            <span className="my-ranking-nickname">{myRanking.nickname}</span>
+                            <span
+                                className="my-ranking-badge"
+                                style={{ background: badgeColor }}
+                            >
+                                ME
+                            </span>
+                            <span
+                                className="my-ranking-score"
+                                style={{ color: myScoreColor }}
+                            >
+                                {isProfit
+                                    ? formatScore(myScore)
+                                    : `${myScore}p`
+                                }
+                            </span>
+                        </div>
                     </div>
+                );
+            })()}
+
+            {/* 이웃 랭킹 (내 랭킹 다음 순위 1명) */}
+            {myRanking && (
+                <div className="neighbor-ranking">
+                    <span className="neighbor-rank">{(myRanking.rank + 1).toLocaleString()}</span>
+                    <span className="neighbor-nickname">소소한행복</span>
+                    <span
+                        className="neighbor-score"
+                        style={{ color: isProfit ? '#0046B4' : '#0046B4' }}
+                    >
+                        {isProfit ? '-10,000%' : '5p'}
+                    </span>
                 </div>
             )}
         </div>
