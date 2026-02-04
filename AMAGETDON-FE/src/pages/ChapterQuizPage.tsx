@@ -20,7 +20,8 @@ export const ChapterQuizPage = () => {
     const [quizData, setQuizData] = useState<ChapterQuizResponse | null>(null);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [answers, setAnswers] = useState<Map<number, string>>(new Map());
-    const [shuffledChoicesMap, setShuffledChoicesMap] = useState<Map<number, any[]>>(new Map());
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+    const [_shuffledChoicesMap, setShuffledChoicesMap] = useState<Map<number, any[]>>(new Map());
     const [showResult, setShowResult] = useState(false);
     const [result, setResult] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -204,8 +205,6 @@ export const ChapterQuizPage = () => {
                     <p className="chapter-quiz-page__subtitle">
                         합격 기준: {quizData.passThreshold}% 이상
                     </p>
-                    {/* 디버그: passThreshold 값 확인 */}
-                    {console.log('🎯 passThreshold:', quizData.passThreshold, typeof quizData.passThreshold)}
                 </div>
 
                 {/* 진행률 바 */}
