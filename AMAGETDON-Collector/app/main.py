@@ -30,6 +30,37 @@ rest_loop_task = None
 candle_loop_task = None
 shared_limiter = None 
 
+# 특정 interval의 캔들 데이터가 오늘 기준으로 충분히 존재하는지 확인
+def _has_candle_data_for_period(cursor, interval_type: str, total_stocks: int, min_stock_ratio: float = 0.8) -> bool:
+    """
+    오늘 날짜 기준으로 해당 interval_type의 캔들 데이터가 충분히 있는지 확인
+    - RETENTION_DAYS 기간 내 데이터가 있는 종목 비율로 판단
+    """
+    retention_days = {
+        '30m': 7,
+        '1d': 90,
+        '1w': 365
+    }
+
+    days = retention_days.get(interval_type, 7)
+    start_date = (datetime.now() - timedelta(days=days)).date()
+
+    # 해당 기간 내 캔들이 있는 종목 수
+    cursor.execute("""
+        SELECT COUNT(DISTINCT stock_code)
+        FROM chart_candles
+        WHERE interval_type = %s
+        AND DATE(candle_time) >= %s
+    """, (interval_type, start_date))
+    stocks_with_candles = cursor.fetchone()[0]
+
+    ratio = stocks_with_candles / total_stocks if total_stocks > 0 else 0
+    has_sufficient = ratio >= min_stock_ratio
+
+    logger.info(f"  - {interval_type} (최근 {days}일): {stocks_with_candles}/{total_stocks} 종목 ({ratio*100:.1f}%)")
+
+    return has_sufficient
+
 #서버 시작 시 초기화(종목/업종 파싱, 30분봉/일봉/주봉 수집)
 async def check_and_initialize(rate_limit: int = 18):
     start_time = time.time()
@@ -42,10 +73,10 @@ async def check_and_initialize(rate_limit: int = 18):
         cursor.execute("SELECT stock_code FROM stock")
         rows = cursor.fetchall()
         stocks = [row[0] for row in rows]
-        conn.close()
 
         if not stocks:
             logger.info("종목 데이터 없음 - 파싱 시작")
+            conn.close()
             parser = StockParser()
             await parser.parse_and_save()
 
@@ -53,21 +84,41 @@ async def check_and_initialize(rate_limit: int = 18):
             cursor = conn.cursor()
             cursor.execute("SELECT stock_code FROM stock")
             stocks = [row[0] for row in cursor.fetchall()]
-            conn.close()
             logger.info(f"종목 데이터 파싱 완료: {len(stocks)}개")
         else:
             logger.info(f"종목 데이터 이미 존재: {len(stocks)}개")
 
         if not stocks:
             logger.error("파싱된 종목이 없습니다.")
+            conn.close()
             return
 
-        logger.info("과거 캔들 데이터 수집 시작")
+        logger.info("과거 캔들 데이터 확인 중...")
+
+        # 각 interval별로 DB에 충분한 데이터가 있는지 확인
+        total_stocks = len(stocks)
+        intervals_to_collect = []
+        for interval in ['30m', '1d', '1w']:
+            if _has_candle_data_for_period(cursor, interval, total_stocks):
+                logger.info(f"    → 스킵")
+            else:
+                logger.info(f"    → 수집 필요")
+                intervals_to_collect.append(interval)
+
+        conn.close()
+
+        if not intervals_to_collect:
+            logger.info("모든 캔들 데이터가 이미 존재 - 초기화 완료")
+            total_elapsed = time.time() - start_time
+            logger.info(f"=== [DONE] 서버 초기화 완료 (총 소요: {total_elapsed:.2f}초, API 호출 없음) ===")
+            return
+
+        logger.info(f"과거 캔들 데이터 수집 대상: {intervals_to_collect}")
         tm = TokenManager.get_instance()
         candle_collector = CandleCollector(tm)
 
         total_api_calls = 0
-        for interval in ['30m', '1d', '1w']:
+        for interval in intervals_to_collect:
             logger.info(f"  - {interval} 수집 시작 ({len(stocks)}개 종목)...")
 
             result = await candle_collector.collect_batch_parallel(
