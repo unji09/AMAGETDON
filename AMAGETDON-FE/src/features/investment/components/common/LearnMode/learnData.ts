@@ -16,7 +16,7 @@ export const LEARN_DATA: Record<string, LearnItem> = {
     'popular-stocks': {
         id: 'popular-stocks',
         title: '실시간 인기 종목',
-        description: '현재 거래량이 가장 많은 종목들이에요. 많은 투자자들이 관심을 가지고 있다는 뜻이죠.',
+        description: '현재 누적 거래량이 가장 많은 종목들이에요. 많은 투자자들이 관심을 가지고 있다는 뜻이죠.',
         tip: '거래량이 많다고 좋은 종목은 아니에요. 참고 지표로만 활용하세요!',
     },
     'my-holdings': {
