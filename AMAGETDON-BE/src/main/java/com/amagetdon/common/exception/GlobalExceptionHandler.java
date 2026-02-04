@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @Hidden
@@ -136,5 +137,13 @@ public class GlobalExceptionHandler {
         log.warn("OpenVidu API Status: {}, Message: {}", e.getStatusCode(), e.getMessage());
         return ResponseEntity.status(e.getStatusCode())
                 .body(new ErrorResponse("외부 서비스 응답: "  + e.getStatusCode()));
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handleResponseStatusException(ResponseStatusException e) {
+        log.warn(e.getReason());
+        return ResponseEntity
+                .status(e.getStatusCode())
+                .body(new ErrorResponse(e.getReason()));
     }
 }
