@@ -11,6 +11,7 @@ import { RecentTransactions } from '@/features/investment/components/dashboard/R
 import { LearnModeProvider } from '@/features/investment/contexts/LearnModeContext';
 import { LearnModeToggle, LearnSpotlight, LearnOverlay } from '@/features/investment/components/common/LearnMode';
 import { usePolling } from '@/hooks/usePolling';
+import { useMarketStatus } from '@/hooks/useMarketStatus';
 import { getVolumeRankings, getAssets, getHoldings, getAllWatchlist, getTransactions } from '@/api/investmentApi';
 import type { VolumeRankingItem, AssetData, StockHoldingResponse, WatchlistResponse, TransactionResponse } from '@/features/investment/types/investment';
 import './InvestmentPage.css';
@@ -20,6 +21,7 @@ const RANKINGS_POLL_INTERVAL = 1500;    // 인기 종목: 1초
 const HOLDINGS_POLL_INTERVAL = 7000;    // 내 종목/관심 종목: 7초
 
 export const InvestmentPage = () => {
+    const { isOpen } = useMarketStatus();
     const [rankings, setRankings] = useState<VolumeRankingItem[]>([]);
     const [assets, setAssets] = useState<AssetData | null>(null);
     const [holdings, setHoldings] = useState<StockHoldingResponse | null>(null);
@@ -81,15 +83,15 @@ export const InvestmentPage = () => {
         fetchData();
     }, []);
 
-    // 폴링 설정
+    // 폴링 설정 (장 운영 중일 때만)
     usePolling(fetchRankings, {
         interval: RANKINGS_POLL_INTERVAL,
-        enabled: !loading,
+        enabled: !loading && isOpen,
     });
 
     usePolling(fetchHoldingsAndWatchlist, {
         interval: HOLDINGS_POLL_INTERVAL,
-        enabled: !loading,
+        enabled: !loading && isOpen,
     });
 
     // 관심 종목 stockCode Set (하트 표시용)

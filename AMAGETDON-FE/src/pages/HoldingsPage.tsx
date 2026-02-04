@@ -95,10 +95,10 @@ export const HoldingsPage = () => {
 
     useEffect(() => { fetchData(page); }, [page, fetchData]);
 
-    // 폴링 설정 (7초마다)
+    // 폴링 설정 (7초마다, 장 운영 중일 때만)
     usePolling(fetchDataSilent, {
         interval: POLL_INTERVAL,
-        enabled: !loading,
+        enabled: !loading && isOpen,
     });
 
     const handleRefresh = () => fetchData(page);

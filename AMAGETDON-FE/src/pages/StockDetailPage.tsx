@@ -76,12 +76,12 @@ export const StockDetailPage = () => {
 
     usePolling(fetchDetailSilent, {
         interval: DETAIL_POLL_INTERVAL,
-        enabled: !loading,
+        enabled: !loading && isOpen,
     });
 
     usePolling(fetch1DChartSilent, {
         interval: CHART_1D_POLL_INTERVAL,
-        enabled: !loading && period === '1D',
+        enabled: !loading && isOpen && period === '1D',
     });
 
     const handlePeriodChange = async (newPeriod: ChartPeriod) => {
