@@ -7,9 +7,9 @@ interface ReviewNoteListProps {
     /** 챕터별로 그룹화된 오답 목록 */
     reviewNotes: Record<string, ReviewNoteDetail[]>;
     /** 다시 풀기 */
-    onSolve: (note: ReviewNoteDetail) => void;
+    onSolveClick: (note: ReviewNoteDetail) => void;
     /** 삭제 */
-    onDelete: (reviewNoteId: number) => void;
+    onDeleteClick: (reviewNoteId: number) => void;
 }
 
 /**
@@ -18,7 +18,7 @@ interface ReviewNoteListProps {
  * - 카드 리스트
  * - 스크롤 애니메이션
  */
-export const ReviewNoteList = ({ reviewNotes, onSolve, onDelete }: ReviewNoteListProps) => {
+export const ReviewNoteList = ({ reviewNotes, onSolveClick, onDeleteClick }: ReviewNoteListProps) => {
     const listRef = useRef<HTMLDivElement | null>(null);
 
     // 스크롤 애니메이션
@@ -56,8 +56,8 @@ export const ReviewNoteList = ({ reviewNotes, onSolve, onDelete }: ReviewNoteLis
                             <ReviewNoteCard
                                 key={note.reviewNoteId}
                                 note={note}
-                                onSolve={onSolve}
-                                onDelete={onDelete}
+                                onSolve={(n) => onSolveClick(n)}
+                                onDelete={(id) => onDeleteClick(id)}
                             />
                         ))}
                     </div>

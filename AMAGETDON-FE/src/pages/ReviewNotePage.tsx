@@ -6,6 +6,7 @@ import {
     ReviewNoteHeader,
     ReviewNoteList,
     ReviewNoteEmpty,
+    ReviewNoteFeedback,
 } from '@/features/learning/components/review';
 import { Modal, Button, Toast } from '@/components/common';
 import type { ReviewNoteDetail, ReviewNoteSubmitRequest } from '@/types/quiz';
@@ -27,6 +28,13 @@ export const ReviewNotePage = () => {
     const [toastMsg, setToastMsg] = useState<string | null>(null);
     const [toastType, setToastType] = useState<'success' | 'error'>('success');
     const [submitting, setSubmitting] = useState(false);
+
+    // 피드백 모달
+    const [showFeedback, setShowFeedback] = useState(false);
+    const [feedbackData, setFeedbackData] = useState<{
+        isCorrect: boolean;
+        rewardReceived: boolean;
+    } | null>(null);
 
     // 다시 풀기 모달 열기
     const handleSolveClick = (note: ReviewNoteDetail) => {
@@ -54,17 +62,12 @@ export const ReviewNotePage = () => {
             };
             const response = await handleSubmit(request);
 
-            if (response.isCorrect) {
-                setToastType('success');
-                let message = '정답입니다! 오답노트에서 삭제되었습니다.';
-                if (response.rewardReceived) {
-                    message += ` 첫 풀이 보상 50,000원이 지급되었습니다.`;
-                }
-                setToastMsg(message);
-            } else {
-                setToastType('error');
-                setToastMsg(response.message || '오답입니다. 다시 도전해보세요!');
-            }
+            // 피드백 모달 표시
+            setFeedbackData({
+                isCorrect: response.isCorrect,
+                rewardReceived: response.rewardReceived || false,
+            });
+            setShowFeedback(true);
             handleCloseModal();
         } catch (err) {
             setToastType('error');
@@ -86,17 +89,12 @@ export const ReviewNotePage = () => {
             };
             const response = await handleSubmit(request);
 
-            if (response.isCorrect) {
-                setToastType('success');
-                let message = '정답입니다! 오답노트에서 삭제되었습니다.';
-                if (response.rewardReceived) {
-                    message += ` 첫 풀이 보상 50,000원이 지급되었습니다.`;
-                }
-                setToastMsg(message);
-            } else {
-                setToastType('error');
-                setToastMsg(response.message || '오답입니다. 다시 도전해보세요!');
-            }
+            // 피드백 모달 표시
+            setFeedbackData({
+                isCorrect: response.isCorrect,
+                rewardReceived: response.rewardReceived || false,
+            });
+            setShowFeedback(true);
             handleCloseModal();
         } catch (err) {
             setToastType('error');
@@ -104,6 +102,21 @@ export const ReviewNotePage = () => {
         } finally {
             setSubmitting(false);
         }
+    };
+
+    // 피드백 모달 닫기
+    const handleCloseFeedback = () => {
+        if (!feedbackData) return;
+
+        setShowFeedback(false);
+
+        // 오답인 경우에만 Toast 표시
+        if (!feedbackData.isCorrect) {
+            setToastType('error');
+            setToastMsg('다시 도전해보세요!');
+        }
+
+        setFeedbackData(null);
     };
 
     // 개별 삭제
@@ -224,6 +237,16 @@ export const ReviewNotePage = () => {
                             )}
                         </div>
                     </Modal>
+                )}
+
+                {/* 피드백 모달 */}
+                {feedbackData && (
+                    <ReviewNoteFeedback
+                        isOpen={showFeedback}
+                        isCorrect={feedbackData.isCorrect}
+                        rewardReceived={feedbackData.rewardReceived}
+                        onClose={handleCloseFeedback}
+                    />
                 )}
 
                 {/* 토스트 알림 */}

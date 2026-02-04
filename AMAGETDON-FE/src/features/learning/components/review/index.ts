@@ -6,3 +6,4 @@ export { ReviewNoteHeader } from './ReviewNoteHeader';
 export { ReviewNoteList } from './ReviewNoteList';
 export { ReviewNoteCard } from './ReviewNoteCard';
 export { ReviewNoteEmpty } from './ReviewNoteEmpty';
+export { ReviewNoteFeedback } from './ReviewNoteFeedback';
