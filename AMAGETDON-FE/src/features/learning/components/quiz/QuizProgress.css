@@ -1,90 +1,96 @@
-/* 퀴즈 진행률 */
 .quiz-progress {
-    background: var(--color-white);
+    width: 100%;
+    background: white;
     border-radius: 12px;
-    padding: var(--spacing-5);
-    margin-bottom: var(--spacing-6);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    padding: 20px 28px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
 .quiz-progress__header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--spacing-3);
+    margin-bottom: 14px;
 }
 
-.quiz-progress__label {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-dark-gray);
+.quiz-progress__title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
 }
 
 .quiz-progress__count {
-    font-size: var(--font-size-sm);
+    font-size: 18px;
     color: #666;
+    font-weight: 500;
 }
 
 .quiz-progress__count strong {
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-bold);
-    color: var(--color-main-green);
+    font-size: 22px;
+    font-weight: 700;
+    color: #203C2E;
 }
 
-/* 진행률 바 */
 .quiz-progress__bar {
+    width: 100%;
     height: 10px;
-    background: #e8e8e8;
-    border-radius: 5px;
+    background: #e5e7eb;
+    border-radius: 999px;
     overflow: hidden;
-    margin-bottom: var(--spacing-3);
+    position: relative;
 }
 
 .quiz-progress__fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--color-main-green), var(--color-pale-green));
-    border-radius: 5px;
-    transition: width 0.5s ease;
-}
-
-/* 통계 */
-.quiz-progress__stats {
-    display: flex;
-    gap: var(--spacing-4);
-}
-
-.quiz-progress__stat {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-2);
-    font-size: var(--font-size-sm);
-    color: #666;
-}
-
-.quiz-progress__stat-icon {
-    font-size: var(--font-size-base);
-}
-
-.quiz-progress__stat-icon--correct {
-    color: var(--color-main-green);
-}
-
-.quiz-progress__stat-icon--wrong {
-    color: var(--color-chart-up);
-}
-
-.quiz-progress__stat-value {
-    font-weight: var(--font-weight-bold);
-    color: var(--color-dark-gray);
+    background: linear-gradient(90deg, #8FAE5D 0%, #6B8E3D 100%);
+    border-radius: 999px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 12px rgba(143, 174, 93, 0.4);
 }
 
 /* 반응형 */
 @media (max-width: 768px) {
     .quiz-progress {
-        padding: var(--spacing-4);
+        padding: 18px 24px;
     }
 
-    .quiz-progress__stats {
-        flex-wrap: wrap;
+    .quiz-progress__title {
+        font-size: 16px;
+    }
+
+    .quiz-progress__count {
+        font-size: 17px;
+    }
+
+    .quiz-progress__count strong {
+        font-size: 20px;
+    }
+
+    .quiz-progress__bar {
+        height: 9px;
+    }
+}
+
+@media (max-width: 480px) {
+    .quiz-progress {
+        padding: 16px 20px;
+        border-radius: 10px;
+    }
+
+    .quiz-progress__title {
+        font-size: 15px;
+    }
+
+    .quiz-progress__count {
+        font-size: 16px;
+    }
+
+    .quiz-progress__count strong {
+        font-size: 19px;
+    }
+
+    .quiz-progress__bar {
+        height: 8px;
     }
 }
