@@ -1,0 +1,193 @@
+version: '3.8'
+
+services:
+  # MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: amagetdon-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: amagetdon
+      TZ: Asia/Seoul
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./AMAGETDON-BE/data/chapters.csv:/var/lib/mysql-files/chapters.csv
+      - ./AMAGETDON-BE/data/quizzes.csv:/var/lib/mysql-files/quizzes.csv
+      - ./AMAGETDON-BE/data/quiz_choices.csv:/var/lib/mysql-files/quiz_choices.csv
+      - ./AMAGETDON-BE/data/survey_questions.csv:/var/lib/mysql-files/survey_questions.csv
+      - ./AMAGETDON-BE/data/achievements.csv:/var/lib/mysql-files/achievements.csv
+      - ./AMAGETDON-BE/init-scripts/01-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./AMAGETDON-BE/init-scripts/02-load-data.sql:/docker-entrypoint-initdb.d/02-load-data.sql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --secure-file-priv=/var/lib/mysql-files
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - amagetdon-network
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: amagetdon-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - amagetdon-network
+
+  # OpenVidu Server
+  openvidu:
+    image: openvidu/openvidu-dev:latest
+    container_name: amagetdon-openvidu
+    ports:
+      - "4443:4443"
+    environment:
+      - OPENVIDU_SECRET=${OPENVIDU_SECRET}
+      - DOMAIN_OR_PUBLIC_IP=${DOMAIN:-localhost}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - openvidu-recordings:/opt/openvidu/recordings
+    restart: unless-stopped
+    networks:
+      - amagetdon-network
+
+  # Backend
+  backend:
+    build:
+      context: ./AMAGETDON-BE
+      dockerfile: Dockerfile
+    container_name: amagetdon-backend
+    expose:
+      - "8080"
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=amagetdon
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET}
+      - TZ=Asia/Seoul
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - amagetdon-network
+
+  # FastAPI Quiz Service
+  fastapi:
+    build:
+      context: ./AMAGETDON-FastAPI
+      dockerfile: Dockerfile
+    container_name: amagetdon-fastapi
+    expose:
+      - "8000"
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=amagetdon
+      - GMS_API_KEY=${GMS_API_KEY}
+      - TZ=Asia/Seoul
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - amagetdon-network
+
+  # Stock Collector Service
+  collector:
+    build:
+      context: ./AMAGETDON-Collector
+      dockerfile: Dockerfile
+    container_name: amagetdon-collector
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=amagetdon
+      - TZ=Asia/Seoul
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - amagetdon-network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./AMAGETDON-FE
+      dockerfile: Dockerfile
+    container_name: amagetdon-frontend
+    expose:
+      - "3000"
+    restart: unless-stopped
+    networks:
+      - amagetdon-network
+
+  # Nginx with SSL (자체 서명 인증서 자동 생성)
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: amagetdon-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    depends_on:
+      - frontend
+      - backend
+      - fastapi
+    restart: unless-stopped
+    networks:
+      - amagetdon-network
+
+  # Certbot (SSL 인증서 발급 및 갱신 - EC2 프로덕션용)
+  certbot:
+    image: certbot/certbot
+    container_name: amagetdon-certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - amagetdon-network
+    profiles:
+      - production
+
+volumes:
+  mysql-data:
+  redis-data:
+  openvidu-recordings:
+
+networks:
+  amagetdon-network:
+    driver: bridge
