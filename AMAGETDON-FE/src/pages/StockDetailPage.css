@@ -5,25 +5,40 @@
     margin-top: var(--spacing-5);
 }
 
-/* 실시간 갱신 표시 */
-.stock-detail__poll-indicator {
+/* 장 상태 표시 */
+.stock-detail__market-status {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     padding: 6px 12px;
-    background: rgba(32, 60, 46, 0.08);
-    color: var(--color-main-green);
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-semibold);
     border-radius: 16px;
 }
 
-.stock-detail__poll-dot {
+.stock-detail__market-status--open {
+    background: rgba(32, 60, 46, 0.08);
+    color: var(--color-main-green);
+}
+
+.stock-detail__market-status--closed {
+    background: rgba(136, 136, 136, 0.1);
+    color: #888;
+}
+
+.stock-detail__market-dot {
     width: 6px;
     height: 6px;
-    background: var(--color-main-green);
     border-radius: 50%;
+}
+
+.stock-detail__market-status--open .stock-detail__market-dot {
+    background: var(--color-main-green);
     animation: stockDetailPollPulse 2s ease-in-out infinite;
+}
+
+.stock-detail__market-status--closed .stock-detail__market-dot {
+    background: #888;
 }
 
 @keyframes stockDetailPollPulse {

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { FlipText } from '@/components/common';
+import { useMarketStatus } from '@/hooks/useMarketStatus';
 import type { VolumeRankingItem } from '../../types/investment';
 import { formatPrice, formatVolume } from '../../utils/format';
 import { addToWatchlist, removeFromWatchlist } from '@/api/investmentApi';
@@ -61,6 +62,7 @@ StockRow.displayName = 'StockRow';
 
 export const PopularStocksTable = ({ rankings, watchlistCodes, onWatchlistChange }: PopularStocksTableProps) => {
     const navigate = useNavigate();
+    const { isOpen, statusText } = useMarketStatus();
     const displayItems = rankings.slice(0, 10);
     const [loadingCode, setLoadingCode] = useState<string | null>(null);
 
@@ -99,9 +101,9 @@ export const PopularStocksTable = ({ rankings, watchlistCodes, onWatchlistChange
         <div className="popular-stocks">
             <div className="popular-stocks__header">
                 <h2 className="popular-stocks__title">실시간 인기 종목</h2>
-                <span className="popular-stocks__live-badge">
-                    <span className="popular-stocks__live-dot"></span>
-                    LIVE
+                <span className={`popular-stocks__market-badge ${isOpen ? 'popular-stocks__market-badge--open' : 'popular-stocks__market-badge--closed'}`}>
+                    <span className="popular-stocks__market-dot"></span>
+                    {isOpen ? 'LIVE' : statusText}
                 </span>
             </div>
             <div className="popular-stocks__table-wrapper">

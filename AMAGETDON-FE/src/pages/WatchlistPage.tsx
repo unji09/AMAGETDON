@@ -6,6 +6,7 @@ import { Loading, FlipText } from '@/components/common';
 import { RefreshCw, Heart, ArrowLeft } from 'lucide-react';
 import { Pagination } from '@/features/investment/components/common/Pagination';
 import { usePolling } from '@/hooks/usePolling';
+import { useMarketStatus } from '@/hooks/useMarketStatus';
 import { getWatchlist, removeFromWatchlist } from '@/api/investmentApi';
 import { formatPrice } from '@/features/investment/utils/format';
 import type { WatchlistResponse, WatchlistItem as WatchlistItemType } from '@/features/investment/types/investment';
@@ -67,6 +68,7 @@ WatchlistRow.displayName = 'WatchlistRow';
 
 export const WatchlistPage = () => {
     const navigate = useNavigate();
+    const { isOpen, statusText } = useMarketStatus();
     const [data, setData] = useState<WatchlistResponse | null>(null);
     const [page, setPage] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -129,9 +131,9 @@ export const WatchlistPage = () => {
                         </div>
                     </div>
                     <div className="watchlist-page__actions">
-                        <span className="watchlist-page__poll-indicator">
-                            <span className="watchlist-page__poll-dot"></span>
-                            자동 갱신
+                        <span className={`watchlist-page__market-status ${isOpen ? 'watchlist-page__market-status--open' : 'watchlist-page__market-status--closed'}`}>
+                            <span className="watchlist-page__market-dot"></span>
+                            {statusText}
                         </span>
                         <button className="watchlist-page__icon-btn" onClick={handleRefresh} title="새로고침">
                             <RefreshCw size={18} />

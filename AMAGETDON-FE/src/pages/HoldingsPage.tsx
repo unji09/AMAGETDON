@@ -6,6 +6,7 @@ import { Loading, FlipText } from '@/components/common';
 import { RefreshCw, ArrowLeft, Heart } from 'lucide-react';
 import { Pagination } from '@/features/investment/components/common/Pagination';
 import { usePolling } from '@/hooks/usePolling';
+import { useMarketStatus } from '@/hooks/useMarketStatus';
 import { getHoldings, getAllWatchlist, addToWatchlist, removeFromWatchlist } from '@/api/investmentApi';
 import { formatWon, formatRate } from '@/features/investment/utils/format';
 import type { StockHoldingResponse, WatchlistResponse, StockHoldingItem } from '@/features/investment/types/investment';
@@ -69,6 +70,7 @@ HoldingRow.displayName = 'HoldingRow';
 
 export const HoldingsPage = () => {
     const navigate = useNavigate();
+    const { isOpen, statusText } = useMarketStatus();
     const [data, setData] = useState<StockHoldingResponse | null>(null);
     const [watchlist, setWatchlist] = useState<WatchlistResponse | null>(null);
     const [page, setPage] = useState(0);
@@ -143,9 +145,9 @@ export const HoldingsPage = () => {
                         </div>
                     </div>
                     <div className="holdings-page__actions">
-                        <span className="holdings-page__poll-indicator">
-                            <span className="holdings-page__poll-dot"></span>
-                            자동 갱신
+                        <span className={`holdings-page__market-status ${isOpen ? 'holdings-page__market-status--open' : 'holdings-page__market-status--closed'}`}>
+                            <span className="holdings-page__market-dot"></span>
+                            {statusText}
                         </span>
                         <button className="holdings-page__icon-btn" onClick={handleRefresh} title="새로고침">
                             <RefreshCw size={18} />

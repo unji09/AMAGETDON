@@ -23,25 +23,40 @@
     color: var(--color-dark-gray);
 }
 
-/* LIVE 배지 */
-.popular-stocks__live-badge {
+/* 장 상태 배지 */
+.popular-stocks__market-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     padding: 4px 10px;
-    background: rgba(231, 76, 60, 0.1);
-    color: var(--color-chart-up);
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-bold);
     border-radius: 12px;
 }
 
-.popular-stocks__live-dot {
+.popular-stocks__market-badge--open {
+    background: rgba(231, 76, 60, 0.1);
+    color: var(--color-chart-up);
+}
+
+.popular-stocks__market-badge--closed {
+    background: rgba(136, 136, 136, 0.1);
+    color: #888;
+}
+
+.popular-stocks__market-dot {
     width: 6px;
     height: 6px;
-    background: var(--color-chart-up);
     border-radius: 50%;
+}
+
+.popular-stocks__market-badge--open .popular-stocks__market-dot {
+    background: var(--color-chart-up);
     animation: livePulse 1.5s ease-in-out infinite;
+}
+
+.popular-stocks__market-badge--closed .popular-stocks__market-dot {
+    background: #888;
 }
 
 @keyframes livePulse {

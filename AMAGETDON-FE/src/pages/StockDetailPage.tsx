@@ -9,6 +9,7 @@ import { TradingPanel } from '@/features/investment/components/detail/TradingPan
 import { LearnModeProvider } from '@/features/investment/contexts/LearnModeContext';
 import { LearnModeToggle, LearnSpotlight, LearnOverlay } from '@/features/investment/components/common/LearnMode';
 import { usePolling } from '@/hooks/usePolling';
+import { useMarketStatus } from '@/hooks/useMarketStatus';
 import { getStockDetail, getStockChart, getAssets, getAllWatchlist, getSingleHolding } from '@/api/investmentApi';
 import type { StockDetailData, CandleChartResponse, AssetData, WatchlistResponse, ChartPeriod, SingleHoldingData } from '@/features/investment/types/investment';
 import './StockDetailPage.css';
@@ -19,6 +20,7 @@ const CHART_1D_POLL_INTERVAL = 360000;  // 1일 차트: 6분
 
 export const StockDetailPage = () => {
     const { stockCode } = useParams<{ stockCode: string }>();
+    const { isOpen, statusText } = useMarketStatus();
     const [detail, setDetail] = useState<StockDetailData | null>(null);
     const [chart, setChart] = useState<CandleChartResponse | null>(null);
     const [assets, setAssets] = useState<AssetData | null>(null);
@@ -126,9 +128,9 @@ export const StockDetailPage = () => {
             <Layout>
                 <ContainerContent>
                     <div className="stock-detail__header">
-                        <div className="stock-detail__poll-indicator">
-                            <span className="stock-detail__poll-dot"></span>
-                            실시간 갱신
+                        <div className={`stock-detail__market-status ${isOpen ? 'stock-detail__market-status--open' : 'stock-detail__market-status--closed'}`}>
+                            <span className="stock-detail__market-dot"></span>
+                            {statusText}
                         </div>
                         <LearnModeToggle />
                     </div>
