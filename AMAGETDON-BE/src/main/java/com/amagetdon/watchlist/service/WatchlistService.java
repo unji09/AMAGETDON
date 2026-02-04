@@ -15,9 +15,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -62,14 +64,14 @@ public class WatchlistService {
         validateStockCode(stockCode);
 
         if (watchlistRepository.existsByUserUserIdAndStockStockCode(userId, stockCode)) {
-            throw new IllegalArgumentException(WATCHLIST_ALREADY_EXISTS.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, WATCHLIST_ALREADY_EXISTS.getMessage());
         }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException(USER_NOT_FOUND_SIMPLE.getMessage()));
 
         Stock stock = stockRepository.findById(stockCode)
-                .orElseThrow(() -> new IllegalArgumentException(STOCK_NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, STOCK_NOT_FOUND.getMessage()));
 
         Watchlist watchlist = Watchlist.builder()
                 .user(user)
@@ -85,10 +87,10 @@ public class WatchlistService {
     @Transactional
     public void removeFromWatchlist(Long userId, Long watchlistId) {
         Watchlist watchlist = watchlistRepository.findById(watchlistId)
-                .orElseThrow(() -> new IllegalArgumentException(WATCHLIST_NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, WATCHLIST_NOT_FOUND.getMessage()));
 
         if (!watchlist.getUser().getUserId().equals(userId)) {
-            throw new IllegalArgumentException(WATCHLIST_ACCESS_DENIED.getMessage());
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, WATCHLIST_ACCESS_DENIED.getMessage());
         }
 
         watchlistRepository.delete(watchlist);
@@ -111,16 +113,16 @@ public class WatchlistService {
     private StockPrice getCurrentPrice(Stock stock) {
         return stockPriceRepository
                 .findTopByStockOrderByCreatedAtDesc(stock)
-                .orElseThrow(() -> new IllegalStateException(PRICE_NOT_AVAILABLE.getMessage()));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, PRICE_NOT_AVAILABLE.getMessage()));
     }
 
     private void validateStockCode(String stockCode) {
         if (!StringUtils.hasText(stockCode)) {
-            throw new IllegalArgumentException(INVALID_INPUT.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, INVALID_INPUT.getMessage());
         }
 
         if (!stockCode.matches("^[A-Za-z0-9]{6}$")) {
-            throw new IllegalArgumentException(INVALID_STOCK_CODE_FORMAT.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, INVALID_STOCK_CODE_FORMAT.getMessage());
         }
     }
 }
