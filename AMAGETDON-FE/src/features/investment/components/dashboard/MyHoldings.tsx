@@ -8,12 +8,11 @@ import './MyHoldings.css';
 
 interface MyHoldingsProps {
     holdings: StockHoldingItem[];
-    totalElements: number;
     watchlistCodes: Set<string>;
     onWatchlistChange: () => void;
 }
 
-export const MyHoldings = ({ holdings, totalElements, watchlistCodes, onWatchlistChange }: MyHoldingsProps) => {
+export const MyHoldings = ({ holdings, watchlistCodes, onWatchlistChange }: MyHoldingsProps) => {
     const navigate = useNavigate();
     const [loadingCode, setLoadingCode] = useState<string | null>(null);
 

@@ -10,7 +10,7 @@ export const InvestmentSearch = () => {
     const [results, setResults] = useState<StockSearchItem[]>([]);
     const [showDropdown, setShowDropdown] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
-    const timerRef = useRef<ReturnType<typeof setTimeout>>();
+    const timerRef = useRef<number | null>(null);
     const navigate = useNavigate();
 
     const handleSearch = useCallback(async (value: string) => {
@@ -31,8 +31,10 @@ export const InvestmentSearch = () => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setKeyword(value);
-        clearTimeout(timerRef.current);
-        timerRef.current = setTimeout(() => handleSearch(value), 300);
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+        }
+        timerRef.current = window.setTimeout(() => handleSearch(value), 300);
     };
 
     const handleSelect = (stockCode: string) => {

@@ -8,11 +8,10 @@ import './WatchlistSection.css';
 
 interface WatchlistSectionProps {
     stocks: WatchlistStockItem[];
-    totalElements: number;
     onWatchlistChange: () => void;
 }
 
-export const WatchlistSection = ({ stocks, totalElements, onWatchlistChange }: WatchlistSectionProps) => {
+export const WatchlistSection = ({ stocks, onWatchlistChange }: WatchlistSectionProps) => {
     const navigate = useNavigate();
     const [loadingId, setLoadingId] = useState<number | null>(null);
 

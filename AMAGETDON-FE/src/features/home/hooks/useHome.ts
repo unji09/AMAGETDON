@@ -129,9 +129,15 @@ export const useHome = () => {
         navigate('/learning/quiz');
     };
 
-    const navigateToDailyQuiz = () => {
-        navigate('/learning/quiz');
-    };
+    const navigateToDailyQuiz = () => navigate('/daily-quiz');
+
+    const navigateToMyInfo = () => navigate('/mypage');
+
+    const navigateToRanking = () => navigate('/ranking');
+
+    const navigateToAchievement = () => navigate('/achievement');
+
+    const navigateToLearning = () => navigate('/learning');
 
     return {
         loading,
@@ -141,5 +147,9 @@ export const useHome = () => {
         quizStreak,
         navigateToQuiz,
         navigateToDailyQuiz,
+        navigateToMyInfo,
+        navigateToRanking,
+        navigateToAchievement,
+        navigateToLearning,
     };
 };

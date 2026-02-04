@@ -6,10 +6,9 @@ import './RecentTransactions.css';
 
 interface RecentTransactionsProps {
     transactions: TransactionItem[];
-    totalElements: number;
 }
 
-export const RecentTransactions = ({ transactions, totalElements }: RecentTransactionsProps) => {
+export const RecentTransactions = ({ transactions }: RecentTransactionsProps) => {
     const navigate = useNavigate();
 
     const formatDate = (iso: string) => {
