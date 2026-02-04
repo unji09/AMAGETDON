@@ -20,7 +20,7 @@ export const RecentTransactions = ({ transactions, totalElements }: RecentTransa
     return (
         <div className="recent-transactions">
             <div className="recent-transactions__header">
-                <h2 className="recent-transactions__title">최근 거래 내역</h2>
+                <h3 className="recent-transactions__title">최근 거래 내역</h3>
                 <button
                     type="button"
                     className="recent-transactions__more-link"
@@ -46,14 +46,17 @@ export const RecentTransactions = ({ transactions, totalElements }: RecentTransa
                                     <span className="recent-transactions__item-name">{tx.stockName}</span>
                                     <span className="recent-transactions__item-date">{formatDate(tx.createdAt)}</span>
                                 </div>
-                                <div className="recent-transactions__item-center">
-                                    <span className={`recent-transactions__badge ${isBuy ? 'recent-transactions__badge--buy' : 'recent-transactions__badge--sell'}`}>
-                                        {isBuy ? '매수' : '매도'}
-                                    </span>
-                                    <span className="recent-transactions__item-qty">{tx.quantity}주</span>
-                                </div>
-                                <div className="recent-transactions__item-right">
-                                    <span className="recent-transactions__item-amount">{formatWon(tx.totalAmount)}</span>
+                                <div className='recent-transactions__item-center-right'>
+                                    <div className="recent-transactions__item-center">
+                                        <span className="recent-transactions__item-qty">{tx.quantity}주</span>
+                                        <span className={`recent-transactions__badge ${isBuy ? 'recent-transactions__badge--buy' : 'recent-transactions__badge--sell'}`}>
+                                            {isBuy ? '매수' : '매도'}
+                                        </span>
+                                        
+                                    </div>
+                                    <div className="recent-transactions__item-right">
+                                        <span className="recent-transactions__item-amount">{formatWon(tx.totalAmount)}</span>
+                                    </div>
                                 </div>
                             </div>
                         );
