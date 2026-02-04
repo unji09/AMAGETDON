@@ -10,10 +10,10 @@ export const LearnModeToggle = () => {
             type="button"
             className={`learn-mode-toggle ${isLearnMode ? 'learn-mode-toggle--active' : ''}`}
             onClick={toggleLearnMode}
-            title={isLearnMode ? '학습 모드 끄기' : '학습 모드 켜기'}
+            title={isLearnMode ? '투자 가이드 끄기' : '투자 가이드 켜기'}
         >
             <GraduationCap size={18} />
-            <span>학습 모드</span>
+            <span>투자 가이드</span>
             <span className="learn-mode-toggle__badge">{isLearnMode ? 'ON' : 'OFF'}</span>
         </button>
     );

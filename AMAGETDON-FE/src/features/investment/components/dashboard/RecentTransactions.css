@@ -82,14 +82,13 @@
 }
 
 .recent-transactions__item-center {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-2);
+    padding-left: var(--spacing-4);
 }
 
 .recent-transactions__badge {
     display: inline-block;
-    padding: 2px 8px;
+    margin-left: 8px;
+    padding-inline: 3px;
     border-radius: 4px;
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-bold);
@@ -111,8 +110,12 @@
 }
 
 .recent-transactions__item-right {
-    text-align: right;
+    /* text-align: center; */
     min-width: 80px;
+}
+
+.recent-transactions__item-center-right{
+    text-align: right;
 }
 
 .recent-transactions__item-amount {

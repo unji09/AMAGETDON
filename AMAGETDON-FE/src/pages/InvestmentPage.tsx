@@ -34,9 +34,9 @@ export const InvestmentPage = () => {
             const [rankingsRes, assetsRes, holdingsRes, watchlistRes, transactionsRes] = await Promise.allSettled([
                 getVolumeRankings(),
                 getAssets(),
-                getHoldings(0, 3),
+                getHoldings(0, 4),
                 getAllWatchlist(),
-                getTransactions(0, 5),
+                getTransactions(0, 4),
             ]);
             if (rankingsRes.status === 'fulfilled') setRankings(rankingsRes.value);
             else console.error('rankings failed:', rankingsRes.reason);
@@ -106,7 +106,7 @@ export const InvestmentPage = () => {
                             </LearnSpotlight>
                             <LearnSpotlight id="watchlist">
                                 <WatchlistSection
-                                    stocks={watchlist?.items?.slice(0, 3) ?? []}
+                                    stocks={watchlist?.items?.slice(0, 4) ?? []}
                                     totalElements={watchlist?.totalElements ?? 0}
                                     onWatchlistChange={fetchWatchlist}
                                 />
