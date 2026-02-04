@@ -133,6 +133,16 @@ class WebSocketCollector:
         try:
             parts = message.split('|')
             if len(parts) < 4:
+                # 구독 응답 로깅
+                logger.info(f"WS 응답: {message[:200]}")
+
+                # 에러 체크
+                if "ALREADY IN USE" in message:
+                    logger.error("appkey 중복 사용 - 다른 연결이 이미 존재합니다. 기존 프로세스를 종료하세요.")
+                    return
+                if "invalid approval" in message.lower() or "NOT FOUND" in message:
+                    logger.warning("Approval Key 만료 - 재발급 후 재연결")
+                    self._reconnect_with_new_key()
                 return
 
             tr_id = parts[1]
@@ -185,13 +195,10 @@ class WebSocketCollector:
         logger.error(f"WebSocket 오류: {error}")
     
     def on_close(self, ws, close_status_code, close_msg):
-        self.connected = False  
-        logger.info(f"WebSocket 연결 종료: {close_msg}")
-        self.subscribed_stocks.clear()
-
-        logger.info("WebSocket 재연결 시도")
-        self.token_manager.redis_client.delete(self.token_manager.ws_approval_key)
-        self.connect()
+        self.connected = False
+        self.connect_event.clear()
+        logger.info(f"WebSocket 연결 종료: code={close_status_code}, msg={close_msg}")
+        # 자동 재연결 안 함 - 외부에서 필요 시 reconnect() 호출
     
     #웹소켓 체결 데이터 처리
     def on_tick(self, stock_code: str, tick_data: dict):
@@ -342,6 +349,29 @@ class WebSocketCollector:
         except Exception as e:
             logger.error(f"30분봉 생성 실패: {e}")
     
+    def _reconnect_with_new_key(self):
+        """Approval Key 재발급 후 재연결"""
+        try:
+            # 기존 연결 종료
+            if self.ws:
+                self.ws.close()
+
+            # Redis에서 기존 키 삭제
+            self.token_manager.redis_client.delete(self.token_manager.ws_approval_key)
+
+            # 상태 초기화
+            self.connected = False
+            self.connect_event.clear()
+            self.subscribed_stocks.clear()
+
+            # 재연결
+            logger.info("새 Approval Key로 재연결 시도")
+            self.connect()
+
+            # 기존 구독 종목이 있으면 다시 구독 (main에서 처리)
+        except Exception as e:
+            logger.error(f"재연결 실패: {e}")
+
     def close(self):
         if self.ws:
             self.ws.close()
