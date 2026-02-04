@@ -1,17 +1,20 @@
 /**
  * RankingCard 스타일
- * S14P11A207-186
+ * Figma 디자인 기반 (node-id=46-374)
  *
- * 파일 위치: src/features/ranking/components/RankingCard.css
+ * 규격:
+ * - 카드: 580px × 280px
+ * - 내 랭킹: 548px × 48px
  */
 
 .ranking-card {
     width: 100%;
-    min-height: 280px;
+    height: 280px;
     background-color: #FFFFFF;
     border: 1px solid #F0F0F0;
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;
 }
 
 /* 헤더 */
@@ -26,15 +29,17 @@
     font-size: 18px;
     font-weight: 700;
     color: #1A1A1A;
+    font-family: 'Inter', sans-serif;
 }
 
 .ranking-card-date {
     font-size: 12px;
     font-weight: 400;
     color: #9CA3AF;
+    font-family: 'Inter', sans-serif;
 }
 
-/* 랭킹 리스트 */
+/* 랭킹 리스트 (상위 3명) */
 .ranking-card-list {
     padding: 0 24px;
     flex: 1;
@@ -43,7 +48,7 @@
 .ranking-item {
     display: flex;
     align-items: center;
-    padding: 10px 0;
+    height: 40px;
 }
 
 .ranking-item-rank {
@@ -51,6 +56,7 @@
     font-size: 15px;
     font-weight: 700;
     color: #1A1A1A;
+    font-family: 'Inter', sans-serif;
 }
 
 .ranking-item-nickname {
@@ -58,37 +64,29 @@
     font-size: 15px;
     font-weight: 700;
     color: #1A1A1A;
+    font-family: 'Inter', sans-serif;
 }
 
 .ranking-item-score {
     font-size: 15px;
     font-weight: 700;
     text-align: right;
+    font-family: 'Inter', sans-serif;
 }
 
-/* 점수 색상 */
-.score-positive {
-    color: #DC0000;
-}
-
-.score-negative {
-    color: #0046B4;
-}
-
-.score-learning {
-    color: #2563EB;
-}
-
-/* 내 랭킹 섹션 */
+/* 내 랭킹 섹션 (548 × 48) */
 .my-ranking-section {
-    background-color: #FFF5F5;
-    padding: 12px 16px;
-    margin: 8px 16px 16px;
+    margin: 4px 16px 0;
+    padding: 0 16px;
+    height: 48px;
+    display: flex;
+    align-items: center;
 }
 
 .my-ranking-item {
     display: flex;
     align-items: center;
+    width: 100%;
     gap: 8px;
 }
 
@@ -96,20 +94,26 @@
     font-size: 15px;
     font-weight: 700;
     min-width: 48px;
+    font-family: 'Inter', sans-serif;
 }
 
 .my-ranking-nickname {
     font-size: 15px;
     font-weight: 700;
     color: #1A1A1A;
+    font-family: 'Inter', sans-serif;
 }
 
 .my-ranking-badge {
-    padding: 1px 5px;
+    width: 28px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 11px;
     font-weight: 700;
     color: #FFFFFF;
-    border-radius: 2px;
+    font-family: 'Inter', sans-serif;
 }
 
 .my-ranking-score {
@@ -117,6 +121,38 @@
     font-size: 15px;
     font-weight: 700;
     text-align: right;
+    font-family: 'Inter', sans-serif;
+}
+
+/* 이웃 랭킹 */
+.neighbor-ranking {
+    display: flex;
+    align-items: center;
+    padding: 8px 32px 16px;
+    gap: 8px;
+}
+
+.neighbor-rank {
+    font-size: 14px;
+    font-weight: 400;
+    color: #9CA3AF;
+    min-width: 48px;
+    font-family: 'Inter', sans-serif;
+}
+
+.neighbor-nickname {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 400;
+    color: #6B7280;
+    font-family: 'Inter', sans-serif;
+}
+
+.neighbor-score {
+    font-size: 14px;
+    font-weight: 400;
+    text-align: right;
+    font-family: 'Inter', sans-serif;
 }
 
 /* 빈 상태 */
@@ -127,6 +163,7 @@
     height: 120px;
     color: #9CA3AF;
     font-size: 14px;
+    font-family: 'Inter', sans-serif;
 }
 
 /* 로딩 상태 */
@@ -135,14 +172,34 @@
     align-items: center;
     justify-content: center;
     flex: 1;
-    color: #9CA3AF;
+    padding: 24px;
+}
+
+.ranking-card-loading .skeleton {
+    background: #E0E0E0;
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* 에러 상태 */
+.ranking-card-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    color: #DC0000;
     font-size: 14px;
+    font-family: 'Inter', sans-serif;
 }
 
 /* 반응형 */
 @media (max-width: 768px) {
     .ranking-card {
-        min-height: 240px;
+        height: 260px;
     }
 
     .ranking-card-header {
@@ -158,7 +215,7 @@
     }
 
     .ranking-item {
-        padding: 8px 0;
+        height: 36px;
     }
 
     .ranking-item-rank,
@@ -168,13 +225,24 @@
     }
 
     .my-ranking-section {
-        padding: 10px 12px;
-        margin: 6px 12px 12px;
+        margin: 4px 12px 0;
+        padding: 0 12px;
+        height: 44px;
     }
 
     .my-ranking-rank,
     .my-ranking-nickname,
     .my-ranking-score {
         font-size: 14px;
+    }
+
+    .neighbor-ranking {
+        padding: 6px 24px 12px;
+    }
+
+    .neighbor-rank,
+    .neighbor-nickname,
+    .neighbor-score {
+        font-size: 13px;
     }
 }

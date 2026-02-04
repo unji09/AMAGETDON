@@ -65,7 +65,7 @@ const MyMessageContainer = styled.div`
     margin-bottom: 16px;
 `;
 
-// 상대 메시지 컨테이너 (왼쪽 정렬)
+// 상대 메시지 컨테이너
 const OtherMessageContainer = styled.div`
     display: flex;
     align-items: flex-start;
@@ -81,7 +81,7 @@ const MessageContent = styled.div`
     max-width: 700px;
 `;
 
-// 메시지 헤더 (이름 + 시간)
+// 메시지 헤더
 const MessageHeader = styled.div`
     display: flex;
     align-items: center;
@@ -102,7 +102,7 @@ const TimeText = styled.span`
     font-weight: 400;
 `;
 
-// 내 메시지 말풍선 (노란색)
+// 내 메시지 말풍선
 const MyMessageBubble = styled.div`
     background-color: #fadb13;
     padding: 12px 16px;
@@ -111,7 +111,7 @@ const MyMessageBubble = styled.div`
     word-wrap: break-word;
 `;
 
-// ✅ 상대 메시지 말풍선 (흰색)
+// 상대 메시지 말풍선
 const OtherMessageBubble = styled.div`
     background-color: #ffffff;
     padding: 12px 16px;
