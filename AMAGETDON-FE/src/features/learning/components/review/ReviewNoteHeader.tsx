@@ -13,9 +13,9 @@ export const ReviewNoteHeader = ({ totalCount }: ReviewNoteHeaderProps) => {
     return (
         <div className="review-note-header">
             <div className="review-note-header__title-area">
-                <h1 className="review-note-header__title">개편된 나의 오답노트</h1>
+                <h1 className="review-note-header__title">나의 오답노트</h1>
                 <p className="review-note-header__subtitle">
-                    틀린 문제를 다시 풀어보며 주식 고수가 되어보세요!
+                    틀린 문제를 다시 풀어보며 주식 고수가 되어보자!
                 </p>
             </div>
             <div className="review-note-header__count-card">
