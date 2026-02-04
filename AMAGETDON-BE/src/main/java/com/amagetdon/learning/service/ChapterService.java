@@ -305,11 +305,17 @@ public class ChapterService {
                 ? NORMAL_REWARD
                 : SIDE_REWARD;
 
+        // 퀴즈 개수에 따른 동적 백분율 계산 (반올림 처리)
+        int totalCount = quizItems.size();
+        int passingPercentage = (totalCount > 0)
+                ? (int) Math.round(((double) PASS_THRESHOLD / totalCount) * 100)
+                : 0;
+
         return new ChapterQuizzesResponse(
                 chapter.getChapterId(),
                 chapter.getChapterTitle(),
                 chapter.getChapterType(),
-                PASS_THRESHOLD,
+                passingPercentage, // % 표시를 위해 단위 변경
                 rewardAmount,
                 quizItems
         );

@@ -3,7 +3,9 @@ package com.amagetdon.watchlist.controller;
 import com.amagetdon.common.security.SecurityUtil;
 import com.amagetdon.watchlist.controller.swagger.WatchlistControllerSwagger;
 import com.amagetdon.watchlist.dto.request.WatchlistAddRequest;
+import com.amagetdon.watchlist.dto.response.WatchlistCheckResponse;
 import com.amagetdon.watchlist.dto.response.WatchlistResponse;
+import com.amagetdon.watchlist.dto.response.WatchlistResponse.WatchlistItem;
 import com.amagetdon.watchlist.service.WatchlistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -33,11 +35,20 @@ public class WatchlistController implements WatchlistControllerSwagger {
     }
 
     @Override
-    @PostMapping
-    public ResponseEntity<Void> addToWatchlist(@RequestBody WatchlistAddRequest request) {
+    @GetMapping("/{stockCode}")
+    public ResponseEntity<WatchlistCheckResponse> checkWatchlist(
+            @PathVariable String stockCode) {
         Long userId = SecurityUtil.getCurrentUserId();
-        watchlistService.addToWatchlist(userId, request.stockCode());
-        return ResponseEntity.ok().build();
+        WatchlistCheckResponse response = watchlistService.checkWatchlist(userId, stockCode);
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @PostMapping
+    public ResponseEntity<WatchlistItem> addToWatchlist(@RequestBody WatchlistAddRequest request) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        WatchlistItem response = watchlistService.addToWatchlist(userId, request.stockCode());
+        return ResponseEntity.ok(response);
     }
 
     @Override

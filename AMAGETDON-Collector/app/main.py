@@ -330,13 +330,17 @@ async def start_collection():
     logger.info("장 시작")
 
     token_manager = TokenManager.get_instance()
-    
+
+    # 웹소켓 Approval Key 강제 재발급 (서버 시작 시 새 연결을 위해)
+    token_manager.redis_client.delete(token_manager.ws_approval_key)
+    logger.info("기존 Approval Key 삭제 - 새로 발급 예정")
+
     # 공유 rate limiter 생성 (1초에 18건, 여유있게)
     shared_limiter = HardRateLimiter(18)
-    
+
     # volume_tracker에 공유 limiter 전달
     volume_tracker = VolumeTracker(token_manager, shared_limiter=shared_limiter)
-    
+
     ws_collector = WebSocketCollector(token_manager)
     ws_collector.connect()
     

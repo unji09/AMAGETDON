@@ -1,10 +1,11 @@
 package com.amagetdon.learning.controller;
 
+import com.amagetdon.common.security.SecurityUtil;
+import com.amagetdon.learning.dto.quiz.QuizCountResponse;
 import com.amagetdon.learning.dto.quiz.QuizResponse;
 import com.amagetdon.learning.dto.quiz.QuizSubmitRequest;
 import com.amagetdon.learning.dto.quiz.QuizSubmitResponse;
 import com.amagetdon.learning.service.QuizService;
-import com.amagetdon.common.security.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -16,7 +17,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "퀴즈", description = "오늘의 학습 퀴즈 조회 및 제출 API")
 @RestController
@@ -55,13 +59,13 @@ public class QuizController {
     @Operation(
             summary = "퀴즈 답안 제출",
             description = """
-            오늘의 퀴즈 답안을 제출합니다. JWT 토큰에서 사용자 정보를 자동으로 추출합니다.
-            
-            - 정답: 보상 지급 (1번: 100,000원, 2-100번: 1,000원)
-            - 오답: 오답노트에 자동 저장
-            - OX 문제: answer에 "O" 또는 "X"
-            - 객관식 문제: answer에 선택지 ID (문자열)
-            """
+                    오늘의 퀴즈 답안을 제출합니다. JWT 토큰에서 사용자 정보를 자동으로 추출합니다.
+                    
+                    - 정답: 보상 지급 (1번: 100,000원, 2-100번: 1,000원)
+                    - 오답: 오답노트에 자동 저장
+                    - OX 문제: answer에 "O" 또는 "X"
+                    - 객관식 문제: answer에 선택지 ID (문자열)
+                    """
     )
     @ApiResponses({
             @ApiResponse(
@@ -91,22 +95,22 @@ public class QuizController {
                                             summary = "OX 문제 답안",
                                             description = "answer에 'O' 또는 'X' 입력",
                                             value = """
-                            {
-                              "quizId": 1,
-                              "answer": "O"
-                            }
-                            """
+                                                    {
+                                                      "quizId": 1,
+                                                      "answer": "O"
+                                                    }
+                                                    """
                                     ),
                                     @ExampleObject(
                                             name = "객관식 퀴즈 예시",
                                             summary = "객관식 문제 답안",
                                             description = "answer에 선택지 ID를 문자열로 입력",
                                             value = """
-                            {
-                              "quizId": 380,
-                              "answer": "770"
-                            }
-                            """
+                                                    {
+                                                      "quizId": 380,
+                                                      "answer": "770"
+                                                    }
+                                                    """
                                     )
                             }
                     )
@@ -115,6 +119,37 @@ public class QuizController {
     ) {
         Long userId = SecurityUtil.getCurrentUserId();
         QuizSubmitResponse response = quizService.submitQuiz(userId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/daily/count")
+    @Operation(
+            summary = "오늘 푼 퀴즈 개수 조회",
+            description = "현재 사용자가 오늘 푼 퀴즈의 개수를 조회합니다. JWT 토큰에서 사용자 정보를 자동으로 추출합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = QuizCountResponse.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "count": 1
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자입니다"
+            )
+    })
+    public ResponseEntity<QuizCountResponse> getTodayQuizCount() {
+        Long userId = SecurityUtil.getCurrentUserId();
+        QuizCountResponse response = quizService.getTodayQuizCount(userId);
         return ResponseEntity.ok(response);
     }
 }
