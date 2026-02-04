@@ -7,6 +7,7 @@ import com.amagetdon.stock.repository.StockPriceRepository;
 import com.amagetdon.stock.repository.StockRepository;
 import com.amagetdon.user.entity.User;
 import com.amagetdon.user.repository.UserRepository;
+import com.amagetdon.watchlist.dto.response.WatchlistCheckResponse;
 import com.amagetdon.watchlist.dto.response.WatchlistResponse;
 import com.amagetdon.watchlist.dto.response.WatchlistResponse.WatchlistItem;
 import com.amagetdon.watchlist.entity.Watchlist;
@@ -57,6 +58,16 @@ public class WatchlistService {
         });
 
         return WatchlistResponse.from(watchlistPage, items);
+    }
+
+    public WatchlistCheckResponse checkWatchlist(Long userId, String stockCode) {
+        validateStockCode(stockCode);
+
+        Watchlist watchlist = watchlistRepository
+                .findByUserUserIdAndStockStockCode(userId, stockCode)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, WATCHLIST_NOT_IN_LIST.getMessage()));
+
+        return WatchlistCheckResponse.from(watchlist.getWatchlistId());
     }
 
     @Transactional
