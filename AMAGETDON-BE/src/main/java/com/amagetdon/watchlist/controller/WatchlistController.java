@@ -5,6 +5,7 @@ import com.amagetdon.watchlist.controller.swagger.WatchlistControllerSwagger;
 import com.amagetdon.watchlist.dto.request.WatchlistAddRequest;
 import com.amagetdon.watchlist.dto.response.WatchlistCheckResponse;
 import com.amagetdon.watchlist.dto.response.WatchlistResponse;
+import com.amagetdon.watchlist.dto.response.WatchlistResponse.WatchlistItem;
 import com.amagetdon.watchlist.service.WatchlistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -44,10 +45,10 @@ public class WatchlistController implements WatchlistControllerSwagger {
 
     @Override
     @PostMapping
-    public ResponseEntity<Void> addToWatchlist(@RequestBody WatchlistAddRequest request) {
+    public ResponseEntity<WatchlistItem> addToWatchlist(@RequestBody WatchlistAddRequest request) {
         Long userId = SecurityUtil.getCurrentUserId();
-        watchlistService.addToWatchlist(userId, request.stockCode());
-        return ResponseEntity.ok().build();
+        WatchlistItem response = watchlistService.addToWatchlist(userId, request.stockCode());
+        return ResponseEntity.ok(response);
     }
 
     @Override
