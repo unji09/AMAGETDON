@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Layout } from '@/components/layout';
 import { ContainerContent } from '@/components/layout';
@@ -26,10 +26,6 @@ export const StockDetailPage = () => {
     const [holding, setHolding] = useState<SingleHoldingData | null>(null);
     const [period, setPeriod] = useState<ChartPeriod>('1D');
     const [loading, setLoading] = useState(true);
-
-    // 이전 가격 저장 (애니메이션용)
-    const prevPriceRef = useRef<number | null>(null);
-    const [priceDirection, setPriceDirection] = useState<'up' | 'down' | null>(null);
 
     const fetchAll = useCallback(async () => {
         if (!stockCode) return;
@@ -59,18 +55,7 @@ export const StockDetailPage = () => {
                 getAssets(),
                 getSingleHolding(stockCode),
             ]);
-            if (detailRes.status === 'fulfilled') {
-                const newDetail = detailRes.value;
-                const newPrice = Number(newDetail.currentPrice);
-                const prevPrice = prevPriceRef.current;
-
-                if (prevPrice !== null && newPrice !== prevPrice) {
-                    setPriceDirection(newPrice > prevPrice ? 'up' : 'down');
-                    setTimeout(() => setPriceDirection(null), 600);
-                }
-                prevPriceRef.current = newPrice;
-                setDetail(newDetail);
-            }
+            if (detailRes.status === 'fulfilled') setDetail(detailRes.value);
             if (assetsRes.status === 'fulfilled') setAssets(assetsRes.value);
             if (holdingRes.status === 'fulfilled') setHolding(holdingRes.value);
         } catch { /* */ }
@@ -130,13 +115,6 @@ export const StockDetailPage = () => {
         return watchlist.items.some((s) => s.stockCode === stockCode);
     }, [watchlist, stockCode]);
 
-    // 초기 가격 저장
-    useEffect(() => {
-        if (detail && prevPriceRef.current === null) {
-            prevPriceRef.current = Number(detail.currentPrice);
-        }
-    }, [detail]);
-
     if (loading || !detail || !stockCode) {
         return <Layout><Loading fullScreen /></Layout>;
     }
@@ -159,7 +137,6 @@ export const StockDetailPage = () => {
                             detail={detail}
                             isFavorite={isFavorite}
                             onWatchlistChange={fetchWatchlist}
-                            priceDirection={priceDirection}
                         />
                     </LearnSpotlight>
                     <div className="stock-detail__grid">
@@ -180,7 +157,6 @@ export const StockDetailPage = () => {
                                     balance={assets?.balance ?? 0}
                                     holding={holding}
                                     onTradeComplete={refreshAfterTrade}
-                                    priceDirection={priceDirection}
                                 />
                             </LearnSpotlight>
                         </div>

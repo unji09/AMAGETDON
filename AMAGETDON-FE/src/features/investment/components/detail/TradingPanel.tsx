@@ -11,7 +11,6 @@ interface TradingPanelProps {
     balance: number;
     holding: SingleHoldingData | null;
     onTradeComplete: () => void;
-    priceDirection?: 'up' | 'down' | null;
 }
 
 type TradeMode = 'buy' | 'sell';
@@ -30,7 +29,7 @@ const SELL_RATIO_BUTTONS = [
     { label: '전량', value: 1 },
 ];
 
-export const TradingPanel = ({ stockCode, currentPrice, balance, holding, onTradeComplete, priceDirection }: TradingPanelProps) => {
+export const TradingPanel = ({ stockCode, currentPrice, balance, holding, onTradeComplete }: TradingPanelProps) => {
     const [mode, setMode] = useState<TradeMode>('buy');
     const [quantity, setQuantity] = useState<number | ''>('');
     const [loading, setLoading] = useState(false);
@@ -135,8 +134,6 @@ export const TradingPanel = ({ stockCode, currentPrice, balance, holding, onTrad
                     <FlipText
                         value={formatWon(currentPrice)}
                         className="trading-panel__flip-price"
-                        highlightUp={priceDirection === 'up'}
-                        highlightDown={priceDirection === 'down'}
                     />
                 </div>
             </div>

@@ -12,10 +12,9 @@ interface StockHeaderProps {
     detail: StockDetailData;
     isFavorite: boolean;
     onWatchlistChange: () => void;
-    priceDirection?: 'up' | 'down' | null;
 }
 
-export const StockHeader = ({ stockCode, detail, isFavorite, onWatchlistChange, priceDirection }: StockHeaderProps) => {
+export const StockHeader = ({ stockCode, detail, isFavorite, onWatchlistChange }: StockHeaderProps) => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const isUp = detail.changeRate >= 0;
@@ -61,16 +60,12 @@ export const StockHeader = ({ stockCode, detail, isFavorite, onWatchlistChange, 
                     <FlipText
                         value={formatPrice(detail.currentPrice)}
                         className="stock-header__flip-price"
-                        highlightUp={priceDirection === 'up'}
-                        highlightDown={priceDirection === 'down'}
                     />
                 </span>
                 <span className={`stock-header__change ${isUp ? 'stock-header__change--up' : 'stock-header__change--down'}`}>
                     <FlipText
                         value={`${isUp ? '+' : '-'}${changeAmount.toLocaleString()} (${isUp ? '+' : ''}${detail.changeRate.toFixed(2)}%)`}
                         className="stock-header__flip-change"
-                        highlightUp={priceDirection === 'up'}
-                        highlightDown={priceDirection === 'down'}
                     />
                 </span>
             </div>

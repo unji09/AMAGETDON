@@ -28,18 +28,6 @@ const HoldingRow = memo(({
     onToggleWatchlist: (e: React.MouseEvent, stockCode: string) => void;
     onNavigate: (stockCode: string) => void;
 }) => {
-    const [prevPrice, setPrevPrice] = useState(item.currentPrice);
-    const [priceDirection, setPriceDirection] = useState<'up' | 'down' | null>(null);
-
-    useEffect(() => {
-        if (item.currentPrice !== prevPrice) {
-            setPriceDirection(item.currentPrice > prevPrice ? 'up' : 'down');
-            setPrevPrice(item.currentPrice);
-            const timer = setTimeout(() => setPriceDirection(null), 500);
-            return () => clearTimeout(timer);
-        }
-    }, [item.currentPrice, prevPrice]);
-
     return (
         <tr
             className="holdings-page__row"
@@ -52,32 +40,16 @@ const HoldingRow = memo(({
             <td className="holdings-page__right">{item.quantity.toLocaleString()}</td>
             <td className="holdings-page__right">{formatWon(item.avgPrice)}</td>
             <td className="holdings-page__right">
-                <FlipText
-                    value={formatWon(item.currentPrice)}
-                    highlightUp={priceDirection === 'up'}
-                    highlightDown={priceDirection === 'down'}
-                />
+                <FlipText value={formatWon(item.currentPrice)} />
             </td>
             <td className="holdings-page__right">
-                <FlipText
-                    value={formatWon(item.totalValue)}
-                    highlightUp={priceDirection === 'up'}
-                    highlightDown={priceDirection === 'down'}
-                />
+                <FlipText value={formatWon(item.totalValue)} />
             </td>
             <td className={`holdings-page__right ${item.profitAmount >= 0 ? 'holdings-page__up' : 'holdings-page__down'}`}>
-                <FlipText
-                    value={`${item.profitAmount >= 0 ? '+' : ''}${formatWon(item.profitAmount)}`}
-                    highlightUp={priceDirection === 'up'}
-                    highlightDown={priceDirection === 'down'}
-                />
+                <FlipText value={`${item.profitAmount >= 0 ? '+' : ''}${formatWon(item.profitAmount)}`} />
             </td>
             <td className={`holdings-page__right ${item.profitRate >= 0 ? 'holdings-page__up' : 'holdings-page__down'}`}>
-                <FlipText
-                    value={formatRate(item.profitRate)}
-                    highlightUp={priceDirection === 'up'}
-                    highlightDown={priceDirection === 'down'}
-                />
+                <FlipText value={formatRate(item.profitRate)} />
             </td>
             <td className="holdings-page__center">
                 <button

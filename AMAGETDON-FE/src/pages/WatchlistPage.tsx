@@ -26,18 +26,7 @@ const WatchlistRow = memo(({
     onRemove: (e: React.MouseEvent, stockCode: string) => void;
     onNavigate: (stockCode: string) => void;
 }) => {
-    const [prevPrice, setPrevPrice] = useState(item.currentPrice);
-    const [priceDirection, setPriceDirection] = useState<'up' | 'down' | null>(null);
     const isUp = item.changeRate >= 0;
-
-    useEffect(() => {
-        if (item.currentPrice !== prevPrice) {
-            setPriceDirection(item.currentPrice > prevPrice ? 'up' : 'down');
-            setPrevPrice(item.currentPrice);
-            const timer = setTimeout(() => setPriceDirection(null), 500);
-            return () => clearTimeout(timer);
-        }
-    }, [item.currentPrice, prevPrice]);
 
     return (
         <tr
@@ -54,18 +43,10 @@ const WatchlistRow = memo(({
                 </span>
             </td>
             <td className="watchlist-page__right">
-                <FlipText
-                    value={formatPrice(item.currentPrice)}
-                    highlightUp={priceDirection === 'up'}
-                    highlightDown={priceDirection === 'down'}
-                />
+                <FlipText value={formatPrice(item.currentPrice)} />
             </td>
             <td className={`watchlist-page__right ${isUp ? 'watchlist-page__up' : 'watchlist-page__down'}`}>
-                <FlipText
-                    value={`${isUp ? '+' : ''}${item.changeRate.toFixed(2)}%`}
-                    highlightUp={priceDirection === 'up'}
-                    highlightDown={priceDirection === 'down'}
-                />
+                <FlipText value={`${isUp ? '+' : ''}${item.changeRate.toFixed(2)}%`} />
             </td>
             <td className="watchlist-page__center">
                 <button

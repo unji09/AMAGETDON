@@ -27,29 +27,6 @@ const StockRow = memo(({
     onToggleWatchlist: (e: React.MouseEvent, stockCode: string) => void;
     onNavigate: (stockCode: string) => void;
 }) => {
-    const [prevPrice, setPrevPrice] = useState(item.currentPrice);
-    const [priceDirection, setPriceDirection] = useState<'up' | 'down' | null>(null);
-    const [prevRate, setPrevRate] = useState(item.changeRate);
-    const [rateDirection, setRateDirection] = useState<'up' | 'down' | null>(null);
-
-    useEffect(() => {
-        if (item.currentPrice !== prevPrice) {
-            setPriceDirection(Number(item.currentPrice) > Number(prevPrice) ? 'up' : 'down');
-            setPrevPrice(item.currentPrice);
-            const timer = setTimeout(() => setPriceDirection(null), 500);
-            return () => clearTimeout(timer);
-        }
-    }, [item.currentPrice, prevPrice]);
-
-    useEffect(() => {
-        if (item.changeRate !== prevRate) {
-            setRateDirection(item.changeRate > prevRate ? 'up' : 'down');
-            setPrevRate(item.changeRate);
-            const timer = setTimeout(() => setRateDirection(null), 500);
-            return () => clearTimeout(timer);
-        }
-    }, [item.changeRate, prevRate]);
-
     const isUp = item.changeRate >= 0;
 
     return (
@@ -60,19 +37,11 @@ const StockRow = memo(({
             <td className="popular-stocks__td popular-stocks__td--rank">{item.rank}</td>
             <td className="popular-stocks__td popular-stocks__td--name">{item.stockName}</td>
             <td className="popular-stocks__td popular-stocks__td--price">
-                <FlipText
-                    value={formatPrice(item.currentPrice)}
-                    highlightUp={priceDirection === 'up'}
-                    highlightDown={priceDirection === 'down'}
-                />
+                <FlipText value={formatPrice(item.currentPrice)} />
             </td>
             <td className="popular-stocks__td popular-stocks__td--volume">{formatVolume(item.volume)}</td>
             <td className={`popular-stocks__td popular-stocks__td--rate ${isUp ? 'popular-stocks__td--up' : 'popular-stocks__td--down'}`}>
-                <FlipText
-                    value={`${isUp ? '+' : ''}${item.changeRate.toFixed(2)}%`}
-                    highlightUp={rateDirection === 'up'}
-                    highlightDown={rateDirection === 'down'}
-                />
+                <FlipText value={`${isUp ? '+' : ''}${item.changeRate.toFixed(2)}%`} />
             </td>
             <td className="popular-stocks__td popular-stocks__td--fav">
                 <button
