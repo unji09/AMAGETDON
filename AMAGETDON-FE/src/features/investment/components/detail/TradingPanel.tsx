@@ -29,6 +29,9 @@ const SELL_RATIO_BUTTONS = [
     { label: '전량', value: 1 },
 ];
 
+// 수수료율 (0.015%)
+const FEE_RATE = 0.00015;
+
 export const TradingPanel = ({ stockCode, currentPrice, balance, holding, onTradeComplete }: TradingPanelProps) => {
     const [mode, setMode] = useState<TradeMode>('buy');
     const [quantity, setQuantity] = useState<number | ''>('');
@@ -37,6 +40,8 @@ export const TradingPanel = ({ stockCode, currentPrice, balance, holding, onTrad
 
     const qty = typeof quantity === 'number' ? quantity : 0;
     const totalAmount = currentPrice * qty;
+    const feeAmount = Math.floor(totalAmount * FEE_RATE);
+    const totalWithFee = totalAmount + feeAmount; // 매수 시 실제 필요 금액
     const holdingQty = holding?.quantity ?? 0;
 
     const handleModeChange = (newMode: TradeMode) => {
@@ -47,7 +52,8 @@ export const TradingPanel = ({ stockCode, currentPrice, balance, holding, onTrad
 
     const handleBuyRatio = (ratio: number) => {
         if (currentPrice <= 0) return;
-        const maxQty = Math.floor((balance * ratio) / currentPrice);
+        // 수수료 포함하여 최대 수량 계산: balance >= qty * price * (1 + FEE_RATE)
+        const maxQty = Math.floor((balance * ratio) / (currentPrice * (1 + FEE_RATE)));
         setQuantity(maxQty);
     };
 
@@ -63,8 +69,8 @@ export const TradingPanel = ({ stockCode, currentPrice, balance, holding, onTrad
             setMessage({ type: 'error', text: '보유 수량을 초과했습니다.' });
             return;
         }
-        if (mode === 'buy' && totalAmount > balance) {
-            setMessage({ type: 'error', text: '잔액이 부족합니다.' });
+        if (mode === 'buy' && totalWithFee > balance) {
+            setMessage({ type: 'error', text: '잔액이 부족합니다. (수수료 포함)' });
             return;
         }
 
@@ -87,7 +93,7 @@ export const TradingPanel = ({ stockCode, currentPrice, balance, holding, onTrad
         }
     };
 
-    const isBuyDisabled = mode === 'buy' && (qty <= 0 || loading || totalAmount > balance);
+    const isBuyDisabled = mode === 'buy' && (qty <= 0 || loading || totalWithFee > balance);
     const isSellDisabled = mode === 'sell' && (qty <= 0 || loading || qty > holdingQty);
 
     return (
@@ -181,6 +187,18 @@ export const TradingPanel = ({ stockCode, currentPrice, balance, holding, onTrad
                     <span>주문총액</span>
                     <strong>{formatWon(totalAmount)}</strong>
                 </div>
+                {mode === 'buy' && (
+                    <>
+                        <div className="trading-panel__summary-row">
+                            <span>수수료 (0.015%)</span>
+                            <span>{formatWon(feeAmount)}</span>
+                        </div>
+                        <div className="trading-panel__summary-row">
+                            <span>총 결제금액</span>
+                            <strong>{formatWon(totalWithFee)}</strong>
+                        </div>
+                    </>
+                )}
                 {mode === 'buy' ? (
                     <div className="trading-panel__summary-row">
                         <span>주문가능 금액</span>
