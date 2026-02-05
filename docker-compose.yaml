@@ -81,12 +81,16 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - JWT_SECRET=${JWT_SECRET}
+      - OPENVIDU_URL=http://openvidu:4443/
+      - OPENVIDU_SECRET=${OPENVIDU_SECRET}
       - TZ=Asia/Seoul
     depends_on:
       mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
+      openvidu:
+        condition: service_started
     restart: unless-stopped
     networks:
       - amagetdon-network
@@ -117,18 +121,21 @@ services:
       - amagetdon-network
 
   # Stock Collector Service
+  # network_mode: host 사용 - 한투 API 외부 접속 필요
+  # EC2 Linux: localhost로 MySQL/Redis 접근
+  # 로컬 Windows: host.docker.internal 또는 localhost (포트 포워딩됨)
   collector:
     build:
       context: ./AMAGETDON-Collector
       dockerfile: Dockerfile
     container_name: amagetdon-collector
     environment:
-      - DB_HOST=host.docker.internal
+      - DB_HOST=localhost
       - DB_PORT=3306
       - DB_USER=root
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=amagetdon
-      - REDIS_HOST=host.docker.internal
+      - REDIS_HOST=localhost
       - REDIS_PORT=6379
       - STOCK_API_KEY=${STOCK_API_KEY}
       - STOCK_API_SECRET=${STOCK_API_SECRET}
@@ -136,11 +143,6 @@ services:
       - CANDLE_API_SECRET=${CANDLE_API_SECRET}
       - TZ=Asia/Seoul
     network_mode: host
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    depends_on:
-      mysql:
-        condition: service_healthy
     restart: unless-stopped
 
   # Frontend
