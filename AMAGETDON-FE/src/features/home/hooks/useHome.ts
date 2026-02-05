@@ -3,7 +3,7 @@ import {useNavigate} from 'react-router-dom';
 import {getMyInfo} from '@/api/userApi';
 import {getMyAchievements} from '@/api/achievementApi';
 import {getBaseChapters, getProgress} from '@/api/learningApi';
-import {getTodayQuizCount} from '@/api/quizApi';
+import {getTodayQuizCount, fetchReviewNotes} from '@/api/quizApi';
 import type {AchievementItem} from '@/features/achievement/types/achievement';
 
 interface UserInfo {
@@ -39,12 +39,13 @@ export const useHome = () => {
         nextChapter: null,
     });
     const [quizStreak, setQuizStreak] = useState(0);
+    const [reviewNoteCount, setReviewNoteCount] = useState(0);
 
     // 1단계: 필수 데이터 로드
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
         if (!token) {
-            navigate('/login', {replace: true});
+            navigate('/login', {replace: true} as any);
             return;
         }
 
@@ -53,8 +54,9 @@ export const useHome = () => {
             getMyAchievements('ALL'),
             getProgress(),
             getBaseChapters(),
+            fetchReviewNotes(),
         ])
-            .then(([userRes, achievementRes, progressRes, chaptersRes]) => {
+            .then(([userRes, achievementRes, progressRes, chaptersRes, reviewNotesRes]) => {
                 const data = userRes.data;
                 setUserData({
                     nickname: data.nickname,
@@ -86,20 +88,22 @@ export const useHome = () => {
                     percentage,
                     nextChapter,
                 });
+
+                setReviewNoteCount(reviewNotesRes.totalCount);
             })
             .catch(() => {
-                navigate('/login', {replace: true});
+                navigate('/login', {replace: true} as any);
             })
             .finally(() => setLoading(false));
     }, [navigate]);
 
-    // 2단계: 로딩 완료 후 퀴즈 애니메이션
+    // 2단계: 로딩 완료 후 퀴즈 개수 조회 및 애니메이션
     useEffect(() => {
         if (loading) return;
 
         getTodayQuizCount()
             .then((res) => {
-                const target = res.count || 0;
+                const target = res.count;
                 let current = 0;
                 const increment = target / 50;
 
@@ -115,13 +119,8 @@ export const useHome = () => {
 
                 return () => clearInterval(timer);
             })
-            .catch((error) => {
-                // 400 에러 = 더 이상 퀴즈 없음 (100문제 완료)
-                if (error.response?.status === 400) {
-                    setQuizStreak(100);
-                } else {
-                    setQuizStreak(0);
-                }
+            .catch(() => {
+                setQuizStreak(0);
             });
     }, [loading]);
 
@@ -139,17 +138,21 @@ export const useHome = () => {
 
     const navigateToLearning = () => navigate('/learning');
 
+    const navigateToReviewNote = () => navigate('/learning/review-note');
+
     return {
         loading,
         userData,
         achievements,
         progressData,
         quizStreak,
+        reviewNoteCount,
         navigateToQuiz,
         navigateToDailyQuiz,
         navigateToMyInfo,
         navigateToRanking,
         navigateToAchievement,
         navigateToLearning,
+        navigateToReviewNote,
     };
 };

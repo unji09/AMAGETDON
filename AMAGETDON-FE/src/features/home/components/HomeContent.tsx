@@ -10,11 +10,13 @@ export const HomeContent = () => {
         progressData,
         loading,
         quizStreak,
+        reviewNoteCount,
         navigateToMyInfo,
         navigateToRanking,
         navigateToAchievement,
         navigateToDailyQuiz,
         navigateToLearning,
+        navigateToReviewNote,
     } = useHome()
 
     if (loading || !userData) {
@@ -70,9 +72,6 @@ export const HomeContent = () => {
                     <div className="home-stats-balance">
                         {formatBalance(userData.balance)} <span className="home-stats-unit">GM</span>
                     </div>
-                    {/*<div className="home-stats-change negative">*/}
-                    {/*    <span>↓</span> -23.7%*/}
-                    {/*</div>*/}
                 </div>
             </div>
 
@@ -88,7 +87,7 @@ export const HomeContent = () => {
                     </h3>
 
                     <div className="home-streak-stats">
-                        <div className="home-streak-label">오늘 맞춘 문제 수</div>
+                        <div className="home-streak-label">오늘 푼 문제 수</div>
                         <div className="home-streak-number streak-number">{quizStreak}</div>
                     </div>
                 </div>
@@ -139,7 +138,11 @@ export const HomeContent = () => {
                 </div>
 
                 {/* 오답노트 Card */}
-                <div className="home-wrong-answers-card card-hover">
+                <div
+                    className="home-wrong-answers-card card-hover"
+                    onClick={navigateToReviewNote}
+                    style={{ cursor: 'pointer' }}
+                >
                     <div className="home-wrong-header">
                         <div className="home-wrong-title">
                             <svg className="home-wrong-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -152,8 +155,10 @@ export const HomeContent = () => {
                     </div>
 
                     <div className="home-wrong-answers-content">
-                        <div className="home-wrong-count">13문제</div>
-                        <div className="home-wrong-desc">다시 풀어볼 문항이 있습니다</div>
+                        <div className="home-wrong-count">{reviewNoteCount}문제</div>
+                        <div className="home-wrong-desc">
+                            {reviewNoteCount > 0 ? '다시 풀어볼 문항이 있습니다' : '모든 문제를 맞혔어요!'}
+                        </div>
                     </div>
                 </div>
             </div>
