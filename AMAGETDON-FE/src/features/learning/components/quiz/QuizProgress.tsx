@@ -1,8 +1,9 @@
-import './QuizProgress.css';
+import "./QuizProgress.css";
 
 interface QuizProgressProps {
-    current: number;
-    total: number;
+  current: number;
+  total: number;
+  label?: string;
 }
 
 /**
@@ -11,33 +12,37 @@ interface QuizProgressProps {
  * - 프로그레스 바
  * - 100문제 초과 시 "100+ / 100" 형식으로 표시
  */
-export const QuizProgress = ({ current, total }: QuizProgressProps) => {
-    // 100문제 기준으로 진행률 계산 (100 초과 시 100%)
-    const displayCurrent = Math.min(current, total);
-    const percentage = total > 0 ? (displayCurrent / total) * 100 : 0;
+export const QuizProgress = ({
+  current,
+  total,
+  label = "진행 상황",
+}: QuizProgressProps) => {
+  // 100문제 기준으로 진행률 계산 (100 초과 시 100%)
+  const displayCurrent = Math.min(current, total);
+  const percentage = total > 0 ? (displayCurrent / total) * 100 : 0;
 
-    // 100문제 초과 여부
-    const isOver100 = current > total;
+  // 100문제 초과 여부
+  const isOver100 = current > total;
 
-    return (
-        <div className="quiz-progress">
-            <div className="quiz-progress__header">
-                <h2 className="quiz-progress__title">오늘 맞춘 문제</h2>
-                <span className="quiz-progress__count">
-                    <strong>{isOver100 ? `${total}+` : current}</strong> / {total}
-                </span>
-            </div>
-            <div className="quiz-progress__bar">
-                <div
-                    className="quiz-progress__fill"
-                    style={{ width: `${percentage}%` }}
-                />
-            </div>
-            {isOver100 && (
-                <p className="quiz-progress__bonus-text">
-                    🎉 100문제 달성! 보상 없이 계속 도전 중... ({current}문제)
-                </p>
-            )}
-        </div>
-    );
+  return (
+    <div className="quiz-progress">
+      <div className="quiz-progress__header">
+        <h2 className="quiz-progress__title">{label}</h2>
+        <span className="quiz-progress__count">
+          <strong>{isOver100 ? `${total}+` : current}</strong> / {total}
+        </span>
+      </div>
+      <div className="quiz-progress__bar">
+        <div
+          className="quiz-progress__fill"
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+      {isOver100 && (
+        <p className="quiz-progress__bonus-text">
+          🎉 100문제 달성! 보상 없이 계속 도전 중... ({current}문제)
+        </p>
+      )}
+    </div>
+  );
 };
