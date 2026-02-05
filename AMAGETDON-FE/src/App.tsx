@@ -22,6 +22,7 @@ import { StockDetailPage } from '@/pages/StockDetailPage';
 import { TransactionPage } from '@/pages/TransactionPage';
 import { HoldingsPage } from '@/pages/HoldingsPage';
 import { WatchlistPage } from '@/pages/WatchlistPage';
+import { ReviewNotePage } from '@/pages/ReviewNotePage';
 // import { LandingPage } from '@/pages/LandingPage';
 
 function App() {
@@ -31,10 +32,11 @@ function App() {
                 <Routes>
                     {/* <Route path="/" element={<LandingPage />} /> */}
                     <Route path="/" element={<HomePage />} />
-                    <Route path="/learning" element={<LearningPage />} />
+                    <Route path="/learning/review-note" element={<ReviewNotePage />} />
                     <Route path="/learning/quiz" element={<DailyQuizPage />} />
                     <Route path="/learning/:chapterId/quiz" element={<ChapterQuizPage />} />
                     <Route path="/learning/:chapterId" element={<ChapterDetailPage />} />
+                    <Route path="/learning" element={<LearningPage />} />
                     <Route path="/achievement" element={<AchievementPage />} />
                     <Route path="/investment" element={<InvestmentPage />} />
                     <Route path="/investment/transactions" element={<TransactionPage />} />

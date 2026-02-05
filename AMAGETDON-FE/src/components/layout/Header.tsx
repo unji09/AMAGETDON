@@ -47,7 +47,7 @@ export const Header = () => {
         fetchUserInfo();
     }, [fetchUserInfo]);
 
-    // 네비게이션 아이템 (순서: 홈, 학습, 오늘의 퀴즈, 투자, 업적, 커뮤니티)
+    // 네비게이션 아이템 (순서: 홈, 학습, 오답노트, 투자, 업적, 커뮤니티)
     const navItems = [
         {
             path: '/',
@@ -70,13 +70,14 @@ export const Header = () => {
             ),
         },
         {
-            path: '/learning/quiz',
-            label: '오늘의 퀴즈',
+            path: '/learning/review-note',
+            label: '오답노트',
             icon: (
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                    <line x1="9" y1="13" x2="15" y2="13"/>
+                    <line x1="9" y1="17" x2="15" y2="17"/>
                 </svg>
             ),
         },
@@ -114,9 +115,35 @@ export const Header = () => {
         },
     ];
 
+    /**
+     * 개선된 isActive 로직
+     * - 더 구체적인 경로를 먼저 체크
+     * - /learning/review-note가 /learning보다 우선
+     */
     const isActive = (path: string) => {
-        if (path === '/') return location.pathname === '/';
-        return location.pathname.startsWith(path);
+        const currentPath = location.pathname;
+
+        // 홈은 정확히 일치해야 함
+        if (path === '/') {
+            return currentPath === '/';
+        }
+
+        // /learning/review-note 같은 구체적인 경로는 정확히 일치해야 함
+        if (path.startsWith('/learning/') && path !== '/learning') {
+            return currentPath === path || currentPath.startsWith(path + '/');
+        }
+
+        // /learning은 정확히 /learning이거나
+        // /learning/챕터ID 형태만 허용 (단, review-note, quiz는 제외)
+        if (path === '/learning') {
+            if (currentPath === '/learning') return true;
+            if (currentPath.startsWith('/learning/review-note')) return false;
+            if (currentPath.startsWith('/learning/quiz')) return false;
+            return currentPath.startsWith('/learning/');
+        }
+
+        // 나머지 경로는 startsWith로 체크
+        return currentPath.startsWith(path);
     };
 
     const handleProfileClick = () => {

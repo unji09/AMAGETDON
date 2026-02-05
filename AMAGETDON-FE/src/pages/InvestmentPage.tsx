@@ -88,7 +88,6 @@ export const InvestmentPage = () => {
                             <LearnSpotlight id="recent-transactions">
                                 <RecentTransactions
                                     transactions={transactions?.items ?? []}
-                                    totalElements={transactions?.totalElements ?? 0}
                                 />
                             </LearnSpotlight>
                         </div>
@@ -99,7 +98,6 @@ export const InvestmentPage = () => {
                             <LearnSpotlight id="my-holdings">
                                 <MyHoldings
                                     holdings={holdings?.items ?? []}
-                                    totalElements={holdings?.totalElements ?? 0}
                                     watchlistCodes={watchlistCodes}
                                     onWatchlistChange={fetchWatchlist}
                                 />
@@ -107,7 +105,6 @@ export const InvestmentPage = () => {
                             <LearnSpotlight id="watchlist">
                                 <WatchlistSection
                                     stocks={watchlist?.items?.slice(0, 4) ?? []}
-                                    totalElements={watchlist?.totalElements ?? 0}
                                     onWatchlistChange={fetchWatchlist}
                                 />
                             </LearnSpotlight>

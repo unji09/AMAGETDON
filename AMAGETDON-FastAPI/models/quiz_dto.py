@@ -15,6 +15,7 @@ class Difficulty(str, Enum):
 class QuizGenerateRequest(BaseModel):
     """
     Spring Boot에서 퀴즈 생성 요청
+    """
     difficulty: str = Field(default="RANDOM")
     quiz_type: str = Field(default="RANDOM")
 
