@@ -10,3 +10,6 @@ export * from './Modal';
 export * from './Loading';
 export * from './Toast';
 export * from './Dropdown';
+export * from './PrivateRoute';
+export * from './PublicRoute';
+export * from './AuthRoute';
