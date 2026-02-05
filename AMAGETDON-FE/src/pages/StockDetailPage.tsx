@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Layout } from '@/components/layout';
 import { ContainerContent } from '@/components/layout';
@@ -8,38 +8,81 @@ import { CandleChart } from '@/features/investment/components/detail/CandleChart
 import { TradingPanel } from '@/features/investment/components/detail/TradingPanel';
 import { LearnModeProvider } from '@/features/investment/contexts/LearnModeContext';
 import { LearnModeToggle, LearnSpotlight, LearnOverlay } from '@/features/investment/components/common/LearnMode';
-import { getStockDetail, getStockChart, getAssets, getAllWatchlist, getSingleHolding } from '@/api/investmentApi';
-import type { StockDetailData, CandleChartResponse, AssetData, WatchlistResponse, ChartPeriod, SingleHoldingData } from '@/features/investment/types/investment';
+import { usePolling } from '@/hooks/usePolling';
+import { useMarketStatus } from '@/hooks/useMarketStatus';
+import { getStockDetail, getStockChart, getAssets, checkWatchlist, getSingleHolding } from '@/api/investmentApi';
+import type { StockDetailData, CandleChartResponse, AssetData, ChartPeriod, SingleHoldingData } from '@/features/investment/types/investment';
 import './StockDetailPage.css';
+
+// 폴링 간격 상수
+const DETAIL_POLL_INTERVAL = 7000;      // 현재가: 7초
+const CHART_1D_POLL_INTERVAL = 360000;  // 1일 차트: 6분
 
 export const StockDetailPage = () => {
     const { stockCode } = useParams<{ stockCode: string }>();
+    const { isOpen, statusText } = useMarketStatus();
     const [detail, setDetail] = useState<StockDetailData | null>(null);
     const [chart, setChart] = useState<CandleChartResponse | null>(null);
     const [assets, setAssets] = useState<AssetData | null>(null);
-    const [watchlist, setWatchlist] = useState<WatchlistResponse | null>(null);
+    const [isFavorite, setIsFavorite] = useState(false);
     const [holding, setHolding] = useState<SingleHoldingData | null>(null);
     const [period, setPeriod] = useState<ChartPeriod>('1D');
     const [loading, setLoading] = useState(true);
 
-    const fetchAll = useCallback(async () => {
+    // 초기 로딩 (stockCode 변경 시에만)
+    const fetchInitial = useCallback(async () => {
         if (!stockCode) return;
+        setLoading(true);
         const [detailRes, chartRes, assetsRes, watchlistRes, holdingRes] = await Promise.allSettled([
             getStockDetail(stockCode),
-            getStockChart(stockCode, period),
+            getStockChart(stockCode, '1D'), // 초기에는 1D 차트
             getAssets(),
-            getAllWatchlist(),
+            checkWatchlist(stockCode),
             getSingleHolding(stockCode),
         ]);
         if (detailRes.status === 'fulfilled') setDetail(detailRes.value);
         if (chartRes.status === 'fulfilled') setChart(chartRes.value);
         if (assetsRes.status === 'fulfilled') setAssets(assetsRes.value);
-        if (watchlistRes.status === 'fulfilled') setWatchlist(watchlistRes.value);
+        if (watchlistRes.status === 'fulfilled') setIsFavorite(watchlistRes.value !== null);
         if (holdingRes.status === 'fulfilled') setHolding(holdingRes.value);
         setLoading(false);
+    }, [stockCode]);
+
+    useEffect(() => { fetchInitial(); }, [fetchInitial]);
+
+    // 현재가/자산 정보 폴링 (7초)
+    const fetchDetailSilent = useCallback(async () => {
+        if (!stockCode) return;
+        try {
+            const [detailRes, assetsRes, holdingRes] = await Promise.allSettled([
+                getStockDetail(stockCode),
+                getAssets(),
+                getSingleHolding(stockCode),
+            ]);
+            if (detailRes.status === 'fulfilled') setDetail(detailRes.value);
+            if (assetsRes.status === 'fulfilled') setAssets(assetsRes.value);
+            if (holdingRes.status === 'fulfilled') setHolding(holdingRes.value);
+        } catch { /* */ }
+    }, [stockCode]);
+
+    // 1일 차트 폴링 (6분) - 1D period일 때만
+    const fetch1DChartSilent = useCallback(async () => {
+        if (!stockCode || period !== '1D') return;
+        try {
+            const chartRes = await getStockChart(stockCode, '1D');
+            setChart(chartRes);
+        } catch { /* */ }
     }, [stockCode, period]);
 
-    useEffect(() => { fetchAll(); }, [fetchAll]);
+    usePolling(fetchDetailSilent, {
+        interval: DETAIL_POLL_INTERVAL,
+        enabled: !loading && isOpen,
+    });
+
+    usePolling(fetch1DChartSilent, {
+        interval: CHART_1D_POLL_INTERVAL,
+        enabled: !loading && isOpen && period === '1D',
+    });
 
     const handlePeriodChange = async (newPeriod: ChartPeriod) => {
         setPeriod(newPeriod);
@@ -50,11 +93,8 @@ export const StockDetailPage = () => {
         } catch { /* */ }
     };
 
-    const fetchWatchlist = useCallback(async () => {
-        try {
-            const res = await getAllWatchlist();
-            setWatchlist(res);
-        } catch { /* */ }
+    const toggleFavorite = useCallback(() => {
+        setIsFavorite((prev) => !prev);
     }, []);
 
     const refreshAfterTrade = useCallback(async () => {
@@ -71,11 +111,6 @@ export const StockDetailPage = () => {
         } catch { /* */ }
     }, [stockCode]);
 
-    const isFavorite = useMemo(() => {
-        if (!watchlist?.items || !stockCode) return false;
-        return watchlist.items.some((s) => s.stockCode === stockCode);
-    }, [watchlist, stockCode]);
-
     if (loading || !detail || !stockCode) {
         return <Layout><Loading fullScreen /></Layout>;
     }
@@ -85,17 +120,21 @@ export const StockDetailPage = () => {
             <Layout>
                 <ContainerContent>
                     <div className="stock-detail__header">
+                        <LearnSpotlight id="market-status">
+                            <div className={`stock-detail__market-status ${isOpen ? 'stock-detail__market-status--open' : 'stock-detail__market-status--closed'}`}>
+                                <span className="stock-detail__market-dot"></span>
+                                {statusText}
+                            </div>
+                        </LearnSpotlight>
                         <LearnModeToggle />
                     </div>
                     <LearnOverlay />
-                    <LearnSpotlight id="stock-header">
-                        <StockHeader
-                            stockCode={stockCode}
-                            detail={detail}
-                            isFavorite={isFavorite}
-                            onWatchlistChange={fetchWatchlist}
-                        />
-                    </LearnSpotlight>
+                    <StockHeader
+                        stockCode={stockCode}
+                        detail={detail}
+                        isFavorite={isFavorite}
+                        onWatchlistChange={toggleFavorite}
+                    />
                     <div className="stock-detail__grid">
                         <div className="stock-detail__left">
                             <LearnSpotlight id="candle-chart">
