@@ -22,7 +22,7 @@ public class ProfitRanking {
     @Column(nullable = false)
     private Long userId;
 
-    @Column(nullable = false)
+    @Column(name = "ranking", nullable = false)
     private Integer rank;
 
     @Column(nullable = false, precision = 15, scale = 2)

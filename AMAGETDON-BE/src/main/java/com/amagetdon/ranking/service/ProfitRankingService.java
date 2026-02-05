@@ -80,19 +80,27 @@ public class ProfitRankingService {
     private List<ProfitRanking> createRankingsFromProfitMap(Map<Long, BigDecimal> userProfitMap) {
         List<ProfitRanking> rankings = new ArrayList<>();
 
-        // 수익 순으로 정렬(내림차순)
         List<Map.Entry<Long, BigDecimal>> sortedEntries = userProfitMap.entrySet().stream()
                 .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
                 .toList();
 
-        // 순위 매기기
         int rank = 1;
+        int sameCount = 0;
+        BigDecimal prevProfit = null;
         LocalDateTime now = LocalDateTime.now();
 
-        for(Map.Entry<Long, BigDecimal> entry : sortedEntries) {
+        for (Map.Entry<Long, BigDecimal> entry : sortedEntries) {
+            if (prevProfit != null && entry.getValue().compareTo(prevProfit) == 0) {
+                sameCount++;
+            } else {
+                rank += sameCount;
+                sameCount = 1;
+                prevProfit = entry.getValue();
+            }
+
             ProfitRanking ranking = ProfitRanking.builder()
                     .userId(entry.getKey())
-                    .rank(rank++)
+                    .rank(rank)
                     .totalProfit(entry.getValue())
                     .updatedAt(now)
                     .build();
