@@ -107,34 +107,66 @@ export const LandingPage = () => {
                         처음 투자를 배우는 분들을 위해 설계된 완벽한 학습 환경
                     </p>
                 </div>
-                <div className="landing__features-grid">
-                    <div className="landing__feature-card">
-                        <div className="landing__feature-icon landing__feature-icon--green">
-                            <BookOpen size={24} />
+                <div className="landing__features-marquee">
+                    <div className="landing__features-track">
+                        {/* 첫 번째 세트 */}
+                        <div className="landing__feature-card">
+                            <div className="landing__feature-icon landing__feature-icon--green">
+                                <BookOpen size={24} />
+                            </div>
+                            <h3>체계적인 학습 커리큘럼</h3>
+                            <p>기초부터 심화까지, 단계별로 설계된 학습 챕터와 퀴즈로 투자의 모든 것을 배워보세요.</p>
                         </div>
-                        <h3>체계적인 학습 커리큘럼</h3>
-                        <p>기초부터 심화까지, 단계별로 설계된 학습 챕터와 퀴즈로 투자의 모든 것을 배워보세요.</p>
-                    </div>
-                    <div className="landing__feature-card">
-                        <div className="landing__feature-icon landing__feature-icon--blue">
-                            <TrendingUp size={24} />
+                        <div className="landing__feature-card">
+                            <div className="landing__feature-icon landing__feature-icon--blue">
+                                <TrendingUp size={24} />
+                            </div>
+                            <h3>실전 모의 투자</h3>
+                            <p>실제 시장 데이터를 기반으로 가상 자금으로 매매 연습. 리스크 없이 실력을 쌓으세요.</p>
                         </div>
-                        <h3>실전 모의 투자</h3>
-                        <p>실제 시장 데이터를 기반으로 가상 자금으로 매매 연습. 리스크 없이 실력을 쌓으세요.</p>
-                    </div>
-                    <div className="landing__feature-card">
-                        <div className="landing__feature-icon landing__feature-icon--purple">
-                            <Users size={24} />
+                        <div className="landing__feature-card">
+                            <div className="landing__feature-icon landing__feature-icon--purple">
+                                <Users size={24} />
+                            </div>
+                            <h3>커뮤니티 & 스터디</h3>
+                            <p>같은 목표를 가진 동료들과 함께 성장하세요. 채팅으로 소통해요.</p>
                         </div>
-                        <h3>커뮤니티 & 스터디</h3>
-                        <p>같은 목표를 가진 동료들과 함께 성장하세요. 채팅으로 소통해요.</p>
-                    </div>
-                    <div className="landing__feature-card">
-                        <div className="landing__feature-icon landing__feature-icon--orange">
-                            <Shield size={24} />
+                        <div className="landing__feature-card">
+                            <div className="landing__feature-icon landing__feature-icon--orange">
+                                <Shield size={24} />
+                            </div>
+                            <h3>안전한 학습 환경</h3>
+                            <p>실제 돈 한 푼 없이 투자를 경험하세요. 실수해도 괜찮아요, 여기선 배움이 되니까요.</p>
                         </div>
-                        <h3>안전한 학습 환경</h3>
-                        <p>실제 돈 한 푼 없이 투자를 경험하세요. 실수해도 괜찮아요, 여기선 배움이 되니까요.</p>
+                        {/* 복제 세트 (무한 스크롤용) */}
+                        <div className="landing__feature-card">
+                            <div className="landing__feature-icon landing__feature-icon--green">
+                                <BookOpen size={24} />
+                            </div>
+                            <h3>체계적인 학습 커리큘럼</h3>
+                            <p>기초부터 심화까지, 단계별로 설계된 학습 챕터와 퀴즈로 투자의 모든 것을 배워보세요.</p>
+                        </div>
+                        <div className="landing__feature-card">
+                            <div className="landing__feature-icon landing__feature-icon--blue">
+                                <TrendingUp size={24} />
+                            </div>
+                            <h3>실전 모의 투자</h3>
+                            <p>실제 시장 데이터를 기반으로 가상 자금으로 매매 연습. 리스크 없이 실력을 쌓으세요.</p>
+                        </div>
+                        <div className="landing__feature-card">
+                            <div className="landing__feature-icon landing__feature-icon--purple">
+                                <Users size={24} />
+                            </div>
+                            <h3>커뮤니티 & 스터디</h3>
+                            <p>같은 목표를 가진 동료들과 함께 성장하세요. 채팅으로 소통해요.</p>
+                        </div>
+                        <div className="landing__feature-card">
+                            <div className="landing__feature-icon landing__feature-icon--orange">
+                                <Shield size={24} />
+                            </div>
+                            <h3>안전한 학습 환경</h3>
+                            <p>실제 돈 한 푼 없이 투자를 경험하세요. 실수해도 괜찮아요, 여기선 배움이 되니까요.</p>
+                        </div>
                     </div>
                 </div>
             </section>

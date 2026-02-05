@@ -443,19 +443,42 @@
     margin: 0 auto;
 }
 
-.landing__features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+/* Features Marquee Container */
+.landing__features-marquee {
+    overflow: hidden;
+    width: 100%;
+    mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+}
+
+.landing__features-track {
+    display: flex;
     gap: 24px;
-    max-width: 1200px;
-    margin: 0 auto;
+    width: max-content;
+    animation: marquee 30s linear infinite;
+}
+
+.landing__features-track:hover {
+    animation-play-state: paused;
+}
+
+@keyframes marquee {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
 }
 
 .landing__feature-card {
+    flex: 0 0 300px;
+    max-width: 300px;
     background: #ffffff;
     border: 1px solid rgba(0,0,0,0.06);
     border-radius: 20px;
     padding: 32px;
+    margin-block: 20px;
     transition: all 0.3s;
     box-shadow: 0 4px 20px rgba(0,0,0,0.04);
 }
@@ -659,7 +682,7 @@
         font-size: 1rem;
     }
 
-    /* Features 섹션 - 가로 스크롤 */
+    /* Features 섹션 */
     .landing__features {
         padding: 60px 0;
         min-height: auto;
@@ -669,23 +692,14 @@
         padding: 0 5%;
     }
 
-    .landing__features-grid {
-        display: flex;
-        overflow-x: auto;
-        scroll-snap-type: x mandatory;
+    .landing__features-track {
         gap: 16px;
-        padding: 0 5% 20px;
-        margin: 0;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .landing__features-grid::-webkit-scrollbar {
-        display: none;
+        animation-duration: 20s;
     }
 
     .landing__feature-card {
         flex: 0 0 280px;
-        scroll-snap-align: center;
+        max-width: 280px;
     }
 
     /* How it works 섹션 */
@@ -774,6 +788,11 @@
         padding: 40px 0;
     }
 
+    .landing__features-track {
+        gap: 12px;
+        animation-duration: 15s;
+    }
+
     .landing__section-header {
         margin-bottom: 32px;
     }
@@ -792,8 +811,9 @@
     }
 
     .landing__feature-card {
-        flex: 0 0 260px;
-        padding: 24px;
+        flex: 0 0 250px;
+        max-width: 250px;
+        padding: 20px;
     }
 
     .landing__feature-card h3 {
