@@ -1,5 +1,6 @@
-import { Loading } from '@/components/common'
+import {Loading} from '@/components/common'
 
+import type {AchievementItem} from '@/features/achievement/types/achievement'
 import './HomeContent.css'
 import {useHome} from "@/features/home";
 
@@ -32,6 +33,8 @@ export const HomeContent = () => {
     const formatBalance = (balance: number) => {
         return balance.toLocaleString()
     }
+
+    const isReviewNoteEmpty = reviewNoteCount === 0;
 
     return (
         <div className="home-container">
@@ -139,7 +142,7 @@ export const HomeContent = () => {
 
                 {/* 오답노트 Card */}
                 <div
-                    className="home-wrong-answers-card card-hover"
+                    className={`home-wrong-answers-card card-hover ${isReviewNoteEmpty ? 'empty' : ''}`}
                     onClick={navigateToReviewNote}
                     style={{ cursor: 'pointer' }}
                 >
@@ -147,7 +150,12 @@ export const HomeContent = () => {
                         <div className="home-wrong-title">
                             <svg className="home-wrong-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M4 6H20M4 12H20M4 18H12" stroke="#333" strokeWidth="2" strokeLinecap="round"/>
-                                <path d="M16 16L20 20M20 16L16 20" stroke="#e53e3e" strokeWidth="2" strokeLinecap="round"/>
+                                <path
+                                    d="M16 16L20 20M20 16L16 20"
+                                    stroke={isReviewNoteEmpty ? "#4CAF50" : "#e53e3e"}
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                />
                             </svg>
                             <h4>오답노트</h4>
                         </div>
@@ -155,9 +163,14 @@ export const HomeContent = () => {
                     </div>
 
                     <div className="home-wrong-answers-content">
-                        <div className="home-wrong-count">{reviewNoteCount}문제</div>
+                        <div
+                            className="home-wrong-count"
+                            style={isReviewNoteEmpty ? { color: '#4CAF50' } : {}}
+                        >
+                            {reviewNoteCount}문제
+                        </div>
                         <div className="home-wrong-desc">
-                            {reviewNoteCount > 0 ? '다시 풀어볼 문항이 있습니다' : '모든 문제를 맞혔어요!'}
+                            {isReviewNoteEmpty ? '모든 문제를 맞혔어요! 🎉' : '다시 풀어볼 문항이 있습니다'}
                         </div>
                     </div>
                 </div>
@@ -179,13 +192,13 @@ export const HomeContent = () => {
                 </div>
 
                 <div className="home-achievements-grid">
-                    {achievements.slice(0, 7).map((achievement) => (
+                    {achievements.slice(0, 7).map((achievement: AchievementItem) => (
                         <div
                             key={achievement.achievementId}
                             className={`home-achievement-item achievement-badge ${!achievement.isAchieved ? 'locked' : 'tooltip'}`}
                             {...(achievement.isAchieved && { 'data-tooltip': achievement.achievementName })}
                         >
-                            {achievement.isAchieved && achievement.achievementIcon ? (
+                             {achievement.isAchieved && achievement.achievementIcon ? (
                                 <img
                                     src={achievement.achievementIcon}
                                     alt={achievement.achievementName}
