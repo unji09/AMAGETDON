@@ -226,23 +226,23 @@ export const DailyQuizPage = () => {
     );
   }
 
-  return (
-    <Layout>
-      <div className="daily-quiz-page">
-        {showCelebration ? (
-          <QuizCelebration
-            onClose={handleCloseCelebration}
-            onContinue={handleContinueFromCelebration}
-          />
-        ) : (
-          <>
-            <div className="daily-quiz-page__progress-wrapper">
-              <QuizProgress
-                current={quiz.quizSequence - 1}
-                total={100}
-                label="맞춘 문제"
-              />
-            </div>
+    return (
+        <Layout>
+            <div className="daily-quiz-page">
+                {showCelebration ? (
+                    <QuizCelebration
+                        onClose={handleCloseCelebration}
+                        onContinue={handleContinueFromCelebration}
+                    />
+                ) : (
+                    <>
+                        <div className="daily-quiz-page__progress-wrapper">
+                            <QuizProgress
+                                current={quiz.quizSequence - 1}
+                                total={100}
+                                label="맞춘 문제"
+                            />
+                        </div>
 
             <div className="daily-quiz-page__content">
               <QuizCard
