@@ -25,7 +25,7 @@ export const AnimatedNumber = memo(({
     const [prevValue, setPrevValue] = useState(value);
     const [isAnimating, setIsAnimating] = useState(false);
     const [direction, setDirection] = useState<'up' | 'down' | null>(null);
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         if (value !== prevValue) {
