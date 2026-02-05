@@ -1,0 +1,75 @@
+/* 오답노트 헤더 */
+.review-note-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-8);
+    padding: var(--spacing-6) 0;
+    animation: headerFadeIn 0.6s ease-out;
+}
+
+@keyframes headerFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.review-note-header__title-area {
+    flex: 1;
+}
+
+.review-note-header__title {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+    margin-bottom: var(--spacing-2);
+}
+
+.review-note-header__subtitle {
+    font-size: var(--font-size-base);
+    color: #666;
+}
+
+.review-note-header__count-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-1);
+    background: var(--color-white);
+    border: 2px solid var(--color-quiz-yellow);
+    border-radius: 12px;
+    padding: var(--spacing-4) var(--spacing-6);
+    min-width: 120px;
+}
+
+.review-note-header__count-label {
+    font-size: var(--font-size-sm);
+    color: #666;
+}
+
+.review-note-header__count-value {
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-quiz-yellow);
+}
+
+@media (max-width: 768px) {
+    .review-note-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-4);
+    }
+
+    .review-note-header__title {
+        font-size: var(--font-size-2xl);
+    }
+
+    .review-note-header__count-card {
+        width: 100%;
+    }
+}

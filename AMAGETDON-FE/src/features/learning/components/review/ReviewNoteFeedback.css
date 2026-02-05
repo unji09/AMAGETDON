@@ -1,0 +1,124 @@
+/**
+ * ReviewNoteFeedback 컴포넌트 스타일
+ * 오답노트 전용 간단한 정답/오답 피드백
+ */
+
+.review-feedback {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--spacing-8) var(--spacing-6);
+}
+
+/* 아이콘 래퍼 */
+.review-feedback__icon-wrap {
+    margin-bottom: var(--spacing-4);
+    animation: feedback-icon-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes feedback-icon-pop {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.review-feedback__icon {
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.15));
+}
+
+.review-feedback__icon--correct {
+    color: #8FAE5D;
+}
+
+.review-feedback__icon--wrong {
+    color: #C94A3A;
+}
+
+/* 메시지 */
+.review-feedback__message {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-6);
+    animation: feedback-message-appear 0.3s ease-out 0.2s both;
+}
+
+@keyframes feedback-message-appear {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.review-feedback__message--correct {
+    color: #8FAE5D;
+}
+
+.review-feedback__message--wrong {
+    color: #C94A3A;
+}
+
+/* 보상 안내 (정답 시) */
+.review-feedback__reward {
+    font-size: var(--font-size-sm);
+    color: #96773D;
+    background: #FBF7BE;
+    padding: var(--spacing-2) var(--spacing-4);
+    border-radius: 6px;
+    margin-bottom: var(--spacing-6);
+    animation: feedback-reward-appear 0.3s ease-out 0.3s both;
+}
+
+@keyframes feedback-reward-appear {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* 버튼 */
+.review-feedback__button {
+    width: 100%;
+    animation: feedback-button-appear 0.3s ease-out 0.4s both;
+}
+
+@keyframes feedback-button-appear {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .review-feedback {
+        padding: var(--spacing-6) var(--spacing-4);
+    }
+
+    .review-feedback__icon {
+        width: 56px;
+        height: 56px;
+    }
+
+    .review-feedback__message {
+        font-size: var(--font-size-xl);
+        margin-bottom: var(--spacing-5);
+    }
+}
