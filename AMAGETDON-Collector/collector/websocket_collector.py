@@ -155,8 +155,8 @@ class WebSocketCollector:
             current_price = safe_int(fields[2])
             change_amount = safe_int(fields[4])
             change_rate = safe_float(fields[5])
-            volume = safe_int(fields[12])
-            trading_value = safe_int(fields[13])
+            volume = safe_int(fields[13])  # ACML_VOL (누적 거래량)
+            trading_value = safe_int(fields[14])  # ACML_TR_PBMN (누적 거래대금)
 
             if current_price is None:
                 return

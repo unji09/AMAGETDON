@@ -97,8 +97,8 @@ services:
       context: ./AMAGETDON-FastAPI
       dockerfile: Dockerfile
     container_name: amagetdon-fastapi
-    expose:
-      - "8000"
+    ports:
+      - "8000:8000"
     environment:
       - MYSQL_HOST=mysql
       - MYSQL_PORT=3306
@@ -123,18 +123,25 @@ services:
       dockerfile: Dockerfile
     container_name: amagetdon-collector
     environment:
-      - DB_HOST=mysql
+      - DB_HOST=host.docker.internal
       - DB_PORT=3306
       - DB_USER=root
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=amagetdon
+      - REDIS_HOST=host.docker.internal
+      - REDIS_PORT=6379
+      - STOCK_API_KEY=${STOCK_API_KEY}
+      - STOCK_API_SECRET=${STOCK_API_SECRET}
+      - CANDLE_API_KEY=${CANDLE_API_KEY}
+      - CANDLE_API_SECRET=${CANDLE_API_SECRET}
       - TZ=Asia/Seoul
+    network_mode: host
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       mysql:
         condition: service_healthy
     restart: unless-stopped
-    networks:
-      - amagetdon-network
 
   # Frontend
   frontend:
