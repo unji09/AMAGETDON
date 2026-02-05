@@ -4,6 +4,8 @@ import type {
     AssetData,
     StockHoldingResponse,
     WatchlistResponse,
+    WatchlistCheckResponse,
+    WatchlistItem,
     StockSearchItem,
     StockDetailData,
     CandleChartResponse,
@@ -38,16 +40,24 @@ export const searchStocks = async (keyword: string): Promise<StockSearchItem[]> 
     return res.data;
 };
 
-export const addToWatchlist = async (stockCode: string): Promise<void> => {
-    await apiClient.post('/watchlist', { stockCode });
+export const checkWatchlist = async (stockCode: string): Promise<WatchlistCheckResponse | null> => {
+    try {
+        const res = await apiClient.get<WatchlistCheckResponse>(`/watchlist/${stockCode}`);
+        return res.data;
+    } catch {
+        return null; // 관심종목에 없으면 404 → null 반환
+    }
+};
+
+export const addToWatchlist = async (stockCode: string): Promise<WatchlistItem> => {
+    const res = await apiClient.post<WatchlistItem>('/watchlist', { stockCode });
+    return res.data;
 };
 
 export const removeFromWatchlist = async (stockCode: string): Promise<void> => {
-    // 먼저 전체 관심 종목에서 해당 stockCode의 watchlistId를 찾아 삭제
-    const res = await apiClient.get<WatchlistResponse>('/watchlist', { params: { page: 0, size: 100 } });
-    const item = res.data.items?.find((s) => s.stockCode === stockCode);
-    if (item) {
-        await apiClient.delete(`/watchlist/${item.watchlistId}`);
+    const check = await checkWatchlist(stockCode);
+    if (check) {
+        await apiClient.delete(`/watchlist/${check.watchlistId}`);
     }
 };
 

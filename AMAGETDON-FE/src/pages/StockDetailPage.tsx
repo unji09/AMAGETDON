@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Layout } from '@/components/layout';
 import { ContainerContent } from '@/components/layout';
@@ -10,8 +10,8 @@ import { LearnModeProvider } from '@/features/investment/contexts/LearnModeConte
 import { LearnModeToggle, LearnSpotlight, LearnOverlay } from '@/features/investment/components/common/LearnMode';
 import { usePolling } from '@/hooks/usePolling';
 import { useMarketStatus } from '@/hooks/useMarketStatus';
-import { getStockDetail, getStockChart, getAssets, getAllWatchlist, getSingleHolding } from '@/api/investmentApi';
-import type { StockDetailData, CandleChartResponse, AssetData, WatchlistResponse, ChartPeriod, SingleHoldingData } from '@/features/investment/types/investment';
+import { getStockDetail, getStockChart, getAssets, checkWatchlist, getSingleHolding } from '@/api/investmentApi';
+import type { StockDetailData, CandleChartResponse, AssetData, ChartPeriod, SingleHoldingData } from '@/features/investment/types/investment';
 import './StockDetailPage.css';
 
 // 폴링 간격 상수
@@ -24,7 +24,7 @@ export const StockDetailPage = () => {
     const [detail, setDetail] = useState<StockDetailData | null>(null);
     const [chart, setChart] = useState<CandleChartResponse | null>(null);
     const [assets, setAssets] = useState<AssetData | null>(null);
-    const [watchlist, setWatchlist] = useState<WatchlistResponse | null>(null);
+    const [isFavorite, setIsFavorite] = useState(false);
     const [holding, setHolding] = useState<SingleHoldingData | null>(null);
     const [period, setPeriod] = useState<ChartPeriod>('1D');
     const [loading, setLoading] = useState(true);
@@ -37,13 +37,13 @@ export const StockDetailPage = () => {
             getStockDetail(stockCode),
             getStockChart(stockCode, '1D'), // 초기에는 1D 차트
             getAssets(),
-            getAllWatchlist(),
+            checkWatchlist(stockCode),
             getSingleHolding(stockCode),
         ]);
         if (detailRes.status === 'fulfilled') setDetail(detailRes.value);
         if (chartRes.status === 'fulfilled') setChart(chartRes.value);
         if (assetsRes.status === 'fulfilled') setAssets(assetsRes.value);
-        if (watchlistRes.status === 'fulfilled') setWatchlist(watchlistRes.value);
+        if (watchlistRes.status === 'fulfilled') setIsFavorite(watchlistRes.value !== null);
         if (holdingRes.status === 'fulfilled') setHolding(holdingRes.value);
         setLoading(false);
     }, [stockCode]);
@@ -93,11 +93,8 @@ export const StockDetailPage = () => {
         } catch { /* */ }
     };
 
-    const fetchWatchlist = useCallback(async () => {
-        try {
-            const res = await getAllWatchlist();
-            setWatchlist(res);
-        } catch { /* */ }
+    const toggleFavorite = useCallback(() => {
+        setIsFavorite((prev) => !prev);
     }, []);
 
     const refreshAfterTrade = useCallback(async () => {
@@ -113,11 +110,6 @@ export const StockDetailPage = () => {
             setHolding(holdingRes);
         } catch { /* */ }
     }, [stockCode]);
-
-    const isFavorite = useMemo(() => {
-        if (!watchlist?.items || !stockCode) return false;
-        return watchlist.items.some((s) => s.stockCode === stockCode);
-    }, [watchlist, stockCode]);
 
     if (loading || !detail || !stockCode) {
         return <Layout><Loading fullScreen /></Layout>;
@@ -141,7 +133,7 @@ export const StockDetailPage = () => {
                         stockCode={stockCode}
                         detail={detail}
                         isFavorite={isFavorite}
-                        onWatchlistChange={fetchWatchlist}
+                        onWatchlistChange={toggleFavorite}
                     />
                     <div className="stock-detail__grid">
                         <div className="stock-detail__left">
