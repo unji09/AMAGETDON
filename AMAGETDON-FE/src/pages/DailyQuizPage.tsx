@@ -210,8 +210,9 @@ export const DailyQuizPage = () => {
                     <>
                         <div className="daily-quiz-page__progress-wrapper">
                             <QuizProgress
-                                current={quiz.quizSequence}
+                                current={quiz.quizSequence - 1}
                                 total={100}
+                                label="맞춘 문제"
                             />
                         </div>
 
