@@ -206,20 +206,45 @@
     color: #6B7280;
 }
 
+/* 인증 버튼 영역 */
+.header-auth-buttons {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 /* 로그인 버튼 */
 .header-login-btn {
     padding: 8px 16px;
-    background-color: #203C2E;
+    background-color: transparent;
+    color: #1a1a1a;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    text-decoration: none;
+    border: 1px solid rgba(0,0,0,0.15);
+    transition: all 0.2s ease;
+}
+
+.header-login-btn:hover {
+    background-color: rgba(0,0,0,0.03);
+    border-color: rgba(0,0,0,0.3);
+}
+
+/* 회원가입 버튼 */
+.header-signup-btn {
+    padding: 8px 16px;
+    background-color: #10B981;
     color: white;
     font-size: 14px;
     font-weight: 600;
     border-radius: 8px;
     text-decoration: none;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
 }
 
-.header-login-btn:hover {
-    background-color: #162B20;
+.header-signup-btn:hover {
+    background-color: #059669;
 }
 
 /* 프로필 스켈레톤 로딩 */
@@ -299,7 +324,7 @@
 
 /* ==================== 반응형 ==================== */
 @media (max-width: 768px) {
-    /* 데스크톱 상단바 숨김 */
+    /* 데스크톱 상단바 */
     .header-desktop {
         height: 50px;
     }
@@ -326,6 +351,17 @@
         height: 36px;
     }
 
+    /* 비로그인 버튼 - 모바일 */
+    .header-auth-buttons {
+        gap: 8px;
+    }
+
+    .header-login-btn,
+    .header-signup-btn {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+
     /* 모바일 하단 탭바 표시 */
     .mobile-tabbar {
         display: flex;
@@ -335,6 +371,17 @@
 @media (max-width: 480px) {
     .header-content {
         padding: 0 16px;
+    }
+
+    /* 비로그인 버튼 - 작은 화면 */
+    .header-auth-buttons {
+        gap: 6px;
+    }
+
+    .header-login-btn,
+    .header-signup-btn {
+        padding: 6px 10px;
+        font-size: 12px;
     }
 
     .mobile-tabbar {

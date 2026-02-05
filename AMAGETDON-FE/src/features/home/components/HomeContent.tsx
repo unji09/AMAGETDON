@@ -83,8 +83,9 @@ export const HomeContent = () => {
 
                 <div className="home-streak-content">
                     <h3 className="home-streak-title">
-                        너 학습했니?<br />
-                        학습해야 돈 벌 수 있단다
+                        오늘의 학습이d<br />
+                        내일의 투자 실력이 됩니다.<br />
+                        퀴즈로 한 걸음 더 성장해볼까요?
                     </h3>
 
                     <div className="home-streak-stats">

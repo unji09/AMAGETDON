@@ -92,7 +92,7 @@ export const Header = () => {
             ),
         },
         {
-            path: '/achievements',
+            path: '/achievement',
             label: '업적',
             icon: (
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -191,18 +191,20 @@ export const Header = () => {
                         <span className="header-logo-text">AMAGETDON</span>
                     </Link>
 
-                    {/* 네비게이션 */}
-                    <nav className="header-nav">
-                        {navItems.map((item) => (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                className={`header-nav-link ${isActive(item.path) ? 'active' : ''}`}
-                            >
-                                {item.label}
-                            </Link>
-                        ))}
-                    </nav>
+                    {/* 네비게이션 - 로그인 시에만 표시 */}
+                    {userInfo && (
+                        <nav className="header-nav">
+                            {navItems.map((item) => (
+                                <Link
+                                    key={item.path}
+                                    to={item.path}
+                                    className={`header-nav-link ${isActive(item.path) ? 'active' : ''}`}
+                                >
+                                    {item.label}
+                                </Link>
+                            ))}
+                        </nav>
+                    )}
 
                     {/* 프로필 영역 */}
                     <div className="header-profile-area">
@@ -269,27 +271,34 @@ export const Header = () => {
                                 )}
                             </>
                         ) : (
-                            <Link to="/login" className="header-login-btn">
-                                로그인
-                            </Link>
+                            <div className="header-auth-buttons">
+                                <Link to="/login" className="header-login-btn">
+                                    로그인
+                                </Link>
+                                <Link to="/signup" className="header-signup-btn">
+                                    회원가입
+                                </Link>
+                            </div>
                         )}
                     </div>
                 </div>
             </header>
 
-            {/* ========== 모바일 하단 탭바 ========== */}
-            <nav className="mobile-tabbar">
-                {navItems.map((item) => (
-                    <Link
-                        key={item.path}
-                        to={item.path}
-                        className={`tabbar-item ${isActive(item.path) ? 'active' : ''}`}
-                    >
-                        <span className="tabbar-icon">{item.icon}</span>
-                        <span className="tabbar-label">{item.label}</span>
-                    </Link>
-                ))}
-            </nav>
+            {/* ========== 모바일 하단 탭바 - 로그인 시에만 표시 ========== */}
+            {userInfo && (
+                <nav className="mobile-tabbar">
+                    {navItems.map((item) => (
+                        <Link
+                            key={item.path}
+                            to={item.path}
+                            className={`tabbar-item ${isActive(item.path) ? 'active' : ''}`}
+                        >
+                            <span className="tabbar-icon">{item.icon}</span>
+                            <span className="tabbar-label">{item.label}</span>
+                        </Link>
+                    ))}
+                </nav>
+            )}
         </>
     );
 };
