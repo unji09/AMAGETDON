@@ -10,17 +10,46 @@ import { WatchlistSection } from '@/features/investment/components/dashboard/Wat
 import { RecentTransactions } from '@/features/investment/components/dashboard/RecentTransactions';
 import { LearnModeProvider } from '@/features/investment/contexts/LearnModeContext';
 import { LearnModeToggle, LearnSpotlight, LearnOverlay } from '@/features/investment/components/common/LearnMode';
+import { usePolling } from '@/hooks/usePolling';
+import { useMarketStatus } from '@/hooks/useMarketStatus';
 import { getVolumeRankings, getAssets, getHoldings, getAllWatchlist, getTransactions } from '@/api/investmentApi';
 import type { VolumeRankingItem, AssetData, StockHoldingResponse, WatchlistResponse, TransactionResponse } from '@/features/investment/types/investment';
 import './InvestmentPage.css';
 
+// 폴링 간격 상수
+const RANKINGS_POLL_INTERVAL = 1500;    // 인기 종목: 1초
+const HOLDINGS_POLL_INTERVAL = 7000;    // 내 종목/관심 종목: 7초
+
 export const InvestmentPage = () => {
+    const { isOpen } = useMarketStatus();
     const [rankings, setRankings] = useState<VolumeRankingItem[]>([]);
     const [assets, setAssets] = useState<AssetData | null>(null);
     const [holdings, setHoldings] = useState<StockHoldingResponse | null>(null);
     const [watchlist, setWatchlist] = useState<WatchlistResponse | null>(null);
     const [transactions, setTransactions] = useState<TransactionResponse | null>(null);
     const [loading, setLoading] = useState(true);
+
+    // 실시간 인기 종목 조회 (1초마다)
+    const fetchRankings = useCallback(async () => {
+        try {
+            const res = await getVolumeRankings();
+            setRankings(res);
+        } catch { /* */ }
+    }, []);
+
+    // 내 종목, 관심 종목 조회 (7초마다)
+    const fetchHoldingsAndWatchlist = useCallback(async () => {
+        try {
+            const [assetsRes, holdingsRes, watchlistRes] = await Promise.allSettled([
+                getAssets(),
+                getHoldings(0, 4),
+                getAllWatchlist(),
+            ]);
+            if (assetsRes.status === 'fulfilled') setAssets(assetsRes.value);
+            if (holdingsRes.status === 'fulfilled') setHoldings(holdingsRes.value);
+            if (watchlistRes.status === 'fulfilled') setWatchlist(watchlistRes.value);
+        } catch { /* */ }
+    }, []);
 
     const fetchWatchlist = useCallback(async () => {
         try {
@@ -29,6 +58,7 @@ export const InvestmentPage = () => {
         } catch { /* */ }
     }, []);
 
+    // 초기 데이터 로드
     useEffect(() => {
         const fetchData = async () => {
             const [rankingsRes, assetsRes, holdingsRes, watchlistRes, transactionsRes] = await Promise.allSettled([
@@ -52,6 +82,17 @@ export const InvestmentPage = () => {
         };
         fetchData();
     }, []);
+
+    // 폴링 설정 (장 운영 중일 때만)
+    usePolling(fetchRankings, {
+        interval: RANKINGS_POLL_INTERVAL,
+        enabled: !loading && isOpen,
+    });
+
+    usePolling(fetchHoldingsAndWatchlist, {
+        interval: HOLDINGS_POLL_INTERVAL,
+        enabled: !loading && isOpen,
+    });
 
     // 관심 종목 stockCode Set (하트 표시용)
     const watchlistCodes = useMemo(() => {

@@ -7,17 +7,18 @@
 .layout-main {
     flex: 1;
     margin-top: 60px;
+    padding-bottom: 140px;
 }
 
 @media (max-width: 768px) {
     .layout-main {
         margin-top: 50px;
-        padding-bottom: 56px;
+        padding-bottom: 260px; /* 탭바(60px) + 툴팁 여유 공간(200px) */
     }
 }
 
 @media (max-width: 480px) {
     .layout-main {
-        padding-bottom: 52px;
+        padding-bottom: 260px;
     }
 }
