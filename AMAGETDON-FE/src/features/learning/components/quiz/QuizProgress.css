@@ -49,6 +49,14 @@
     box-shadow: 0 0 12px rgba(143, 174, 93, 0.4);
 }
 
+.quiz-progress__bonus-text {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #96773D;
+    text-align: center;
+    font-weight: 500;
+}
+
 /* 반응형 */
 @media (max-width: 768px) {
     .quiz-progress {
