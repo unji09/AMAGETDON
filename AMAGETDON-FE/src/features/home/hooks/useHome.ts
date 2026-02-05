@@ -3,7 +3,7 @@ import {useNavigate} from 'react-router-dom';
 import {getMyInfo} from '@/api/userApi';
 import {getMyAchievements} from '@/api/achievementApi';
 import {getBaseChapters, getProgress} from '@/api/learningApi';
-import {fetchDailyQuiz} from '@/api/quizApi';
+import {getTodayQuizCount} from '@/api/quizApi';
 import type {AchievementItem} from '@/features/achievement/types/achievement';
 
 interface UserInfo {
@@ -97,9 +97,9 @@ export const useHome = () => {
     useEffect(() => {
         if (loading) return;
 
-        fetchDailyQuiz()
+        getTodayQuizCount()
             .then((res) => {
-                const target = res.quizSequence || 0;
+                const target = res.count || 0;
                 let current = 0;
                 const increment = target / 50;
 
