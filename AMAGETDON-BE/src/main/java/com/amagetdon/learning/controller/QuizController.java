@@ -124,8 +124,8 @@ public class QuizController {
 
     @GetMapping("/daily/count")
     @Operation(
-            summary = "오늘 푼 퀴즈 개수 조회",
-            description = "현재 사용자가 오늘 푼 퀴즈의 개수를 조회합니다. JWT 토큰에서 사용자 정보를 자동으로 추출합니다."
+            summary = "오늘 맞춘 퀴즈 개수 조회",
+            description = "현재 사용자가 오늘 맞춘 퀴즈의 개수를 조회합니다. JWT 토큰에서 사용자 정보를 자동으로 추출합니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -136,7 +136,7 @@ public class QuizController {
                             examples = @ExampleObject(
                                     value = """
                                             {
-                                              "count": 1
+                                              "count": 0
                                             }
                                             """
                             )
