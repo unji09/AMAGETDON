@@ -90,7 +90,7 @@ export const HomeContent = () => {
                     </h3>
 
                     <div className="home-streak-stats">
-                        <div className="home-streak-label">오늘 푼 문제 수</div>
+                        <div className="home-streak-label">오늘 맞춘 문제 수</div>
                         <div className="home-streak-number streak-number">{quizStreak}</div>
                     </div>
                 </div>
