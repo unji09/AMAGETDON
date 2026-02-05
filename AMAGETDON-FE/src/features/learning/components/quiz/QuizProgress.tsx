@@ -1,9 +1,9 @@
 import "./QuizProgress.css";
 
 interface QuizProgressProps {
-  current: number;
-  total: number;
-  label?: string;
+    current: number;
+    total: number;
+    label?: string;
 }
 
 /**
