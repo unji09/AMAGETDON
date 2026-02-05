@@ -58,14 +58,19 @@ public class QuizService {
         Integer correctCount = historyRepository
                 .countCorrectByUserIdAndQuizDate(userId, today);
 
-        Integer quizSequence = correctCount + 1;
+        Integer quizSequence = correctCount + 1; // 다음 문제는 "N번째 맞춰야 할 문제"
 
-        // 분기: 1~100번 vs 101번 이후
-        if (quizSequence <= DAILY_QUIZ_LIMIT) {
-            return getDailyQuizUnder100(userId, today, quizSequence);
-        } else {
-            return getDailyQuizOver100(userId, today, quizSequence);
-        }
+        // 100개 맞췄는지 확인
+        boolean isQuizRewardReceived = (correctCount >= 100);
+
+        // 랜덤 퀴즈 선택 (이미 푼 문제 제외)
+        Quiz quiz = selectRandomQuiz(userId, today);
+
+        return QuizResponse.builder()
+                .quizSequence(quizSequence)
+                .isQuizRewardReceived(isQuizRewardReceived)
+                .quiz(convertToQuizDetail(quiz))
+                .build();
     }
 
     /**
@@ -119,10 +124,6 @@ public class QuizService {
             return convertCachedQuizToResponse(cachedQuiz, nextSequence);
         }
 
-        // 2. 퀴즈 없음 → FastAPI 호출하여 생성
-        log.info("FastAPI 퀴즈 생성 요청");
-        // 2. 퀴즈 없음 → FastAPI 호출하여 생성
-        log.info("FastAPI 퀴즈 생성 요청");
         fastApiService.requestQuizGeneration(1, "RANDOM", "RANDOM");
 
         // 3. 생성 요청 후 재조회 (polling 방식)
@@ -168,91 +169,77 @@ public class QuizService {
         Integer correctCount = historyRepository
                 .countCorrectByUserIdAndQuizDate(userId, today);
 
-        Integer currentSequence = correctCount;
-        Integer nextSequence = correctCount + 1;
+        // 2. 퀴즈 조회
+        Quiz quiz = quizRepository.findById(request.quizId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 퀴즈입니다"));
 
-        // 2. 퀴즈 타입에 따라 분기
-        boolean isCorrect;
-        String correctAnswer;
+        // 3. 정답 체크
+        boolean isCorrect = checkAnswer(quiz, request);
+
+        // 4. sequence 계산 (정답인 경우에만 증가)
+        Integer currentSequence = correctCount; // 현재 맞춘 개수
+        Integer nextSequence = isCorrect ? currentSequence + 1 : currentSequence;
+
+        // 5. 보상 계산 (맞춘 문제가 1~100개일 때만)
+        int rewardAmount = 0;
+        if (isCorrect && nextSequence <= DAILY_QUIZ_LIMIT) {
+            rewardAmount = calculateRewardAmount(nextSequence);
+        }
+
+        // 6. 오답노트 저장 (맞춘 문제가 100개 미만일 때만)
         boolean addedToReviewNote = false;
+        if (!isCorrect && currentSequence < DAILY_QUIZ_LIMIT) {
+            // 오답노트 저장 (기존 로직 사용)
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다"));
+
+            boolean exists = reviewNoteRepository.existsByUserAndQuiz(userId, request.quizId());
+            if (!exists) {
+                ReviewNote reviewNote = ReviewNote.builder()
+                        .user(user)
+                        .quiz(quiz)
+                        .build();
+                reviewNoteRepository.save(reviewNote);
+                addedToReviewNote = true;
+            }
+        }
+
+        // 7. User 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다"));
 
-        if ("CACHED".equals(request.quizSource())) {
-            // 101번 이후: CachedQuiz
-            CachedQuiz cachedQuiz = cachedQuizRepository.findById(request.quizId())
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 퀴즈입니다"));
+        // 8. History 저장
+        DailyQuizHistory history = DailyQuizHistory.builder()
+                .user(user)
+                .quiz(quiz)
+                .quizDate(today)
+                .quizSequence(nextSequence) // 정답이면 증가된 값, 오답이면 현재 값
+                .isCorrect(isCorrect)
+                .build();
 
-            isCorrect = checkCachedAnswer(cachedQuiz, request);
-            correctAnswer = getCorrectAnswerStringFromCached(cachedQuiz);
+        historyRepository.save(history);
 
-            // 캐시드 퀴즈는 DailyQuizHistory에 저장하지 않음
-
-        } else {
-            // 1~100번: Quiz
-            Quiz quiz = quizRepository.findById(request.quizId())
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 퀴즈입니다"));
-
-            isCorrect = checkAnswer(quiz, request);
-            correctAnswer = getCorrectAnswerString(quiz);
-
-            // 오답노트 저장
-            if (!isCorrect) {
-                boolean exists = reviewNoteRepository.existsByUserIdAndQuizId(userId, request.quizId());
-                if (!exists) {
-                    ReviewNote reviewNote = new ReviewNote(user.getUserId(), quiz);
-                    reviewNoteRepository.save(reviewNote);
-                    addedToReviewNote = true;
-                }
-            }
-
-            // DailyQuizHistory 저장 (100번 이하만)
-            DailyQuizHistory history = new DailyQuizHistory(
-                    userId,
-                    quiz.getQuizId(),
-                    isCorrect ? nextSequence : currentSequence,
-                    isCorrect);
-            historyRepository.save(history);
+        // 9. 보상 지급
+        if (rewardAmount > 0) {
+            user.addBalance((long) rewardAmount);
         }
 
-        // 3. 보상 계산 (100번 이하만)
-        Integer rewardAmount = 0;
-        if (isCorrect && nextSequence <= DAILY_QUIZ_LIMIT) {
-            rewardAmount = calculateRewardAmount(nextSequence);
-            user.addBalance(rewardAmount.longValue());
-            userRepository.save(user);
-        }
+        // 10. 업적 체크
+        checkQuizAchievements(userId, nextSequence, isCorrect);
 
-        // 4. 오늘 퀴즈 보상 체크 (100번 완료 시)
-        if (isCorrect && nextSequence == DAILY_QUIZ_LIMIT) {
-            boolean alreadyReceived = rewardRepository
-                    .existsByUserIdAndQuizRewardDate(userId, today);
-
-            if (!alreadyReceived) {
-                DailyLearningReward reward = new DailyLearningReward(userId);
-                rewardRepository.save(reward);
-            }
-        }
-
-        // 5. 업적 체크 (100번 이하만)
-        if (nextSequence <= DAILY_QUIZ_LIMIT) {
-            checkQuizAchievements(userId, isCorrect ? nextSequence : currentSequence, isCorrect);
-        }
+        // 11. 정답 문자열 생성
+        String correctAnswer = getCorrectAnswerString(quiz);
 
         return new QuizSubmitResponse(
                 isCorrect,
                 correctAnswer,
                 rewardAmount,
                 addedToReviewNote,
-                user.getBalance());
+                user.getBalance()
+        );
     }
-
-    /**
-     * 오늘 맞춘 문제 수
-     */
-    public QuizCountResponse
-
-            getTodayQuizCount(Long userId) {
+    
+    public QuizCountResponse getTodayQuizCount(Long userId) {
         LocalDate today = LocalDate.now();
 
         // 오늘 맞춘 문제 수 조회
@@ -273,7 +260,6 @@ public class QuizService {
                     userId,
                     attendanceCount,
                     AchievementIdCode.ATTENDANCE_KING);
-                    AchievementIdCode.ATTENDANCE_KING);
         }
 
         // 2. 퀴즈에서 살아남기 (첫 퀴즈 풀이)
@@ -281,7 +267,6 @@ public class QuizService {
             achievementService.checkAndAwardAchievements(
                     userId,
                     1L,
-                    AchievementIdCode.QUIZ_SURVIVOR);
                     AchievementIdCode.QUIZ_SURVIVOR);
         }
 
@@ -303,7 +288,6 @@ public class QuizService {
                 achievementService.checkAndAwardAchievements(
                         userId,
                         100L,
-                        AchievementIdCode.NEWBIE_ESCAPE);
                         AchievementIdCode.NEWBIE_ESCAPE);
             }
         } catch (Exception e) {
@@ -445,8 +429,8 @@ public class QuizService {
     private QuizResponse convertToQuizResponse(
             Quiz quiz,
             Integer quizSequence,
-            Boolean isQuizRewardReceived) {
-            Boolean isQuizRewardReceived) {
+            Boolean isQuizRewardReceived
+    ) {
         List<QuizResponse.ChoiceInfo> choices = null;
         if (quiz.getQuizType() == QuizType.MCQ) {
             List<QuizChoice> quizChoices = quizChoiceRepository.findByQuizId(quiz.getQuizId());
@@ -455,8 +439,8 @@ public class QuizService {
                     .map(choice -> new QuizResponse.ChoiceInfo(
                             choice.getChoiceId(),
                             choice.getChoiceText(),
-                            choice.getChoiceNo()))
-                            choice.getChoiceNo()))
+                            choice.getChoiceNo()
+                    ))
                     .collect(Collectors.toList());
         }
 
@@ -464,20 +448,20 @@ public class QuizService {
                 quiz.getQuizId(),
                 quiz.getQuizType(),
                 quiz.getQuizContent(),
-                choices);
-                choices);
+                choices
+        );
 
         return new QuizResponse(
                 quizSequence,
                 isQuizRewardReceived,
-                quizDetail);
-                quizDetail);
+                quizDetail
+        );
     }
 
     private QuizResponse convertCachedQuizToResponse(
             CachedQuiz cachedQuiz,
-            Integer quizSequence) {
-            Integer quizSequence) {
+            Integer quizSequence
+    ) {
         List<QuizResponse.ChoiceInfo> choices = null;
         if (cachedQuiz.getQuizType() == QuizType.MCQ) {
             List<CachedQuizChoice> cachedChoices = cachedQuizChoiceRepository
@@ -487,8 +471,8 @@ public class QuizService {
                     .map(choice -> new QuizResponse.ChoiceInfo(
                             choice.getCachedChoiceId(),
                             choice.getChoiceText(),
-                            choice.getChoiceNo()))
-                            choice.getChoiceNo()))
+                            choice.getChoiceNo()
+                    ))
                     .collect(Collectors.toList());
         }
 
@@ -496,14 +480,14 @@ public class QuizService {
                 cachedQuiz.getCachedQuizId(),
                 cachedQuiz.getQuizType(),
                 cachedQuiz.getQuizContent(),
-                choices);
-                choices);
+                choices
+        );
 
         return new QuizResponse(
                 quizSequence,
                 false,
-                quizDetail);
-                quizDetail);
+                quizDetail
+        );
     }
 
 }
