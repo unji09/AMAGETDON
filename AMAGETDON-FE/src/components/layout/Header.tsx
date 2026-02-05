@@ -290,7 +290,7 @@ export const Header = () => {
                                                 <span className="profile-dropdown-title">{userInfo.currentTitle}</span>
                                             )}
                                             <span className="profile-dropdown-balance">
-                                                {formatBalance(userInfo.balance)} GM
+                                                {formatBalance(userInfo.balance)}원
                                             </span>
                                         </div>
                                         <div className="profile-dropdown-divider" />
