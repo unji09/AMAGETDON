@@ -57,6 +57,17 @@
 .home-avatar img {
     width: 100%;
     height: 100%;
+    object-fit: cover;
+}
+
+/* 업적 아이콘이 프로필로 설정된 경우 */
+.home-avatar--achievement {
+    background: linear-gradient(135deg, #fef5e7 0%, #fceabb 100%);
+    padding: 12px;
+}
+
+.home-avatar--achievement img {
+    object-fit: contain;
 }
 
 .home-nickname {

@@ -46,6 +46,17 @@ export const HomeContent = () => {
         return Math.min(percentage, 100)
     }
 
+    // 현재 칭호에 해당하는 업적 아이콘 찾기
+    const getProfileIcon = () => {
+        if (!userData.currentTitle) return null
+        const matchedAchievement = achievements.find(
+            (a) => a.achievementName === userData.currentTitle && a.isAchieved && a.achievementIcon
+        )
+        return matchedAchievement?.achievementIcon || null
+    }
+
+    const profileIcon = getProfileIcon()
+
     // 수익 랭킹 표시 문자열
     const getProfitRankDisplay = () => {
         const { profitRank, totalProfitUsers } = rankingData
@@ -64,9 +75,9 @@ export const HomeContent = () => {
             <div className="home-profile-card card-hover">
                 <div className="home-profile-left">
                     <div className="home-profile-image">
-                        <div className="home-avatar">
+                        <div className={`home-avatar ${profileIcon ? 'home-avatar--achievement' : ''}`}>
                             <img
-                                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='35' r='20' fill='%23f8d7da'/%3E%3Cpath d='M25 65 Q25 45 50 45 Q75 45 75 65 L75 100 L25 100 Z' fill='%234a5568'/%3E%3C/svg%3E"
+                                src={profileIcon || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='35' r='20' fill='%23f8d7da'/%3E%3Cpath d='M25 65 Q25 45 50 45 Q75 45 75 65 L75 100 L25 100 Z' fill='%234a5568'/%3E%3C/svg%3E"}
                                 alt="Profile"
                             />
                         </div>
