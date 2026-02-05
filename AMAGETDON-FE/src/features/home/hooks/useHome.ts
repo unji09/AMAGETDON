@@ -12,6 +12,7 @@ interface UserInfo {
     nickname: string;
     currentTitle: string | null;
     balance: number;
+    investmentType: 'AGGRESSIVE' | 'NEUTRAL' | 'STABLE' | null;
 }
 
 interface ProgressData {
@@ -39,6 +40,7 @@ export const useHome = () => {
         nickname: '',
         currentTitle: null,
         balance: 0,
+        investmentType: null,
     });
     const [achievements, setAchievements] = useState<AchievementItem[]>([]);
     const [progressData, setProgressData] = useState<ProgressData>({
@@ -76,6 +78,7 @@ export const useHome = () => {
                     nickname: data.nickname,
                     currentTitle: data.currentTitle,
                     balance: data.balance,
+                    investmentType: data.investmentType,
                 });
                 setAchievements(achievementRes.achievements);
 

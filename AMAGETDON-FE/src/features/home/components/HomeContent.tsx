@@ -3,6 +3,13 @@ import { Loading } from '@/components/common'
 import './HomeContent.css'
 import {useHome} from "@/features/home";
 
+// 투자 성향 표시 설정
+const INVESTMENT_TYPE_CONFIG: Record<'AGGRESSIVE' | 'NEUTRAL' | 'STABLE', { label: string; icon: string; color: string }> = {
+    AGGRESSIVE: { label: '공격형', icon: '🔥', color: '#e53e3e' },
+    NEUTRAL: { label: '중립형', icon: '⚖️', color: '#718096' },
+    STABLE: { label: '안정형', icon: '🛡️', color: '#3182ce' },
+};
+
 export const HomeContent = () => {
     const {
         userData,
@@ -67,7 +74,17 @@ export const HomeContent = () => {
 
                     <div className="home-profile-info">
                         <h2 className="home-nickname">{userData.nickname}</h2>
-                        <p className="home-title">{userData.currentTitle || '칭호 없음'}</p>
+                        <div className="home-title-row">
+                            <p className="home-title">{userData.currentTitle || '칭호 없음'}</p>
+                            {userData.investmentType && (
+                                <span
+                                    className="home-investment-type"
+                                    style={{ color: INVESTMENT_TYPE_CONFIG[userData.investmentType].color }}
+                                >
+                                    {INVESTMENT_TYPE_CONFIG[userData.investmentType].icon} {INVESTMENT_TYPE_CONFIG[userData.investmentType].label}
+                                </span>
+                            )}
+                        </div>
                         <div className="home-profile-buttons">
                             <button
                                 className="home-btn home-btn-edit"
@@ -88,7 +105,7 @@ export const HomeContent = () => {
                 <div className="home-profile-stats">
                     <div className="home-stats-rank">{getProfitRankDisplay()}</div>
                     <div className="home-stats-balance">
-                        {formatBalance(userData.balance)} <span className="home-stats-unit">GM</span>
+                        {formatBalance(userData.balance)} <span className="home-stats-unit">원</span>
                     </div>
                     {rankingData.profitRank && (
                         <div className={`home-stats-change ${rankingData.profitRank.totalProfit >= 0 ? 'positive' : 'negative'}`}>
@@ -198,7 +215,7 @@ export const HomeContent = () => {
                 </div>
 
                 <div className="home-achievements-grid">
-                    {achievements.slice(0, 7).map((achievement) => (
+                    {[...achievements].sort((a, b) => Number(b.isAchieved) - Number(a.isAchieved)).slice(0, 7).map((achievement) => (
                         <div
                             key={achievement.achievementId}
                             className={`home-achievement-item achievement-badge ${!achievement.isAchieved ? 'locked' : 'tooltip'}`}

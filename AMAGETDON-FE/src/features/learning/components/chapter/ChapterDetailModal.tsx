@@ -47,7 +47,7 @@ export const ChapterDetailModal = ({ chapter, isOpen, onClose, onStartLearning }
                         <span className="chapter-detail__meta-label">보상</span>
                         <span className="chapter-detail__meta-value">
                             <Banknote size={16} className="chapter-detail__meta-icon" />
-                            {reward} P
+                            {reward}원
                         </span>
                     </div>
                     <div className="chapter-detail__meta-divider" />
