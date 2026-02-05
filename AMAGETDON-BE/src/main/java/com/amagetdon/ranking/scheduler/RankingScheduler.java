@@ -16,7 +16,7 @@ public class RankingScheduler {
     private final LearningRankingService learningRankingService;
 
     // 매일 자정에 수익 랭킹 집계를 실행
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(fixedRate = 60000)
     public void aggregateProfitRanking() {
         log.info("===================");
         log.info("수익 랭킹 집계 스케줄러 시작");
@@ -36,7 +36,7 @@ public class RankingScheduler {
     }
 
     // 매일 자정에 학습 랭킹 집계를 실행
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(fixedRate = 60000)
     public void aggregateLearningRanking() {
         log.info("==================");
         log.info("학습 랭킹 집계 스케줄러 시작");

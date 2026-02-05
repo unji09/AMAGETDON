@@ -21,7 +21,7 @@ public class LearningRanking {
     @Column(nullable = false)
     private Long userId;
 
-    @Column(nullable = false)
+    @Column(name = "ranking", nullable = false)
     private Integer rank;
 
     @Column(nullable = false)
