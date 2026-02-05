@@ -55,17 +55,19 @@ public interface DailyQuizHistoryRepository extends JpaRepository<DailyQuizHisto
                         @Param("userId") Long userId,
                         @Param("quizDate") LocalDate quizDate);
 
-        // 학습 랭킹 계산용, 유저 전체 퀴즈 히스토리 조회
-        List<DailyQuizHistory> findByUserId(Long userId);
+    // 학습 랭킹 계산용, 유저 전체 퀴즈 히스토리 조회
+    List<DailyQuizHistory> findByUserId(Long userId);
 
-        /**
-         * 오늘 유저가 맞춘 문제수 카운트
-         */
-        @Query("SELECT COUNT(h) FROM DailyQuizHistory h " +
-                        "WHERE h.userId = :userId " +
-                        "AND h.quizDate = :quizDate " +
-                        "AND h.isCorrect = true")
-        Integer countCorrectByUserIdAndQuizDate(
-                        @Param("userId") Long userId,
-                        @Param("quizDate") LocalDate quizDate);
+    /**
+     * 오늘 유저가 맞춘 문제수 카운트
+     */
+
+    @Query("SELECT COUNT(h) FROM DailyQuizHistory h " +
+            "WHERE h.userId = :userId " +
+            "AND h.quizDate = :quizDate " +
+            "AND h.isCorrect = true")
+    Integer countCorrectByUserIdAndQuizDate(
+            @Param("userId") Long userId,
+            @Param("quizDate") LocalDate quizDate
+    );
 }
