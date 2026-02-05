@@ -3,6 +3,7 @@
     margin-top: var(--spacing-6);
     margin-bottom: var(--spacing-6);
     animation: searchFadeIn 0.5s ease-out;
+    min-width: 0;
 }
 
 @keyframes searchFadeIn {
@@ -19,6 +20,7 @@
     border-radius: 12px;
     padding: var(--spacing-3) var(--spacing-4);
     transition: border-color 0.2s;
+    min-width: 0;
 }
 
 .investment-search__input-wrapper:focus-within {
@@ -32,6 +34,7 @@
 
 .investment-search__input {
     flex: 1;
+    min-width: 0;
     border: none;
     outline: none;
     font-size: var(--font-size-base);
