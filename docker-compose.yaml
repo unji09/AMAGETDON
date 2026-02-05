@@ -97,8 +97,8 @@ services:
       context: ./AMAGETDON-FastAPI
       dockerfile: Dockerfile
     container_name: amagetdon-fastapi
-    expose:
-      - "8000"
+    ports:
+      - "8000:8000"
     environment:
       - MYSQL_HOST=mysql
       - MYSQL_PORT=3306
