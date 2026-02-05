@@ -10,6 +10,7 @@ export const HomeContent = () => {
         progressData,
         loading,
         quizStreak,
+        rankingData,
         navigateToMyInfo,
         navigateToRanking,
         navigateToAchievement,
@@ -29,6 +30,25 @@ export const HomeContent = () => {
 
     const formatBalance = (balance: number) => {
         return balance.toLocaleString()
+    }
+
+    // 랭킹 퍼센트 계산 (상위 몇 %)
+    const getRankPercentage = (rank: number, total: number) => {
+        if (total === 0 || rank === 0) return null
+        const percentage = Math.ceil((rank / total) * 100)
+        return Math.min(percentage, 100)
+    }
+
+    // 수익 랭킹 표시 문자열
+    const getProfitRankDisplay = () => {
+        const { profitRank, totalProfitUsers } = rankingData
+        if (!profitRank) return '랭킹 없음'
+
+        const percentage = getRankPercentage(profitRank.rank, totalProfitUsers)
+        if (percentage) {
+            return `상위 ${percentage}% / ${profitRank.rank.toLocaleString()}위`
+        }
+        return `${profitRank.rank.toLocaleString()}위`
     }
 
     return (
@@ -66,13 +86,17 @@ export const HomeContent = () => {
                 </div>
 
                 <div className="home-profile-stats">
-                    <div className="home-stats-rank">상위 1% / 123위</div>
+                    <div className="home-stats-rank">{getProfitRankDisplay()}</div>
                     <div className="home-stats-balance">
                         {formatBalance(userData.balance)} <span className="home-stats-unit">GM</span>
                     </div>
-                    {/*<div className="home-stats-change negative">*/}
-                    {/*    <span>↓</span> -23.7%*/}
-                    {/*</div>*/}
+                    {rankingData.profitRank && (
+                        <div className={`home-stats-change ${rankingData.profitRank.totalProfit >= 0 ? 'positive' : 'negative'}`}>
+                            <span>{rankingData.profitRank.totalProfit >= 0 ? '↑' : '↓'}</span>
+                            {rankingData.profitRank.totalProfit >= 0 ? '+' : ''}
+                            {rankingData.profitRank.totalProfit.toLocaleString()}원
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -83,9 +107,8 @@ export const HomeContent = () => {
 
                 <div className="home-streak-content">
                     <h3 className="home-streak-title">
-                        오늘의 학습이d<br />
-                        내일의 투자 실력이 됩니다.<br />
-                        퀴즈로 한 걸음 더 성장해볼까요?
+                        오늘의 학습이<br />
+                        내일의 투자 실력이 됩니다.
                     </h3>
 
                     <div className="home-streak-stats">
