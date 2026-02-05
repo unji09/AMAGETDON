@@ -82,13 +82,26 @@
 }
 
 .trading-panel__price-display {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-bold);
     color: var(--color-dark-gray);
-    text-align: right;
     padding: var(--spacing-2) var(--spacing-3);
     background: var(--color-background);
     border-radius: 8px;
+}
+
+/* FlipText 스타일 - 주문단가 */
+.trading-panel__flip-price {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+}
+
+.trading-panel__flip-price .flip-text__value {
+    padding: 2px 6px;
+    border-radius: 6px;
 }
 
 .trading-panel__input {

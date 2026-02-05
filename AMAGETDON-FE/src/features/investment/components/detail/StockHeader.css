@@ -72,6 +72,9 @@
 .stock-header__code {
     font-size: var(--font-size-sm);
     color: #888;
+    padding: var(--spacing-1) var(--spacing-5) var(--spacing-1) var(--spacing-3);
+    /* background: var(--color-background); */
+    border-radius: 4px;
 }
 
 .stock-header__name {
@@ -84,7 +87,7 @@
 .stock-header__price-row {
     display: flex;
     align-items: baseline;
-    gap: var(--spacing-3);
+    gap: var(--spacing-1);
     margin-bottom: var(--spacing-2);
 }
 
@@ -92,6 +95,28 @@
     font-size: var(--font-size-3xl);
     font-weight: var(--font-weight-bold);
     color: var(--color-dark-gray);
+}
+
+/* FlipText 스타일 - 가격 (큰 사이즈) */
+.stock-header__flip-price {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+}
+
+.stock-header__flip-price .flip-text__value {
+    padding: 4px 10px 4px 0;
+    border-radius: 8px;
+}
+
+/* FlipText 스타일 - 등락률 */
+.stock-header__flip-change {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+}
+
+.stock-header__flip-change .flip-text__value {
+    padding: 2px 6px;
+    border-radius: 4px;
 }
 
 .stock-header__change {
@@ -102,17 +127,56 @@
 .stock-header__change--up { color: var(--color-chart-up); }
 .stock-header__change--down { color: var(--color-chart-down); }
 
+.stock-header__sector {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    margin-bottom: var(--spacing-3);
+    padding-bottom: var(--spacing-3);
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.stock-header__sector-label {
+    font-size: var(--font-size-xs);
+    color: #888;
+    white-space: nowrap;
+}
+
+.stock-header__sector-name {
+    font-size: var(--font-size-xs);
+    color: var(--color-dark-gray);
+    font-weight: var(--font-weight-medium);
+}
+
 .stock-header__meta {
     display: flex;
-    gap: var(--spacing-6);
+    flex-wrap: wrap;
+    gap: var(--spacing-2) var(--spacing-2);
 }
 
 .stock-header__meta-item {
     font-size: var(--font-size-xs);
     color: #888;
+    padding: var(--spacing-2) var(--spacing-6) var(--spacing-2) var(--spacing-4);
+    background: var(--color-background);
+    border-radius: 6px;
 }
 
 .stock-header__meta-item strong {
     color: var(--color-dark-gray);
     margin-left: 4px;
+}
+
+@media (max-width: 480px) {
+    .stock-header__meta {
+        gap: var(--spacing-2);
+    }
+
+    .stock-header__meta-item {
+        padding: var(--spacing-1) var(--spacing-3);
+    }
+
+    .stock-header__sector-name {
+        word-break: keep-all;
+    }
 }

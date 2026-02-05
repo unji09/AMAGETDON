@@ -101,9 +101,13 @@ const RankingCard = ({ type }: RankingCardProps) => {
         myRank: number,
         forProfit: boolean
     ) => {
-        // 내 순위 바로 위
-        const above = allRankings.find(r => r.rank === myRank - 1);
-        if (above) {
+        // 내 순위 바로 위: rank < myRank 중 가장 큰 rank
+        const aboveList = allRankings
+            .filter(r => r.rank < myRank)
+            .sort((a, b) => b.rank - a.rank);
+
+        if (aboveList.length > 0) {
+            const above = aboveList[0];
             setAboveNeighbor({
                 rank: above.rank,
                 nickname: above.nickname,
@@ -114,9 +118,13 @@ const RankingCard = ({ type }: RankingCardProps) => {
             });
         }
 
-        // 내 순위 바로 아래
-        const below = allRankings.find(r => r.rank === myRank + 1);
-        if (below) {
+        // 내 순위 바로 아래: rank > myRank 중 가장 작은 rank
+        const belowList = allRankings
+            .filter(r => r.rank > myRank)
+            .sort((a, b) => a.rank - b.rank);
+
+        if (belowList.length > 0) {
+            const below = belowList[0];
             setBelowNeighbor({
                 rank: below.rank,
                 nickname: below.nickname,
