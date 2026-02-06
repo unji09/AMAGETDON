@@ -3,7 +3,7 @@ import {useNavigate} from 'react-router-dom';
 import {getMyInfo} from '@/api/userApi';
 import {getMyAchievements} from '@/api/achievementApi';
 import {getBaseChapters, getProgress} from '@/api/learningApi';
-import {getTodayQuizCount, fetchReviewNotes, fetchDailyQuiz} from '@/api/quizApi';
+import {getTodayQuizCount, fetchReviewNotes} from '@/api/quizApi';
 import {getMyLearningRanking, getMyProfitRanking, getLearningRankings, getProfitRankings} from '@/api/rankingApi';
 import type {AchievementItem} from '@/features/achievement/types/achievement';
 import type {MyLearningRanking, MyProfitRanking} from '@/features/ranking/types/rankingTypes';
