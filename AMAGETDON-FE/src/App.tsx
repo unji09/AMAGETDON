@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { ErrorBoundary, PrivateRoute, PublicRoute, AuthRoute } from '@/components/common';
+import { ErrorBoundary, PrivateRoute, PublicRoute, AuthRoute, SurveyRoute } from '@/components/common';
 import { HomePage } from '@/pages/HomePage';
 import { CommunityPage } from '@/pages/CommunityPage';
 import { RankingPage } from '@/pages/RankingPage';
@@ -60,7 +60,7 @@ function App() {
                     <Route path="/community/chat/:roomId" element={<PrivateRoute><ChatRoomPage /></PrivateRoute>} />
                     <Route path="/ranking" element={<PrivateRoute><RankingPage /></PrivateRoute>} />
                     <Route path="/mypage" element={<PrivateRoute><MyInfoPage /></PrivateRoute>} />
-                    <Route path="/survey" element={<PrivateRoute><SurveyPage /></PrivateRoute>} />
+                    <Route path="/survey" element={<SurveyRoute><SurveyPage /></SurveyRoute>} />
                     <Route path="/daily-quiz" element={<PrivateRoute><DailyQuizPage /></PrivateRoute>} />
 
                     {/* 404 */}
