@@ -92,6 +92,7 @@ export interface StockDetailData {
     marketCap: number;
     currentPrice: string;
     changeRate: number;
+    changeAmount: number;
     volume: number;
 }
 
