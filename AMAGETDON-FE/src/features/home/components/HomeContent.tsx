@@ -1,7 +1,14 @@
-import { Loading } from '@/components/common'
+import {Loading} from '@/components/common'
 
 import './HomeContent.css'
 import {useHome} from "@/features/home";
+
+// 투자 성향 표시 설정
+const INVESTMENT_TYPE_CONFIG: Record<'AGGRESSIVE' | 'NEUTRAL' | 'STABLE', { label: string; icon: string; color: string }> = {
+    AGGRESSIVE: { label: '공격형', icon: '🔥', color: '#e53e3e' },
+    NEUTRAL: { label: '중립형', icon: '⚖️', color: '#718096' },
+    STABLE: { label: '안정형', icon: '🛡️', color: '#3182ce' },
+};
 
 export const HomeContent = () => {
     const {
@@ -10,11 +17,14 @@ export const HomeContent = () => {
         progressData,
         loading,
         quizStreak,
+        reviewNoteCount,
+        rankingData,
         navigateToMyInfo,
         navigateToRanking,
         navigateToAchievement,
         navigateToDailyQuiz,
         navigateToLearning,
+        navigateToReviewNote,
     } = useHome()
 
     if (loading || !userData) {
@@ -31,15 +41,47 @@ export const HomeContent = () => {
         return balance.toLocaleString()
     }
 
+    const isReviewNoteEmpty = reviewNoteCount === 0;
+
+    // 랭킹 퍼센트 계산 (상위 몇 %)
+    const getRankPercentage = (rank: number, total: number) => {
+        if (total === 0 || rank === 0) return null
+        const percentage = Math.ceil((rank / total) * 100)
+        return Math.min(percentage, 100)
+    }
+
+    // 현재 칭호에 해당하는 업적 아이콘 찾기
+    const getProfileIcon = () => {
+        if (!userData.currentTitle) return null
+        const matchedAchievement = achievements.find(
+            (a) => a.achievementName === userData.currentTitle && a.isAchieved && a.achievementIcon
+        )
+        return matchedAchievement?.achievementIcon || null
+    }
+
+    const profileIcon = getProfileIcon()
+
+    // 수익 랭킹 표시 문자열
+    const getProfitRankDisplay = () => {
+        const { profitRank, totalProfitUsers } = rankingData
+        if (!profitRank) return '랭킹 없음'
+
+        const percentage = getRankPercentage(profitRank.rank, totalProfitUsers)
+        if (percentage) {
+            return `상위 ${percentage}% / ${profitRank.rank.toLocaleString()}위`
+        }
+        return `${profitRank.rank.toLocaleString()}위`
+    }
+
     return (
         <div className="home-container">
             {/* User Profile Card */}
             <div className="home-profile-card card-hover">
                 <div className="home-profile-left">
                     <div className="home-profile-image">
-                        <div className="home-avatar">
+                        <div className={`home-avatar ${profileIcon ? 'home-avatar--achievement' : ''}`}>
                             <img
-                                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='35' r='20' fill='%23f8d7da'/%3E%3Cpath d='M25 65 Q25 45 50 45 Q75 45 75 65 L75 100 L25 100 Z' fill='%234a5568'/%3E%3C/svg%3E"
+                                src={profileIcon || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='35' r='20' fill='%23f8d7da'/%3E%3Cpath d='M25 65 Q25 45 50 45 Q75 45 75 65 L75 100 L25 100 Z' fill='%234a5568'/%3E%3C/svg%3E"}
                                 alt="Profile"
                             />
                         </div>
@@ -47,7 +89,17 @@ export const HomeContent = () => {
 
                     <div className="home-profile-info">
                         <h2 className="home-nickname">{userData.nickname}</h2>
-                        <p className="home-title">{userData.currentTitle || '칭호 없음'}</p>
+                        <div className="home-title-row">
+                            <p className="home-title">{userData.currentTitle || '칭호 없음'}</p>
+                            {userData.investmentType && (
+                                <span
+                                    className="home-investment-type"
+                                    style={{ color: INVESTMENT_TYPE_CONFIG[userData.investmentType].color }}
+                                >
+                                    {INVESTMENT_TYPE_CONFIG[userData.investmentType].icon} {INVESTMENT_TYPE_CONFIG[userData.investmentType].label}
+                                </span>
+                            )}
+                        </div>
                         <div className="home-profile-buttons">
                             <button
                                 className="home-btn home-btn-edit"
@@ -66,13 +118,19 @@ export const HomeContent = () => {
                 </div>
 
                 <div className="home-profile-stats">
-                    <div className="home-stats-rank">상위 1% / 123위</div>
+                    <div className="home-stats-rank">{getProfitRankDisplay()}</div>
                     <div className="home-stats-balance">
-                        {formatBalance(userData.balance)} <span className="home-stats-unit">GM</span>
+                        {formatBalance(userData.balance)} <span className="home-stats-unit">원</span>
                     </div>
-                    {/*<div className="home-stats-change negative">*/}
-                    {/*    <span>↓</span> -23.7%*/}
-                    {/*</div>*/}
+
+                    {rankingData.profitRank && (
+                        <div className={`home-stats-change ${rankingData.profitRank.totalProfit >= 0 ? 'positive' : 'negative'}`}>
+                            <span>{rankingData.profitRank.totalProfit >= 0 ? '↑' : '↓'}</span>
+                            {rankingData.profitRank.totalProfit >= 0 ? '+' : ''}
+                            {rankingData.profitRank.totalProfit.toLocaleString()}원
+                        </div>
+                    )}
+
                 </div>
             </div>
 
@@ -83,12 +141,12 @@ export const HomeContent = () => {
 
                 <div className="home-streak-content">
                     <h3 className="home-streak-title">
-                        너 학습했니?<br />
-                        학습해야 돈 벌 수 있단다
+                        오늘의 학습이<br />
+                        내일의 투자 실력이 됩니다.
                     </h3>
 
                     <div className="home-streak-stats">
-                        <div className="home-streak-label">오늘 푼 문제 수</div>
+                        <div className="home-streak-label">오늘 맞춘 문제 수</div>
                         <div className="home-streak-number streak-number">{quizStreak}</div>
                     </div>
                 </div>
@@ -139,12 +197,21 @@ export const HomeContent = () => {
                 </div>
 
                 {/* 오답노트 Card */}
-                <div className="home-wrong-answers-card card-hover">
+                <div
+                    className={`home-wrong-answers-card card-hover ${isReviewNoteEmpty ? 'empty' : ''}`}
+                    onClick={navigateToReviewNote}
+                    style={{ cursor: 'pointer' }}
+                >
                     <div className="home-wrong-header">
                         <div className="home-wrong-title">
                             <svg className="home-wrong-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M4 6H20M4 12H20M4 18H12" stroke="#333" strokeWidth="2" strokeLinecap="round"/>
-                                <path d="M16 16L20 20M20 16L16 20" stroke="#e53e3e" strokeWidth="2" strokeLinecap="round"/>
+                                <path
+                                    d="M16 16L20 20M20 16L16 20"
+                                    stroke={isReviewNoteEmpty ? "#4CAF50" : "#e53e3e"}
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                />
                             </svg>
                             <h4>오답노트</h4>
                         </div>
@@ -152,8 +219,15 @@ export const HomeContent = () => {
                     </div>
 
                     <div className="home-wrong-answers-content">
-                        <div className="home-wrong-count">13문제</div>
-                        <div className="home-wrong-desc">다시 풀어볼 문항이 있습니다</div>
+                        <div
+                            className="home-wrong-count"
+                            style={isReviewNoteEmpty ? { color: '#4CAF50' } : {}}
+                        >
+                            {reviewNoteCount}문제
+                        </div>
+                        <div className="home-wrong-desc">
+                            {isReviewNoteEmpty ? '모든 문제를 맞혔어요! 🎉' : '다시 풀어볼 문항이 있습니다'}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -174,13 +248,13 @@ export const HomeContent = () => {
                 </div>
 
                 <div className="home-achievements-grid">
-                    {achievements.slice(0, 7).map((achievement) => (
+                    {[...achievements].sort((a, b) => Number(b.isAchieved) - Number(a.isAchieved)).slice(0, 7).map((achievement) => (
                         <div
                             key={achievement.achievementId}
                             className={`home-achievement-item achievement-badge ${!achievement.isAchieved ? 'locked' : 'tooltip'}`}
                             {...(achievement.isAchieved && { 'data-tooltip': achievement.achievementName })}
                         >
-                            {achievement.isAchieved && achievement.achievementIcon ? (
+                             {achievement.isAchieved && achievement.achievementIcon ? (
                                 <img
                                     src={achievement.achievementIcon}
                                     alt={achievement.achievementName}

@@ -32,5 +32,12 @@
 @media (max-width: 1024px) {
     .investment-page__grid {
         grid-template-columns: 1fr;
+        padding-bottom: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .investment-page__grid {
+        padding-bottom: 200px;
     }
 }

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { fetchDailyQuiz, submitDailyQuiz } from "@/api/quizApi";
 import { Layout } from "@/components/layout";
 import { QuizCard } from "@/features/learning/components/quiz/QuizCard";
@@ -191,11 +192,67 @@ export const DailyQuizPage = () => {
   // 로딩 상태
   if (loading) {
     return (
+<<<<<<< HEAD
       <Layout>
         <div className="daily-quiz-page">
           <div className="daily-quiz-page__loading">퀴즈를 불러오는 중...</div>
         </div>
       </Layout>
+=======
+        <Layout>
+            <div className="daily-quiz-page">
+                {showCelebration ? (
+                    <QuizCelebration
+                        onClose={handleCloseCelebration}
+                        onContinue={handleContinueFromCelebration}
+                    />
+                ) : (
+                    <>
+                        <div className="daily-quiz-page__progress-wrapper">
+                            <QuizProgress
+                                current={correctCount}
+                                total={100}
+                            />
+                        </div>
+
+                        <div className="daily-quiz-page__content">
+                            <QuizCard
+                                key={quiz.quiz.quizId}
+                                quiz={quiz.quiz}
+                                onSubmit={(answer) => {
+                                    const answerValue = answer.oxAnswer !== undefined
+                                        ? (answer.oxAnswer ? 'O' : 'X')
+                                        : answer.choiceId!;
+                                    handleSubmit(quiz.quiz.quizId, answerValue, answer.shuffledChoices);
+                                }}
+                                disabled={showFeedback}
+                            />
+                        </div>
+                    </>
+                )}
+
+                {submitResult && (
+                    <QuizFeedbackModal
+                        isOpen={showFeedback}
+                        isCorrect={submitResult.isCorrect}
+                        userAnswer={getUserAnswerText()}
+                        correctAnswer={getCorrectAnswerText()}
+                        addedToReviewNote={submitResult.addedToReviewNote}
+                        onNext={handleNext}
+                        onClose={() => setShowFeedback(false)}
+                    />
+                )}
+
+                {showReward && submitResult && (
+                    <RewardNotification
+                        amount={submitResult.rewardAmount}
+                        currentBalance={submitResult.currentBalance}
+                        onClose={() => setShowReward(false)}
+                    />
+                )}
+            </div>
+        </Layout>
+>>>>>>> d5619e66f0aa9fba3b46a75d98c6037ed37000bd
     );
   }
 

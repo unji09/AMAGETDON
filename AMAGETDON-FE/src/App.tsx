@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { ErrorBoundary } from '@/components/common';
+import { ErrorBoundary, PrivateRoute, PublicRoute, AuthRoute } from '@/components/common';
 import { HomePage } from '@/pages/HomePage';
 import { CommunityPage } from '@/pages/CommunityPage';
 import { RankingPage } from '@/pages/RankingPage';
@@ -23,36 +23,47 @@ import { TransactionPage } from '@/pages/TransactionPage';
 import { HoldingsPage } from '@/pages/HoldingsPage';
 import { WatchlistPage } from '@/pages/WatchlistPage';
 import { ReviewNotePage } from '@/pages/ReviewNotePage';
-// import { LandingPage } from '@/pages/LandingPage';
+import { LandingPage } from '@/pages/LandingPage';
 
 function App() {
     return (
         <ErrorBoundary>
             <BrowserRouter>
                 <Routes>
-                    {/* <Route path="/" element={<LandingPage />} /> */}
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/learning/review-note" element={<ReviewNotePage />} />
-                    <Route path="/learning/quiz" element={<DailyQuizPage />} />
-                    <Route path="/learning/:chapterId/quiz" element={<ChapterQuizPage />} />
-                    <Route path="/learning/:chapterId" element={<ChapterDetailPage />} />
-                    <Route path="/learning" element={<LearningPage />} />
-                    <Route path="/achievement" element={<AchievementPage />} />
-                    <Route path="/investment" element={<InvestmentPage />} />
-                    <Route path="/investment/transactions" element={<TransactionPage />} />
-                    <Route path="/investment/holdings" element={<HoldingsPage />} />
-                    <Route path="/investment/watchlist" element={<WatchlistPage />} />
-                    <Route path="/investment/:stockCode" element={<StockDetailPage />} />
-                    <Route path="/community" element={<CommunityPage />} />
-                    <Route path="/community/chat/:roomId" element={<ChatRoomPage />} />
-                    <Route path="/ranking" element={<RankingPage />} />
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/signup" element={<SignupPage />} />
+                    {/* "/" 경로: 로그인 여부에 따라 다른 페이지 표시 */}
+                    <Route path="/" element={
+                        <AuthRoute
+                            authenticatedComponent={<HomePage />}
+                            unauthenticatedComponent={<LandingPage />}
+                        />
+                    } />
+
+                    {/* Public Routes - 로그인 시 홈으로 리다이렉트 */}
+                    <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+                    <Route path="/signup" element={<PublicRoute><SignupPage /></PublicRoute>} />
                     <Route path="/oauth/kakao" element={<OAuthKakaoCallback />} />
-                    <Route path="/password-reset" element={<PasswordResetPage />} />
-                    <Route path="/mypage" element={<MyInfoPage />} />
-                    <Route path="/survey" element={<SurveyPage />} />
-                    <Route path="/daily-quiz" element={<DailyQuizPage />} />
+                    <Route path="/password-reset" element={<PublicRoute><PasswordResetPage /></PublicRoute>} />
+
+                    {/* Private Routes - 로그인 필수 */}
+                    <Route path="/learning/review-note" element={<PrivateRoute><ReviewNotePage /></PrivateRoute>} />
+                    <Route path="/learning/quiz" element={<PrivateRoute><DailyQuizPage /></PrivateRoute>} />
+                    <Route path="/learning/:chapterId/quiz" element={<PrivateRoute><ChapterQuizPage /></PrivateRoute>} />
+                    <Route path="/learning/:chapterId" element={<PrivateRoute><ChapterDetailPage /></PrivateRoute>} />
+                    <Route path="/learning" element={<PrivateRoute><LearningPage /></PrivateRoute>} />
+                    <Route path="/achievement" element={<PrivateRoute><AchievementPage /></PrivateRoute>} />
+                    <Route path="/investment" element={<PrivateRoute><InvestmentPage /></PrivateRoute>} />
+                    <Route path="/investment/transactions" element={<PrivateRoute><TransactionPage /></PrivateRoute>} />
+                    <Route path="/investment/holdings" element={<PrivateRoute><HoldingsPage /></PrivateRoute>} />
+                    <Route path="/investment/watchlist" element={<PrivateRoute><WatchlistPage /></PrivateRoute>} />
+                    <Route path="/investment/:stockCode" element={<PrivateRoute><StockDetailPage /></PrivateRoute>} />
+                    <Route path="/community" element={<PrivateRoute><CommunityPage /></PrivateRoute>} />
+                    <Route path="/community/chat/:roomId" element={<PrivateRoute><ChatRoomPage /></PrivateRoute>} />
+                    <Route path="/ranking" element={<PrivateRoute><RankingPage /></PrivateRoute>} />
+                    <Route path="/mypage" element={<PrivateRoute><MyInfoPage /></PrivateRoute>} />
+                    <Route path="/survey" element={<PrivateRoute><SurveyPage /></PrivateRoute>} />
+                    <Route path="/daily-quiz" element={<PrivateRoute><DailyQuizPage /></PrivateRoute>} />
+
+                    {/* 404 */}
                     <Route path="*" element={<NotFoundPage />} />
                 </Routes>
             </BrowserRouter>

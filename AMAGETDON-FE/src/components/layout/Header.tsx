@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import apiClient from '@/api/client';
 import './Header.css';
@@ -20,6 +20,11 @@ export const Header = () => {
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+
+    // 슬라이딩 인디케이터 상태
+    const navRef = useRef<HTMLElement>(null);
+    const linkRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+    const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0, opacity: 0 });
 
     // 사용자 정보 API 호출 함수
     const fetchUserInfo = useCallback(async () => {
@@ -180,6 +185,40 @@ export const Header = () => {
         return balance.toLocaleString();
     };
 
+    // 슬라이딩 인디케이터 위치 업데이트
+    const updateIndicator = useCallback(() => {
+        const activeIndex = navItems.findIndex(item => isActive(item.path));
+        const activeLink = linkRefs.current[activeIndex];
+        const nav = navRef.current;
+
+        if (activeLink && nav) {
+            const navRect = nav.getBoundingClientRect();
+            const linkRect = activeLink.getBoundingClientRect();
+            setIndicatorStyle({
+                left: linkRect.left - navRect.left,
+                width: linkRect.width,
+                opacity: 1,
+            });
+        } else {
+            setIndicatorStyle(prev => ({ ...prev, opacity: 0 }));
+        }
+    }, [location.pathname]);
+
+    // 경로 변경 시 인디케이터 업데이트
+    useEffect(() => {
+        if (userInfo) {
+            // 약간의 지연을 줘서 DOM이 렌더링된 후 계산
+            const timer = setTimeout(updateIndicator, 50);
+            return () => clearTimeout(timer);
+        }
+    }, [location.pathname, userInfo, updateIndicator]);
+
+    // 창 크기 변경 시 인디케이터 재계산
+    useEffect(() => {
+        window.addEventListener('resize', updateIndicator);
+        return () => window.removeEventListener('resize', updateIndicator);
+    }, [updateIndicator]);
+
     return (
         <>
             {/* ========== 데스크톱 상단바 ========== */}
@@ -191,18 +230,30 @@ export const Header = () => {
                         <span className="header-logo-text">AMAGETDON</span>
                     </Link>
 
-                    {/* 네비게이션 */}
-                    <nav className="header-nav">
-                        {navItems.map((item) => (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                className={`header-nav-link ${isActive(item.path) ? 'active' : ''}`}
-                            >
-                                {item.label}
-                            </Link>
-                        ))}
-                    </nav>
+                    {/* 네비게이션 - 로그인 시에만 표시 */}
+                    {userInfo && (
+                        <nav className="header-nav" ref={navRef}>
+                            {navItems.map((item, index) => (
+                                <Link
+                                    key={item.path}
+                                    ref={el => { linkRefs.current[index] = el; }}
+                                    to={item.path}
+                                    className={`header-nav-link ${isActive(item.path) ? 'active' : ''}`}
+                                >
+                                    {item.label}
+                                </Link>
+                            ))}
+                            {/* 슬라이딩 인디케이터 */}
+                            <span
+                                className="header-nav-indicator"
+                                style={{
+                                    transform: `translateX(${indicatorStyle.left}px)`,
+                                    width: `${indicatorStyle.width}px`,
+                                    opacity: indicatorStyle.opacity,
+                                }}
+                            />
+                        </nav>
+                    )}
 
                     {/* 프로필 영역 */}
                     <div className="header-profile-area">
@@ -239,7 +290,7 @@ export const Header = () => {
                                                 <span className="profile-dropdown-title">{userInfo.currentTitle}</span>
                                             )}
                                             <span className="profile-dropdown-balance">
-                                                {formatBalance(userInfo.balance)} GM
+                                                {formatBalance(userInfo.balance)}원
                                             </span>
                                         </div>
                                         <div className="profile-dropdown-divider" />
@@ -269,27 +320,34 @@ export const Header = () => {
                                 )}
                             </>
                         ) : (
-                            <Link to="/login" className="header-login-btn">
-                                로그인
-                            </Link>
+                            <div className="header-auth-buttons">
+                                <Link to="/login" className="header-login-btn">
+                                    로그인
+                                </Link>
+                                <Link to="/signup" className="header-signup-btn">
+                                    회원가입
+                                </Link>
+                            </div>
                         )}
                     </div>
                 </div>
             </header>
 
-            {/* ========== 모바일 하단 탭바 ========== */}
-            <nav className="mobile-tabbar">
-                {navItems.map((item) => (
-                    <Link
-                        key={item.path}
-                        to={item.path}
-                        className={`tabbar-item ${isActive(item.path) ? 'active' : ''}`}
-                    >
-                        <span className="tabbar-icon">{item.icon}</span>
-                        <span className="tabbar-label">{item.label}</span>
-                    </Link>
-                ))}
-            </nav>
+            {/* ========== 모바일 하단 탭바 - 로그인 시에만 표시 ========== */}
+            {userInfo && (
+                <nav className="mobile-tabbar">
+                    {navItems.map((item) => (
+                        <Link
+                            key={item.path}
+                            to={item.path}
+                            className={`tabbar-item ${isActive(item.path) ? 'active' : ''}`}
+                        >
+                            <span className="tabbar-icon">{item.icon}</span>
+                            <span className="tabbar-label">{item.label}</span>
+                        </Link>
+                    ))}
+                </nav>
+            )}
         </>
     );
 };
