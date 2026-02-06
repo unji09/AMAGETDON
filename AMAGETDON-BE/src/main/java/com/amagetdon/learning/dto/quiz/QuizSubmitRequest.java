@@ -4,13 +4,11 @@ import jakarta.validation.constraints.*;
 import org.springframework.lang.Nullable;
 
 public record QuizSubmitRequest(
-        @NotNull(message = "퀴즈 ID는 필수입니다")
-        Long quizId,
+        @NotNull(message = "퀴즈 ID는 필수입니다") Long quizId,
 
-        @NotBlank(message = "답안은 필수입니다")
-        String answer  // OX: "O"/"X", MCQ: choiceId (String)
+        @NotBlank(message = "답안은 필수입니다") String answer, // OX: "O"/"X", MCQ: choiceId (String)
 
-        // quizSequence 제거!
+        @NotNull(message = "퀴즈 타입은 필수입니다") String quizSource // "NORMAL" or "CACHED"
 ) {
     public boolean isOxAnswer() {
         return "O".equals(answer) || "X".equals(answer);
