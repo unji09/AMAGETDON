@@ -37,6 +37,10 @@
     animation: modal-slide-up 0.2s ease-out;
 }
 
+.modal-content--overflow {
+    overflow: visible;
+}
+
 @keyframes modal-slide-up {
     from {
         transform: translateY(20px);
@@ -86,6 +90,10 @@
 /* 본문 */
 .modal-body {
     padding: var(--spacing-5);
+}
+
+.modal-body--overflow {
+    overflow: visible;
 }
 
 /* 반응형 */

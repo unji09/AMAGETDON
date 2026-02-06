@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Lock, Trophy } from 'lucide-react';
 import { Modal, Button, Toast } from '@/components/common';
 import { updateUserTitle } from '@/api/achievementApi';
@@ -30,6 +30,12 @@ export const AchievementDetailModal = ({
 }: AchievementDetailModalProps) => {
     const [toastMsg, setToastMsg] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    // 다른 업적 선택 시 확대 상태 초기화
+    useEffect(() => {
+        setIsExpanded(false);
+    }, [achievement]);
 
     if (!achievement) return null;
 
@@ -58,8 +64,8 @@ export const AchievementDetailModal = ({
 
     return (
         <>
-            <Modal isOpen onClose={onClose}>
-                <div className="achievement-detail">
+            <Modal isOpen onClose={onClose} allowOverflow>
+                <div className={`achievement-detail ${isExpanded ? 'achievement-detail--expanded' : ''}`}>
                     {isAchieved ? (
                         /* ─── 달성 업적 ─── */
                         <>
@@ -70,7 +76,10 @@ export const AchievementDetailModal = ({
                                 ))}
                             </div>
 
-                            <div className="achievement-detail__icon-wrap">
+                            <div
+                                className={`achievement-detail__icon-wrap ${isExpanded ? 'achievement-detail__icon-wrap--expanded' : ''}`}
+                                onClick={() => setIsExpanded(!isExpanded)}
+                            >
                                 {achievementIcon ? (
                                     <img
                                         className="achievement-detail__icon"
@@ -81,23 +90,26 @@ export const AchievementDetailModal = ({
                                     <Trophy size={40} strokeWidth={1.5} className="achievement-detail__trophy-icon" />
                                 )}
                             </div>
-                            <span className="achievement-detail__badge">업적 달성 완료</span>
-                            <h3 className="achievement-detail__name">{achievementName}</h3>
-                            {formattedDate && (
-                                <p className="achievement-detail__date">달성일: {formattedDate}</p>
-                            )}
-                            {achievementContent && (
-                                <p className="achievement-detail__desc">{achievementContent}</p>
-                            )}
-                            <div className="achievement-detail__actions">
-                                <Button
-                                    variant="primary"
-                                    size="medium"
-                                    onClick={handleSetTitle}
-                                    disabled={isCurrentTitle || loading}
-                                >
-                                    {isCurrentTitle ? '현재 칭호' : '칭호로 설정하기'}
-                                </Button>
+
+                            <div className="achievement-detail__content">
+                                <span className="achievement-detail__badge">업적 달성 완료</span>
+                                <h3 className="achievement-detail__name">{achievementName}</h3>
+                                {formattedDate && (
+                                    <p className="achievement-detail__date">달성일: {formattedDate}</p>
+                                )}
+                                {achievementContent && (
+                                    <p className="achievement-detail__desc">{achievementContent}</p>
+                                )}
+                                <div className="achievement-detail__actions">
+                                    <Button
+                                        variant="primary"
+                                        size="medium"
+                                        onClick={handleSetTitle}
+                                        disabled={isCurrentTitle || loading}
+                                    >
+                                        {isCurrentTitle ? '현재 칭호' : '칭호로 설정하기'}
+                                    </Button>
+                                </div>
                             </div>
                         </>
                     ) : (
