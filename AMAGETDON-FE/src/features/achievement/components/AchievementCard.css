@@ -140,9 +140,10 @@
 }
 
 .achievement-card__icon img {
-    width: 32px;
-    height: 32px;
-    object-fit: contain;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
 }
 
 .achievement-card__lock-icon {

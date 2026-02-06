@@ -19,7 +19,6 @@ export const StockHeader = ({ stockCode, detail, isFavorite, onWatchlistChange }
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const isUp = detail.changeRate >= 0;
-    const changeAmount = Math.round(Number(detail.currentPrice) * Math.abs(detail.changeRate) / (100 + Math.abs(detail.changeRate)));
 
     const handleToggle = async () => {
         if (loading) return;
@@ -67,7 +66,7 @@ export const StockHeader = ({ stockCode, detail, isFavorite, onWatchlistChange }
                 </span>
                 <span className={`stock-header__change ${isUp ? 'stock-header__change--up' : 'stock-header__change--down'}`}>
                     <FlipText
-                        value={`${isUp ? '+' : '-'}${changeAmount.toLocaleString()} (${isUp ? '+' : ''}${detail.changeRate.toFixed(2)}%)`}
+                        value={`${isUp ? '+' : '-'}${Math.abs(detail.changeAmount).toLocaleString()} (${isUp ? '+' : ''}${detail.changeRate.toFixed(2)}%)`}
                         className="stock-header__flip-change"
                     />
                 </span>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import apiClient from '@/api/client';
+import { getInvestmentIcon } from '@/constants/investmentType';
 import './Header.css';
 
 // 사용자 정보 타입 (User 엔티티 기반)
@@ -128,9 +129,9 @@ export const Header = () => {
     const isActive = (path: string) => {
         const currentPath = location.pathname;
 
-        // 홈은 정확히 일치해야 함
+        // 홈은 정확히 일치하거나 /ranking 경로일 때 활성화
         if (path === '/') {
-            return currentPath === '/';
+            return currentPath === '/' || currentPath === '/ranking';
         }
 
         // /learning/review-note 같은 구체적인 경로는 정확히 일치해야 함
@@ -266,7 +267,7 @@ export const Header = () => {
                                     onClick={handleProfileClick}
                                 >
                                     <div className="header-profile-avatar">
-                                        <span>{userInfo.nickname.charAt(0)}</span>
+                                        <span>{getInvestmentIcon(userInfo.investmentType)}</span>
                                     </div>
                                     <span className="header-profile-name">
                                         {userInfo.nickname}

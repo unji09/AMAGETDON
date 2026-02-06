@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSurvey } from '../hooks/useSurvey'
 import { submitSurvey } from '../../../api/surveyApi.ts'
+import { INVESTMENT_TYPE_CONFIG } from '@/constants/investmentType'
 import type { InvestmentResult } from '../types'
 import './SurveyForm.css'
 
@@ -27,9 +28,7 @@ const ResultModal = ({ result, onConfirm }: ResultModalProps) => (
     <div className="survey-result-overlay">
         <div className="survey-result-modal">
             <div className={`survey-result-icon survey-result-icon--${result.type}`}>
-                {result.type === 'AGGRESSIVE' && '🔥'}
-                {result.type === 'NEUTRAL' && '⚖️'}
-                {result.type === 'STABLE' && '🛡️'}
+                {INVESTMENT_TYPE_CONFIG[result.type].icon}
             </div>
             <h2 className="survey-result-title">투자 성향 분석 완료</h2>
             <div className={`survey-result-type survey-result-type--${result.type}`}>
