@@ -6,16 +6,10 @@ import {QuizProgress} from '@/features/learning/components/quiz/QuizProgress';
 import {QuizFeedbackModal} from '@/features/learning/components/quiz/QuizFeedbackModal';
 import {RewardNotification} from '@/features/learning/components/quiz/RewardNotification';
 import {QuizCelebration} from '@/features/learning/components/quiz/QuizCelebration';
-import {fetchDailyQuiz, submitDailyQuiz} from '@/api/quizApi';
+import {fetchDailyQuiz, submitDailyQuiz, getTodayQuizCount} from '@/api/quizApi';
 import type {QuizResponse, QuizSubmitResponse} from '@/types/quiz';
 import './DailyQuizPage.css';
 
-/**
- * 무한 퀴즈(오늘의 퀴즈) 페이지
- * - 1~100문제: 보상 지급
- * - 100문제 완료 시: 축하 메시지
- * - 101문제~: 보상 없이 계속
- */
 export const DailyQuizPage = () => {
     const navigate = useNavigate();
     const [quiz, setQuiz] = useState<QuizResponse | null>(null);
@@ -27,6 +21,7 @@ export const DailyQuizPage = () => {
     const [shuffledChoices, setShuffledChoices] = useState<any[] | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [correctCount, setCorrectCount] = useState(0);
 
     // 초기 퀴즈 로드
     useEffect(() => {
@@ -43,8 +38,14 @@ export const DailyQuizPage = () => {
         try {
             setLoading(true);
             setError(null);
-            const data = await fetchDailyQuiz();
-            setQuiz(data);
+
+            const [quizData, countData] = await Promise.all([
+                fetchDailyQuiz(),
+                getTodayQuizCount()
+            ]);
+
+            setQuiz(quizData);
+            setCorrectCount(countData.count);
             setSubmitResult(null);
             setShowFeedback(false);
             setShowCelebration(false);
@@ -63,12 +64,10 @@ export const DailyQuizPage = () => {
         if (!quiz) return;
 
         try {
-            // 섞인 선택지 저장
             if (shuffled) {
                 setShuffledChoices(shuffled);
             }
 
-            // API 호출
             const result = await submitDailyQuiz({
                 quizId,
                 answer: answer.toString(),
@@ -80,17 +79,22 @@ export const DailyQuizPage = () => {
             setUserAnswerText(answer.toString());
             setShowFeedback(true);
 
-            // 보상이 있으면 알림 표시
-            if (result.isCorrect && result.rewardAmount > 0) {
-                setShowReward(true);
-            }
+            // 정답이면 맞춘 문제 수 증가
+            if (result.isCorrect) {
+                const newCount = correctCount + 1;
+                setCorrectCount(newCount);
 
-            // 100문제 완료 체크
-            if (quiz.quizSequence === 100) {
-                setTimeout(() => {
-                    setShowFeedback(false);
-                    setShowCelebration(true);
-                }, 2000);
+                if (result.rewardAmount > 0) {
+                    setShowReward(true);
+                }
+
+                // 100문제 완료 체크
+                if (newCount === 100) {
+                    setTimeout(() => {
+                        setShowFeedback(false);
+                        setShowCelebration(true);
+                    }, 2000);
+                }
             }
         } catch (err) {
             console.error('답안 제출 실패:', err);
@@ -210,7 +214,7 @@ export const DailyQuizPage = () => {
                     <>
                         <div className="daily-quiz-page__progress-wrapper">
                             <QuizProgress
-                                current={quiz.quizSequence}
+                                current={correctCount}
                                 total={100}
                             />
                         </div>

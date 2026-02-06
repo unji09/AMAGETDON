@@ -68,7 +68,11 @@ public class SecurityConfig {
                 "https://localhost",
                 "http://localhost",
                 "https://i14a207.p.ssafy.io",
-                "http://i14a207.p.ssafy.io"
+                "http://i14a207.p.ssafy.io",
+                "https://www.amagetdon.site",
+                "http://www.amagetdon.site",
+                "https://amagetdon.site",
+                "http://amagetdon.site"
         ));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));

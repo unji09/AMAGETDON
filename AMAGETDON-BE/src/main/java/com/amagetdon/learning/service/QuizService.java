@@ -168,7 +168,7 @@ public class QuizService {
                 .findMaxSequenceByUserIdAndQuizDate(userId, today);
         Integer nextSequence = (currentSequence == null) ? 1 : currentSequence + 1;
 
-        // 2. 100개 이하만 처리
+        // 2. 100개 초과는 제출 불가
         if (nextSequence > DAILY_QUIZ_LIMIT) {
             throw new IllegalArgumentException("100개 초과 퀴즈는 제출할 수 없습니다");
         }
@@ -196,10 +196,10 @@ public class QuizService {
         );
         historyRepository.save(history);
 
-        // ✅ 업적 체크
+        // 7. 업적 체크
         checkQuizAchievements(userId, nextSequence, isCorrect);
 
-        // 7. 틀렸으면 오답노트 저장
+        // 8. 오답노트 처리
         boolean addedToReviewNote = false;
         if (!isCorrect) {
             boolean alreadyInReviewNote = reviewNoteRepository
@@ -212,15 +212,21 @@ public class QuizService {
             }
         }
 
-        // 8. 보상 지급
-        Integer rewardAmount = calculateRewardAmount(nextSequence);
+        // 9. 보상 계산 (정답이고 100문제 이내일 때만)
+        Integer rewardAmount = 0;
+        if (isCorrect && nextSequence <= DAILY_QUIZ_LIMIT) {
+            rewardAmount = calculateRewardAmount(nextSequence);
+        }
 
-        // User 조회 및 잔액 업데이트
+        // 10. User 조회 및 잔액 업데이트
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다"));
-        user.addBalance((long) rewardAmount);
 
-        // 9. 정답 문자열 생성
+        if (rewardAmount > 0) {
+            user.addBalance((long) rewardAmount);
+        }
+
+        // 11. 정답 문자열 생성
         String correctAnswer = getCorrectAnswerString(quiz);
 
         return new QuizSubmitResponse(
@@ -228,7 +234,7 @@ public class QuizService {
                 correctAnswer,
                 rewardAmount,
                 addedToReviewNote,
-                user.getBalance()  // 업데이트된 실제 잔액
+                user.getBalance()
         );
     }
 
