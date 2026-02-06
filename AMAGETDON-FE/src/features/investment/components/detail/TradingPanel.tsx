@@ -29,8 +29,17 @@ const SELL_RATIO_BUTTONS = [
     { label: '전량', value: 1 },
 ];
 
-// 수수료율 (0.015%)
-const FEE_RATE = 0.00015;
+// 수수료율
+const BUY_FEE_RATE = 0.00015;   // 매수: 0.015%
+const SELL_FEE_RATE = 0.0015;   // 매도: 0.15%
+const MINIMUM_FEE = 1;          // 최소 수수료 1원
+
+// 수수료 계산 (올림 처리, 최소 1원 보장)
+const calculateFee = (amount: number, isBuy: boolean): number => {
+    const feeRate = isBuy ? BUY_FEE_RATE : SELL_FEE_RATE;
+    const calculatedFee = Math.ceil(amount * feeRate);
+    return Math.max(calculatedFee, MINIMUM_FEE);
+};
 
 export const TradingPanel = ({ stockCode, currentPrice, balance, holding, onTradeComplete }: TradingPanelProps) => {
     const [mode, setMode] = useState<TradeMode>('buy');
@@ -40,8 +49,10 @@ export const TradingPanel = ({ stockCode, currentPrice, balance, holding, onTrad
 
     const qty = typeof quantity === 'number' ? quantity : 0;
     const totalAmount = currentPrice * qty;
-    const feeAmount = Math.floor(totalAmount * FEE_RATE);
-    const totalWithFee = totalAmount + feeAmount; // 매수 시 실제 필요 금액
+    const buyFeeAmount = totalAmount > 0 ? calculateFee(totalAmount, true) : 0;
+    const sellFeeAmount = totalAmount > 0 ? calculateFee(totalAmount, false) : 0;
+    const totalWithBuyFee = totalAmount + buyFeeAmount;  // 매수 시 실제 필요 금액
+    const totalAfterSellFee = totalAmount - sellFeeAmount;  // 매도 시 실제 수령 금액
     const holdingQty = holding?.quantity ?? 0;
 
     const handleModeChange = (newMode: TradeMode) => {
@@ -52,8 +63,8 @@ export const TradingPanel = ({ stockCode, currentPrice, balance, holding, onTrad
 
     const handleBuyRatio = (ratio: number) => {
         if (currentPrice <= 0) return;
-        // 수수료 포함하여 최대 수량 계산: balance >= qty * price * (1 + FEE_RATE)
-        const maxQty = Math.floor((balance * ratio) / (currentPrice * (1 + FEE_RATE)));
+        // 수수료 포함하여 최대 수량 계산: balance >= qty * price * (1 + BUY_FEE_RATE)
+        const maxQty = Math.floor((balance * ratio) / (currentPrice * (1 + BUY_FEE_RATE)));
         setQuantity(maxQty);
     };
 
@@ -69,7 +80,7 @@ export const TradingPanel = ({ stockCode, currentPrice, balance, holding, onTrad
             setMessage({ type: 'error', text: '보유 수량을 초과했습니다.' });
             return;
         }
-        if (mode === 'buy' && totalWithFee > balance) {
+        if (mode === 'buy' && totalWithBuyFee > balance) {
             setMessage({ type: 'error', text: '잔액이 부족합니다. (수수료 포함)' });
             return;
         }
@@ -93,7 +104,7 @@ export const TradingPanel = ({ stockCode, currentPrice, balance, holding, onTrad
         }
     };
 
-    const isBuyDisabled = mode === 'buy' && (qty <= 0 || loading || totalWithFee > balance);
+    const isBuyDisabled = mode === 'buy' && (qty <= 0 || loading || totalWithBuyFee > balance);
     const isSellDisabled = mode === 'sell' && (qty <= 0 || loading || qty > holdingQty);
 
     return (
@@ -187,28 +198,36 @@ export const TradingPanel = ({ stockCode, currentPrice, balance, holding, onTrad
                     <span>주문총액</span>
                     <strong>{formatWon(totalAmount)}</strong>
                 </div>
-                {mode === 'buy' && (
+                {mode === 'buy' ? (
                     <>
                         <div className="trading-panel__summary-row">
                             <span>수수료 (0.015%)</span>
-                            <span>{formatWon(feeAmount)}</span>
+                            <span>{formatWon(buyFeeAmount)}</span>
                         </div>
                         <div className="trading-panel__summary-row">
                             <span>총 결제금액</span>
-                            <strong>{formatWon(totalWithFee)}</strong>
+                            <strong>{formatWon(totalWithBuyFee)}</strong>
+                        </div>
+                        <div className="trading-panel__summary-row">
+                            <span>주문가능 금액</span>
+                            <span>{formatWon(balance)}</span>
                         </div>
                     </>
-                )}
-                {mode === 'buy' ? (
-                    <div className="trading-panel__summary-row">
-                        <span>주문가능 금액</span>
-                        <span>{formatWon(balance)}</span>
-                    </div>
                 ) : (
-                    <div className="trading-panel__summary-row">
-                        <span>매도가능 수량</span>
-                        <span>{holdingQty.toLocaleString()}주</span>
-                    </div>
+                    <>
+                        <div className="trading-panel__summary-row">
+                            <span>수수료 (0.15%)</span>
+                            <span>-{formatWon(sellFeeAmount)}</span>
+                        </div>
+                        <div className="trading-panel__summary-row">
+                            <span>예상 수령금액</span>
+                            <strong>{formatWon(totalAfterSellFee)}</strong>
+                        </div>
+                        <div className="trading-panel__summary-row">
+                            <span>매도가능 수량</span>
+                            <span>{holdingQty.toLocaleString()}주</span>
+                        </div>
+                    </>
                 )}
             </div>
 
