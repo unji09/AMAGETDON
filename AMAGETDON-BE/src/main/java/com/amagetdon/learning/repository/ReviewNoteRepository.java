@@ -29,7 +29,7 @@ public interface ReviewNoteRepository extends JpaRepository<ReviewNote, Long> {
     @Query("SELECT CASE WHEN COUNT(rn) > 0 THEN true ELSE false END " +
             "FROM ReviewNote rn " +
             "WHERE rn.userId = :userId AND rn.quiz.quizId = :quizId")
-    boolean existsByUserAndQuiz(@Param("userId") Long userId, @Param("quizId") Long quizId);
+    boolean existsByUserIdAndQuizId(@Param("userId") Long userId, @Param("quizId") Long quizId);
     /**
      * 특정 사용자의 특정 퀴즈 오답노트 조회
      * 오답노트 풀이 제출 시 사용
