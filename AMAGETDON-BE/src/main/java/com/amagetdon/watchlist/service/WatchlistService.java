@@ -26,7 +26,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.amagetdon.achievement.entity.AchievementIdCode.DIVERSIFY_EGGS;
+import static com.amagetdon.achievement.entity.AchievementIdCode.YOU_ARE_MINE;
 import static com.amagetdon.common.ErrorCode.*;
 
 @Service
@@ -91,7 +91,7 @@ public class WatchlistService {
         watchlistRepository.save(watchlist);
 
         long watchlistCount = watchlistRepository.countByUserUserId(userId);
-        achievementService.checkAndAwardAchievements(userId, watchlistCount, DIVERSIFY_EGGS);
+        achievementService.checkAndAwardAchievements(userId, watchlistCount, YOU_ARE_MINE);
 
         return convertToItem(watchlist);
     }

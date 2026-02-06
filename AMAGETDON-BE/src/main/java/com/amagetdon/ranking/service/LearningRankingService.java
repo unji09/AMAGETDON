@@ -79,19 +79,27 @@ public class LearningRankingService {
     private List<LearningRanking> createRankingsFromCorrectMap(Map<Long, Integer> userCorrectMap) {
         List<LearningRanking> rankings = new ArrayList<>();
 
-        // 정답 개수 순으로 정렬(내림차순)
         List<Map.Entry<Long, Integer>> sortedEntries = userCorrectMap.entrySet().stream()
                 .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
                 .toList();
 
-        // 순위 매기기
         int rank = 1;
+        int sameCount = 0;
+        Integer prevCorrect = null;
         LocalDateTime now = LocalDateTime.now();
 
-        for(Map.Entry<Long, Integer> entry : sortedEntries) {
+        for (Map.Entry<Long, Integer> entry : sortedEntries) {
+            if (prevCorrect != null && entry.getValue().equals(prevCorrect)) {
+                sameCount++;
+            } else {
+                rank += sameCount;
+                sameCount = 1;
+                prevCorrect = entry.getValue();
+            }
+
             LearningRanking ranking = LearningRanking.builder()
                     .userId(entry.getKey())
-                    .rank(rank++)
+                    .rank(rank)
                     .totalCorrect(entry.getValue())
                     .updatedAt(now)
                     .build();

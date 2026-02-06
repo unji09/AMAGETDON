@@ -12,12 +12,10 @@
 @media (max-width: 768px) {
     .layout-main {
         margin-top: 50px;
-        padding-bottom: 56px;
     }
 }
 
 @media (max-width: 480px) {
     .layout-main {
-        padding-bottom: 52px;
     }
 }

@@ -4,12 +4,15 @@ import {getMyInfo} from '@/api/userApi';
 import {getMyAchievements} from '@/api/achievementApi';
 import {getBaseChapters, getProgress} from '@/api/learningApi';
 import {fetchDailyQuiz} from '@/api/quizApi';
+import {getMyLearningRanking, getMyProfitRanking, getLearningRankings, getProfitRankings} from '@/api/rankingApi';
 import type {AchievementItem} from '@/features/achievement/types/achievement';
+import type {MyLearningRanking, MyProfitRanking} from '@/features/ranking/types/rankingTypes';
 
 interface UserInfo {
     nickname: string;
     currentTitle: string | null;
     balance: number;
+    investmentType: 'AGGRESSIVE' | 'NEUTRAL' | 'STABLE' | null;
 }
 
 interface ProgressData {
@@ -23,6 +26,13 @@ interface ProgressData {
     } | null;
 }
 
+interface RankingData {
+    learningRank: MyLearningRanking | null;
+    profitRank: MyProfitRanking | null;
+    totalLearningUsers: number;
+    totalProfitUsers: number;
+}
+
 export const useHome = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
@@ -30,6 +40,7 @@ export const useHome = () => {
         nickname: '',
         currentTitle: null,
         balance: 0,
+        investmentType: null,
     });
     const [achievements, setAchievements] = useState<AchievementItem[]>([]);
     const [progressData, setProgressData] = useState<ProgressData>({
@@ -39,6 +50,12 @@ export const useHome = () => {
         nextChapter: null,
     });
     const [quizStreak, setQuizStreak] = useState(0);
+    const [rankingData, setRankingData] = useState<RankingData>({
+        learningRank: null,
+        profitRank: null,
+        totalLearningUsers: 0,
+        totalProfitUsers: 0,
+    });
 
     // 1단계: 필수 데이터 로드
     useEffect(() => {
@@ -48,6 +65,7 @@ export const useHome = () => {
             return;
         }
 
+        // 필수 데이터 로드
         Promise.all([
             getMyInfo(),
             getMyAchievements('ALL'),
@@ -60,6 +78,7 @@ export const useHome = () => {
                     nickname: data.nickname,
                     currentTitle: data.currentTitle,
                     balance: data.balance,
+                    investmentType: data.investmentType,
                 });
                 setAchievements(achievementRes.achievements);
 
@@ -85,6 +104,21 @@ export const useHome = () => {
                     completedChapters,
                     percentage,
                     nextChapter,
+                });
+
+                // 랭킹 데이터는 별도로 로드 (실패해도 메인 페이지에 영향 없음)
+                Promise.allSettled([
+                    getMyLearningRanking(),
+                    getMyProfitRanking(),
+                    getLearningRankings(0, 1),
+                    getProfitRankings(0, 1),
+                ]).then(([learningRankRes, profitRankRes, learningListRes, profitListRes]) => {
+                    setRankingData({
+                        learningRank: learningRankRes.status === 'fulfilled' ? learningRankRes.value : null,
+                        profitRank: profitRankRes.status === 'fulfilled' ? profitRankRes.value : null,
+                        totalLearningUsers: learningListRes.status === 'fulfilled' ? learningListRes.value.totalElements : 0,
+                        totalProfitUsers: profitListRes.status === 'fulfilled' ? profitListRes.value.totalElements : 0,
+                    });
                 });
             })
             .catch(() => {
@@ -145,6 +179,7 @@ export const useHome = () => {
         achievements,
         progressData,
         quizStreak,
+        rankingData,
         navigateToQuiz,
         navigateToDailyQuiz,
         navigateToMyInfo,

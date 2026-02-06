@@ -9,6 +9,7 @@ RUN npm ci
 
 # 소스 코드 복사 및 빌드
 COPY . .
+RUN npm install
 RUN npm run build
 
 # Production stage

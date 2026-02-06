@@ -45,14 +45,14 @@ export const useMyInfo = () => {
                 setLoginType(data.loginType)
             })
             .catch(() => {
-                setError('Failed to load user information.')
+                setError('사용자 정보를 불러오는데 실패했습니다.')
             })
             .finally(() => setLoading(false))
     }, [navigate])
 
     const handleSave = async () => {
         if (!nickname.trim()) {
-            setError('Please enter a nickname.')
+            setError('닉네임을 입력해주세요.')
             return
         }
 
@@ -72,9 +72,9 @@ export const useMyInfo = () => {
             const res = await updateMyInfo(payload)
             initialDataRef.current = res.data
             setPassword('')
-            setSuccessMsg('Changes saved successfully.')
+            setSuccessMsg('변경사항이 저장되었습니다.')
         } catch {
-            setError('Failed to save changes.')
+            setError('변경사항 저장에 실패했습니다.')
         } finally {
             setSaving(false)
         }
