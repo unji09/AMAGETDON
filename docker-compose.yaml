@@ -112,9 +112,10 @@ services:
     build:
       context: ./AMAGETDON-FE
       dockerfile: Dockerfile
-      args:
-        - VITE_KAKAO_JS_KEY=${VITE_KAKAO_JS_KEY}
     container_name: amagetdon-frontend
+    environment:
+      - VITE_KAKAO_JS_KEY=${VITE_KAKAO_JS_KEY}
+      - REDIRECT_URL=${REDIRECT_URL}
     network_mode: host
     restart: unless-stopped
 
