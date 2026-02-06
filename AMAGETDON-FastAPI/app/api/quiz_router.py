@@ -18,11 +18,12 @@ def generate_quiz(
     AI 퀴즈 생성 API
 
     Spring Boot에서 호출하여 캐싱 퀴즈 생성
+    미사용 캐싱 퀴즈가 100개 이하면 자동으로 10개 생성
     `QuizGenerateRequest` 검증 (Pydantic)
     `QuizService`를 통한 퀴즈 생성
 
     Args:
-        request: 퀴즈 생성 요청 (count, difficulty, quiz_type)
+        request: 퀴즈 생성 요청 (difficulty, quiz_type)
         db: 데이터베이스 세션 (의존성 주입)
 
     Returns:
@@ -37,8 +38,8 @@ def generate_quiz(
         # QuizService 인스턴스 생성
         service = QuizService(db)
 
-        # 퀴즈 생성
-        response = service.generate_quiz(
+        # 자동 체크 후 필요시 생성 (100개 이하면 10개 생성)
+        response = service.check_and_generate_if_needed(
             difficulty=request.difficulty,
             quiz_type=request.quiz_type
         )
@@ -56,6 +57,92 @@ def generate_quiz(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"퀴즈 생성 중 오류가 발생했습니다: {str(e)}"
+        )
+
+@router.post("/generate/batch", response_model=QuizGenerateResponse, status_code=status.HTTP_201_CREATED)
+def generate_quiz_batch(
+    count: int = 10,
+    difficulty: str = "RANDOM",
+    quiz_type: str = "RANDOM",
+    db: Session = Depends(get_db)
+):
+    """
+    퀴즈 일괄 생성 API (수동 호출용)
+
+    지정된 개수만큼 퀴즈를 일괄 생성
+    관리자 또는 배치 작업에서 사용
+
+    Args:
+        count: 생성할 퀴즈 개수 (기본 10개, 최대 50개 권장)
+        difficulty: 난이도 (RANDOM/EASY/MEDIUM/HARD)
+        quiz_type: 타입 (RANDOM/OX/MCQ)
+        db: 데이터베이스 세션 (의존성 주입)
+
+    Returns:
+        QuizGenerateResponse: 생성 결과 (generated_count, cached_total)
+
+    Raises:
+        HTTPException 400: count가 유효하지 않음 (1~50)
+        HTTPException 500: 퀴즈 생성 실패
+    """
+    # count 검증
+    if count < 1 or count > 50:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="생성 개수는 1~50 사이여야 합니다"
+        )
+
+    try:
+        # QuizService 인스턴스 생성
+        service = QuizService(db)
+
+        # 일괄 생성
+        response = service.generate_quiz_batch(
+            difficulty=difficulty,
+            quiz_type=quiz_type,
+            count=count
+        )
+
+        return response
+
+    except Exception as e:
+        # 기타 오류
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"퀴즈 일괄 생성 중 오류: {str(e)}"
+        )
+
+@router.get("/status")
+def get_quiz_cache_status(db: Session = Depends(get_db)):
+    """
+    캐싱 퀴즈 현황 조회 API
+
+    미사용 및 전체 퀴즈 개수 확인용
+
+    Returns:
+        dict: 캐싱 현황
+            - unused_count: 미사용 퀴즈 개수
+            - total_count: 전체 퀴즈 개수
+            - should_generate: 생성이 필요한지 여부 (100개 이하)
+    """
+    try:
+        from app.repositories.quiz_repository import QuizRepository
+        
+        repository = QuizRepository(db)
+        
+        unused_count = repository.count_unused_quizzes()
+        total_count = repository.count_all_quizzes()
+        
+        return {
+            "unused_count": unused_count,
+            "total_count": total_count,
+            "should_generate": unused_count <= 100
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"현황 조회 실패: {str(e)}"
         )
 
 @router.get("/health")
