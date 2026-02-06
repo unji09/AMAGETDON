@@ -6,7 +6,34 @@
     align-items: center;
     text-align: center;
     padding: var(--spacing-4) 0;
-    overflow: hidden;
+    overflow: visible;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 확장 시 가로 레이아웃 (데스크탑만) */
+@media (min-width: 500px) {
+    .achievement-detail--expanded {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        text-align: left;
+        gap: var(--spacing-5);
+        padding: var(--spacing-4);
+    }
+}
+
+@media (min-width: 500px) {
+    .achievement-detail--expanded .achievement-detail__content {
+        flex: 1;
+        max-width: 280px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+.achievement-detail__content {
+    display: contents;
 }
 
 /* ─── Confetti 컨테이너 ─── */
@@ -84,13 +111,13 @@
     justify-content: center;
     margin-bottom: var(--spacing-4);
     box-shadow: 0 4px 20px rgba(245, 215, 100, 0.4);
-    animation: iconBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+    animation: iconBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s forwards;
 }
 
 @keyframes iconBounce {
     from { transform: scale(0.3); opacity: 0; }
     60% { transform: scale(1.1); }
-    to { transform: scale(1); opacity: 1; }
+    to { opacity: 1; }
 }
 
 .achievement-detail__icon-wrap--locked {
@@ -106,20 +133,54 @@
     border-radius: 50%;
 }
 
-/* 아이콘 래퍼 호버/클릭 시 확대 효과 */
-.achievement-detail__icon-wrap {
+/* 아이콘 래퍼 클릭 시 확대 효과 */
+.achievement-detail__icon-wrap:not(.achievement-detail__icon-wrap--locked) {
     cursor: pointer;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
 }
 
-.achievement-detail__icon-wrap:hover {
-    transform: scale(1.5) translateX(30px);
-    box-shadow: 0 8px 32px rgba(245, 215, 100, 0.5);
-    z-index: 10;
+/* 클릭 힌트 */
+.achievement-detail__icon-wrap:not(.achievement-detail__icon-wrap--locked)::after {
+    content: '클릭하여 확대';
+    position: absolute;
+    top: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: #999;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s ease;
 }
 
-.achievement-detail__icon-wrap:active {
-    transform: scale(1.8) translateX(40px);
+.achievement-detail__icon-wrap:not(.achievement-detail__icon-wrap--locked):hover::after {
+    opacity: 1;
+}
+
+/* 확대된 상태 - 모바일: 가운데 확대 */
+.achievement-detail__icon-wrap--expanded {
+    width: 160px !important;
+    height: 160px !important;
+    flex-shrink: 0;
+    box-shadow:
+        0 0 0 4px rgba(255, 255, 255, 0.95),
+        0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* 확대된 상태 - 데스크탑: 가로 레이아웃용 */
+@media (min-width: 500px) {
+    .achievement-detail__icon-wrap--expanded {
+        width: 180px !important;
+        height: 180px !important;
+        margin-bottom: 0 !important;
+    }
+}
+
+.achievement-detail__icon-wrap--expanded::after {
+    content: '클릭하여 축소' !important;
+    opacity: 1 !important;
+    top: -24px;
 }
 
 .achievement-detail__trophy-icon {
@@ -181,6 +242,12 @@
     margin-bottom: var(--spacing-6);
 }
 
+@media (min-width: 500px) {
+    .achievement-detail--expanded .achievement-detail__desc {
+        max-width: none;
+    }
+}
+
 /* ─── 액션 버튼 ─── */
 .achievement-detail__actions {
     position: relative;
@@ -188,6 +255,12 @@
     width: 100%;
     display: flex;
     justify-content: center;
+}
+
+@media (min-width: 500px) {
+    .achievement-detail--expanded .achievement-detail__actions {
+        justify-content: flex-start;
+    }
 }
 
 /* ─── 카테고리 태그 (미달성) ─── */
