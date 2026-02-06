@@ -164,7 +164,7 @@ public class QuizService {
     public QuizSubmitResponse submitQuiz(Long userId, QuizSubmitRequest request) {
         LocalDate today = LocalDate.now();
 
-        // 1. 오늘 맞춘 문제 수 조회 (변경: 푼 문제 수 → 맞춘 문제 수)
+        // 1. 오늘 맞춘 문제 수 조회
         Integer correctCount = historyRepository
                 .countCorrectByUserIdAndQuizDate(userId, today);
 
@@ -174,7 +174,9 @@ public class QuizService {
         // 2. 퀴즈 타입에 따라 분기
         boolean isCorrect;
         String correctAnswer;
-        DailyQuizHistory history;
+        boolean addedToReviewNote = false;
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다"));
 
         if ("CACHED".equals(request.quizSource())) {
             // 101번 이후: CachedQuiz
@@ -184,15 +186,7 @@ public class QuizService {
             isCorrect = checkCachedAnswer(cachedQuiz, request);
             correctAnswer = getCorrectAnswerStringFromCached(cachedQuiz);
 
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다"));
-
-            history = new DailyQuizHistory(
-                    userId,
-                    cachedQuiz.getCachedQuizId(),
-                    today,
-                    isCorrect ? nextSequence : currentSequence,
-                    isCorrect);
+            // 캐시드 퀴즈는 DailyQuizHistory에 저장하지 않음
 
         } else {
             // 1~100번: Quiz
@@ -202,55 +196,54 @@ public class QuizService {
             isCorrect = checkAnswer(quiz, request);
             correctAnswer = getCorrectAnswerString(quiz);
 
-            // 오답노트 저장 (100개 미만일 때만)
-            boolean addedToReviewNote = false;
-            if (!isCorrect && currentSequence < DAILY_QUIZ_LIMIT) {
-                User user = userRepository.findById(userId)
-                        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다"));
-
+            // 오답노트 저장
+            if (!isCorrect) {
                 boolean exists = reviewNoteRepository.existsByUserIdAndQuizId(userId, request.quizId());
                 if (!exists) {
-                    ReviewNote reviewNote = new ReviewNote(user, quiz);
+                    ReviewNote reviewNote = new ReviewNote(user.getUserId(), quiz);
                     reviewNoteRepository.save(reviewNote);
+                    addedToReviewNote = true;
                 }
             }
 
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다"));
-
-            history = new DailyQuizHistory(
-                    user,
-                    quiz,
-                    today,
+            // DailyQuizHistory 저장 (100번 이하만)
+            DailyQuizHistory history = new DailyQuizHistory(
+                    userId,
+                    quiz.getQuizId(),
                     isCorrect ? nextSequence : currentSequence,
                     isCorrect);
+            historyRepository.save(history);
         }
 
-        // 3. History 저장
-        historyRepository.save(history);
-
-        // 4. 보상 계산 (맞춘 문제가 1~100개일 때만)
-        int rewardAmount = 0;
+        // 3. 보상 계산 (100번 이하만)
+        Integer rewardAmount = 0;
         if (isCorrect && nextSequence <= DAILY_QUIZ_LIMIT) {
             rewardAmount = calculateRewardAmount(nextSequence);
+            user.addBalance(rewardAmount.longValue());
+            userRepository.save(user);
         }
 
-        // 5. User 조회 및 보상 지급
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다"));
+        // 4. 오늘 퀴즈 보상 체크 (100번 완료 시)
+        if (isCorrect && nextSequence == DAILY_QUIZ_LIMIT) {
+            boolean alreadyReceived = rewardRepository
+                    .existsByUserIdAndQuizRewardDate(userId, today);
 
-        if (rewardAmount > 0) {
-            user.addBalance((long) rewardAmount);
+            if (!alreadyReceived) {
+                DailyLearningReward reward = new DailyLearningReward(userId);
+                rewardRepository.save(reward);
+            }
         }
 
-        // 6. 업적 체크
-        checkQuizAchievements(userId, isCorrect ? nextSequence : currentSequence, isCorrect);
+        // 5. 업적 체크 (100번 이하만)
+        if (nextSequence <= DAILY_QUIZ_LIMIT) {
+            checkQuizAchievements(userId, isCorrect ? nextSequence : currentSequence, isCorrect);
+        }
 
         return new QuizSubmitResponse(
                 isCorrect,
                 correctAnswer,
                 rewardAmount,
-                false, // 101번 이후는 오답노트 없음
+                addedToReviewNote,
                 user.getBalance());
     }
 
