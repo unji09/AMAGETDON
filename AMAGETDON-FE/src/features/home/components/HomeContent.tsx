@@ -112,13 +112,6 @@ export const HomeContent = () => {
                     <div className="home-stats-balance">
                         {formatBalance(userData.balance)} <span className="home-stats-unit">원</span>
                     </div>
-                    {rankingData.profitRank && (
-                        <div className={`home-stats-change ${rankingData.profitRank.totalProfit >= 0 ? 'positive' : 'negative'}`}>
-                            <span>{rankingData.profitRank.totalProfit >= 0 ? '↑' : '↓'}</span>
-                            {rankingData.profitRank.totalProfit >= 0 ? '+' : ''}
-                            {rankingData.profitRank.totalProfit.toLocaleString()}원
-                        </div>
-                    )}
                 </div>
             </div>
 
