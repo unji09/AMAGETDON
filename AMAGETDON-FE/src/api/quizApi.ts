@@ -14,6 +14,19 @@ import type {
 const QUIZ_BASE = '/quizzes';
 const CHAPTER_BASE = '/chapters';
 
+
+/**
+ * 메인페이지에 띄울 오늘 맞춘 문제 수
+ */
+export interface QuizCountResponse {
+    count: number;
+}
+
+export const getTodayQuizCount = async (): Promise<QuizCountResponse> => {
+    const response = await apiClient.get<QuizCountResponse>('/quizzes/daily/count');
+    return response.data;
+};
+
 /**
  * 무한 퀴즈 - 오늘의 퀴즈 조회
  * GET /api/v1/quizzes/daily
