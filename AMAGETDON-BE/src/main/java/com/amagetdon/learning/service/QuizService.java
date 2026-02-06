@@ -119,15 +119,8 @@ public class QuizService {
             return convertCachedQuizToResponse(cachedQuiz, nextSequence);
         }
 
-        // 2. 미사용 퀴즈 없음 -> 미사용 개수 확인
-        Integer unusedCount = cachedQuizRepository.countByIsUsed(false);
-
-        if (unusedCount >= CACHED_QUIZ_BUFFER_SIZE) {
-            throw new IllegalStateException("퀴즈 생성 중입니다. 잠시 후 다시 시도해주세요");
-        }
-
-        // 3. 100개 미만 -> FastAPI 호출하여 생성
-        log.info("FastAPI 퀴즈 생성 요청: unusedCount={}", unusedCount);
+        // 2. 퀴즈 없음 → FastAPI 호출하여 생성
+        log.info("FastAPI 퀴즈 생성 요청");
         fastApiService.requestQuizGeneration(1, "RANDOM", "RANDOM");
 
         // 3. 생성 요청 후 재조회 (polling 방식)

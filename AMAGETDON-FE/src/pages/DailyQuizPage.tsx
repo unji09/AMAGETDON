@@ -5,7 +5,7 @@ import { QuizCelebration } from "@/features/learning/components/quiz/QuizCelebra
 import { QuizFeedbackModal } from "@/features/learning/components/quiz/QuizFeedbackModal";
 import { QuizProgress } from "@/features/learning/components/quiz/QuizProgress";
 import { RewardNotification } from "@/features/learning/components/quiz/RewardNotification";
-import { SimpleFeedbackModal } from "@/features/learning/components/quiz/SimpleFeedbackModal"; // 추가
+import { SimpleFeedbackModal } from "@/features/learning/components/quiz/SimpleFeedbackModal";
 import type { QuizResponse, QuizSubmitResponse } from "@/types/quiz";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
