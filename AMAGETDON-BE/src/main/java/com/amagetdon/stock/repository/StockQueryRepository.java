@@ -35,6 +35,7 @@ public class StockQueryRepository {
                         s.marketCap,
                         sp.currentPrice,
                         sp.changeRate,
+                        sp.changeAmount,
                         sp.volume
                 ))
                 .from(sp)

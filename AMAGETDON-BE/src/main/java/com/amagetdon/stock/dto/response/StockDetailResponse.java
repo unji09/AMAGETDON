@@ -13,6 +13,7 @@ public record StockDetailResponse(
         Long marketCap,
         String currentPrice,
         BigDecimal changeRate,
+        Integer changeAmount,
         Integer volume
 ) {
 }
