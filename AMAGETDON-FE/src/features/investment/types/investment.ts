@@ -55,6 +55,14 @@ export interface WatchlistResponse {
     items: WatchlistStockItem[];
 }
 
+// WatchlistItem 별칭 (편의를 위해)
+export type WatchlistItem = WatchlistStockItem;
+
+// 관심 종목 여부 확인 응답
+export interface WatchlistCheckResponse {
+    watchlistId: number;
+}
+
 // 단일 종목 보유 정보
 export interface SingleHoldingData {
     stockCode: string;

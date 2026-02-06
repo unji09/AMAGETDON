@@ -1,9 +1,19 @@
 .investment-page__header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     gap: var(--spacing-4);
     margin-bottom: var(--spacing-5);
+}
+
+/* 검색창: 남은 공간 채우기 */
+.investment-page__header .investment-search {
+    flex: 1;
+}
+
+/* 투자가이드 버튼: 고정 크기 */
+.investment-page__header .learn-mode-toggle {
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .investment-page__grid {
@@ -22,5 +32,12 @@
 @media (max-width: 1024px) {
     .investment-page__grid {
         grid-template-columns: 1fr;
+        padding-bottom: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .investment-page__grid {
+        padding-bottom: 200px;
     }
 }

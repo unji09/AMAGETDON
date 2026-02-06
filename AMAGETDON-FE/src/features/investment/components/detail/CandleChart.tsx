@@ -31,6 +31,50 @@ export const CandleChart = ({ candles, period, onPeriodChange }: CandleChartProp
             chartRef.current = null;
         }
 
+        // x축 라벨 포맷터
+        const getTickMarkFormatter = (timestamp: number) => {
+            const date = new Date(timestamp * 1000);
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+
+            switch (period) {
+                case '1D':
+                    return `${hours}:${minutes}`;
+                case '1W':
+                    return `${month}/${day}`;
+                case '3M':
+                    return `${month}/${day}`;
+                case '1Y':
+                    return `${month}월`;
+                default:
+                    return `${month}/${day}`;
+            }
+        };
+
+        // 호버 툴팁 포맷터
+        const getTooltipFormatter = (timestamp: number) => {
+            const date = new Date(timestamp * 1000);
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+
+            switch (period) {
+                case '1D':
+                    return `${month}월 ${day}일 ${hours}:${minutes}`;
+                case '1W':
+                    return `${month}월 ${day}일 ${hours}:${minutes}`;
+                case '3M':
+                    return `${month}월 ${day}일`;
+                case '1Y':
+                    return `${date.getFullYear()}년 ${month}월 ${day}일`;
+                default:
+                    return `${month}월 ${day}일`;
+            }
+        };
+
         const chart = createChart(containerRef.current, {
             layout: {
                 background: { color: '#ffffff' },
@@ -44,8 +88,14 @@ export const CandleChart = ({ candles, period, onPeriodChange }: CandleChartProp
             width: containerRef.current.clientWidth,
             height: 360,
             crosshair: { mode: 0 },
-            timeScale: { borderColor: '#e0e0e0' },
+            timeScale: {
+                borderColor: '#e0e0e0',
+                tickMarkFormatter: (time: number) => getTickMarkFormatter(time),
+            },
             rightPriceScale: { borderColor: '#e0e0e0' },
+            localization: {
+                timeFormatter: (timestamp: number) => getTooltipFormatter(timestamp),
+            },
         });
 
         const candleSeries = chart.addSeries(CandlestickSeries, {
@@ -108,7 +158,7 @@ export const CandleChart = ({ candles, period, onPeriodChange }: CandleChartProp
             chart.remove();
             chartRef.current = null;
         };
-    }, [candles]);
+    }, [candles, period]);
 
     return (
         <div className="candle-chart">

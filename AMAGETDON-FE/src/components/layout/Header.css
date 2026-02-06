@@ -11,7 +11,7 @@
     height: 60px;
     background-color: #FFFFFF;
     border-bottom: 1px solid #F0F0F0;
-    z-index: 1000;
+    z-index: 1100;
 }
 
 .header-content {
@@ -22,6 +22,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    overflow: visible;
 }
 
 /* 로고 */
@@ -48,18 +49,24 @@
 
 /* 네비게이션 */
 .header-nav {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 40px;
+    height: 100%;
+    padding-bottom: 3px;
 }
 
 .header-nav-link {
     position: relative;
+    display: flex;
+    align-items: center;
+    height: 100%;
     font-size: 15px;
     font-weight: 500;
     color: #8B8B8B;
     text-decoration: none;
-    padding: 8px 0;
+    padding: 0 4px;
     transition: color 0.2s ease;
     white-space: nowrap;
 }
@@ -73,15 +80,19 @@
     color: #203C2E;
 }
 
-.header-nav-link.active::after {
-    content: '';
+/* 슬라이딩 인디케이터 */
+.header-nav-indicator {
     position: absolute;
-    bottom: -18px;
+    bottom: 0;
     left: 0;
-    right: 0;
     height: 3px;
-    background-color: #203C2E;
-    border-radius: 2px 2px 0 0;
+    background: linear-gradient(90deg, #203C2E 0%, #3D6B4F 100%);
+    border-radius: 3px 3px 0 0;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.2s ease;
+    box-shadow: 0 0 8px rgba(32, 60, 46, 0.3);
+    pointer-events: none;
 }
 
 /* 프로필 영역 */
@@ -146,7 +157,7 @@
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
     padding: 8px 0;
-    z-index: 1001;
+    z-index: 1101;
 }
 
 .profile-dropdown-header {
@@ -206,20 +217,45 @@
     color: #6B7280;
 }
 
+/* 인증 버튼 영역 */
+.header-auth-buttons {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 /* 로그인 버튼 */
 .header-login-btn {
     padding: 8px 16px;
-    background-color: #203C2E;
+    background-color: transparent;
+    color: #1a1a1a;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    text-decoration: none;
+    border: 1px solid rgba(0,0,0,0.15);
+    transition: all 0.2s ease;
+}
+
+.header-login-btn:hover {
+    background-color: rgba(0,0,0,0.03);
+    border-color: rgba(0,0,0,0.3);
+}
+
+/* 회원가입 버튼 */
+.header-signup-btn {
+    padding: 8px 16px;
+    background-color: #10B981;
     color: white;
     font-size: 14px;
     font-weight: 600;
     border-radius: 8px;
     text-decoration: none;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
 }
 
-.header-login-btn:hover {
-    background-color: #162B20;
+.header-signup-btn:hover {
+    background-color: #059669;
 }
 
 /* 프로필 스켈레톤 로딩 */
@@ -251,7 +287,7 @@
     height: 60px;
     background-color: #FFFFFF;
     border-top: 1px solid #F0F0F0;
-    z-index: 1000;
+    z-index: 1100;
 }
 
 .tabbar-item {
@@ -299,7 +335,7 @@
 
 /* ==================== 반응형 ==================== */
 @media (max-width: 768px) {
-    /* 데스크톱 상단바 숨김 */
+    /* 데스크톱 상단바 */
     .header-desktop {
         height: 50px;
     }
@@ -326,6 +362,17 @@
         height: 36px;
     }
 
+    /* 비로그인 버튼 - 모바일 */
+    .header-auth-buttons {
+        gap: 8px;
+    }
+
+    .header-login-btn,
+    .header-signup-btn {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+
     /* 모바일 하단 탭바 표시 */
     .mobile-tabbar {
         display: flex;
@@ -335,6 +382,17 @@
 @media (max-width: 480px) {
     .header-content {
         padding: 0 16px;
+    }
+
+    /* 비로그인 버튼 - 작은 화면 */
+    .header-auth-buttons {
+        gap: 6px;
+    }
+
+    .header-login-btn,
+    .header-signup-btn {
+        padding: 6px 10px;
+        font-size: 12px;
     }
 
     .mobile-tabbar {

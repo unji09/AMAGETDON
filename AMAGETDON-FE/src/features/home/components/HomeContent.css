@@ -57,6 +57,17 @@
 .home-avatar img {
     width: 100%;
     height: 100%;
+    object-fit: cover;
+}
+
+/* 업적 아이콘이 프로필로 설정된 경우 */
+.home-avatar--achievement {
+    background: linear-gradient(135deg, #fef5e7 0%, #fceabb 100%);
+    padding: 12px;
+}
+
+.home-avatar--achievement img {
+    object-fit: contain;
 }
 
 .home-nickname {
@@ -66,10 +77,29 @@
     color: #1a202c;
 }
 
+.home-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
 .home-title {
     font-size: 14px;
     color: #718096;
-    margin-bottom: 12px;
+    margin: 0;
+}
+
+.home-investment-type {
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: #f7fafc;
+    border-radius: 6px;
 }
 
 .home-profile-buttons {

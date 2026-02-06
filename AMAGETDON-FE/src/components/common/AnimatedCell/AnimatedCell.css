@@ -1,0 +1,55 @@
+.animated-cell {
+    display: inline-block;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    border-radius: 4px;
+    padding: 0 2px;
+    margin: 0 -2px;
+}
+
+/* 기본 반짝임 효과 */
+.animated-cell--flash {
+    animation: cellFlash 0.6s ease;
+}
+
+/* 상승 시 반짝임 (초록 계열) */
+.animated-cell--flash-up {
+    animation: cellFlashUp 0.6s ease;
+}
+
+/* 하락 시 반짝임 (빨강 계열) */
+.animated-cell--flash-down {
+    animation: cellFlashDown 0.6s ease;
+}
+
+@keyframes cellFlash {
+    0% {
+        background-color: rgba(32, 60, 46, 0.2);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+@keyframes cellFlashUp {
+    0% {
+        background-color: rgba(231, 76, 60, 0.25);
+    }
+    50% {
+        background-color: rgba(231, 76, 60, 0.15);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+@keyframes cellFlashDown {
+    0% {
+        background-color: rgba(52, 152, 219, 0.25);
+    }
+    50% {
+        background-color: rgba(52, 152, 219, 0.15);
+    }
+    100% {
+        background-color: transparent;
+    }
+}

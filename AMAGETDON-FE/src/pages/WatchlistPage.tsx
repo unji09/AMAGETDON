@@ -1,35 +1,101 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout';
 import { ContainerContent } from '@/components/layout';
-import { Loading } from '@/components/common';
+import { Loading, FlipText } from '@/components/common';
 import { RefreshCw, Heart, ArrowLeft } from 'lucide-react';
 import { Pagination } from '@/features/investment/components/common/Pagination';
+import { usePolling } from '@/hooks/usePolling';
+import { useMarketStatus } from '@/hooks/useMarketStatus';
 import { getWatchlist, removeFromWatchlist } from '@/api/investmentApi';
 import { formatPrice } from '@/features/investment/utils/format';
-import type { WatchlistResponse } from '@/features/investment/types/investment';
+import type { WatchlistResponse, WatchlistItem as WatchlistItemType } from '@/features/investment/types/investment';
 import './WatchlistPage.css';
 
 const PAGE_SIZE = 10;
+const POLL_INTERVAL = 7000; // 7초
+
+// 개별 행 컴포넌트 (애니메이션 적용)
+const WatchlistRow = memo(({
+    item,
+    removingCode,
+    onRemove,
+    onNavigate,
+}: {
+    item: WatchlistItemType;
+    removingCode: string | null;
+    onRemove: (e: React.MouseEvent, stockCode: string) => void;
+    onNavigate: (stockCode: string) => void;
+}) => {
+    const isUp = item.changeRate >= 0;
+
+    return (
+        <tr
+            className="watchlist-page__row"
+            onClick={() => onNavigate(item.stockCode)}
+        >
+            <td>
+                <div className="watchlist-page__stock-name">{item.stockName}</div>
+                <div className="watchlist-page__stock-code">{item.stockCode}</div>
+            </td>
+            <td>
+                <span className={`watchlist-page__badge ${item.marketType === 'KOSPI' ? 'watchlist-page__badge--kospi' : 'watchlist-page__badge--kosdaq'}`}>
+                    {item.marketType}
+                </span>
+            </td>
+            <td className="watchlist-page__right">
+                <FlipText value={formatPrice(item.currentPrice)} />
+            </td>
+            <td className={`watchlist-page__right ${isUp ? 'watchlist-page__up' : 'watchlist-page__down'}`}>
+                <FlipText value={`${isUp ? '+' : ''}${item.changeRate.toFixed(2)}%`} />
+            </td>
+            <td className="watchlist-page__center">
+                <button
+                    type="button"
+                    className="watchlist-page__remove-btn"
+                    onClick={(e) => onRemove(e, item.stockCode)}
+                    disabled={removingCode === item.stockCode}
+                    title="관심 해제"
+                >
+                    <Heart size={16} fill="currentColor" />
+                </button>
+            </td>
+        </tr>
+    );
+});
+
+WatchlistRow.displayName = 'WatchlistRow';
 
 export const WatchlistPage = () => {
     const navigate = useNavigate();
+    const { isOpen, statusText } = useMarketStatus();
     const [data, setData] = useState<WatchlistResponse | null>(null);
     const [page, setPage] = useState(0);
     const [loading, setLoading] = useState(true);
     const [removingCode, setRemovingCode] = useState<string | null>(null);
 
-    const fetchData = useCallback(async (p: number) => {
-        setLoading(true);
+    const fetchData = useCallback(async (p: number, showLoading = true) => {
+        if (showLoading) setLoading(true);
         try {
             const res = await getWatchlist(p, PAGE_SIZE);
             setData(res);
         } catch { /* */ } finally {
-            setLoading(false);
+            if (showLoading) setLoading(false);
         }
     }, []);
 
+    // 폴링용 fetch (로딩 표시 없이)
+    const fetchDataSilent = useCallback(() => {
+        fetchData(page, false);
+    }, [fetchData, page]);
+
     useEffect(() => { fetchData(page); }, [page, fetchData]);
+
+    // 폴링 설정 (7초마다, 장 운영 중일 때만)
+    usePolling(fetchDataSilent, {
+        interval: POLL_INTERVAL,
+        enabled: !loading && isOpen,
+    });
 
     const handleRefresh = () => fetchData(page);
 
@@ -43,6 +109,10 @@ export const WatchlistPage = () => {
         } catch { /* */ } finally {
             setRemovingCode(null);
         }
+    };
+
+    const handleNavigate = (stockCode: string) => {
+        navigate(`/investment/${stockCode}`);
     };
 
     const totalPages = data ? Math.ceil(data.totalElements / PAGE_SIZE) : 0;
@@ -61,6 +131,10 @@ export const WatchlistPage = () => {
                         </div>
                     </div>
                     <div className="watchlist-page__actions">
+                        <span className={`watchlist-page__market-status ${isOpen ? 'watchlist-page__market-status--open' : 'watchlist-page__market-status--closed'}`}>
+                            <span className="watchlist-page__market-dot"></span>
+                            {statusText}
+                        </span>
                         <button className="watchlist-page__icon-btn" onClick={handleRefresh} title="새로고침">
                             <RefreshCw size={18} />
                         </button>
@@ -89,41 +163,15 @@ export const WatchlistPage = () => {
                                                 <td colSpan={5} className="watchlist-page__empty">관심 종목이 없습니다.</td>
                                             </tr>
                                         ) : (
-                                            data.items.map((item) => {
-                                                const isUp = item.changeRate >= 0;
-                                                return (
-                                                    <tr
-                                                        key={item.watchlistId}
-                                                        className="watchlist-page__row"
-                                                        onClick={() => navigate(`/investment/${item.stockCode}`)}
-                                                    >
-                                                        <td>
-                                                            <div className="watchlist-page__stock-name">{item.stockName}</div>
-                                                            <div className="watchlist-page__stock-code">{item.stockCode}</div>
-                                                        </td>
-                                                        <td>
-                                                            <span className={`watchlist-page__badge ${item.marketType === 'KOSPI' ? 'watchlist-page__badge--kospi' : 'watchlist-page__badge--kosdaq'}`}>
-                                                                {item.marketType}
-                                                            </span>
-                                                        </td>
-                                                        <td className="watchlist-page__right">{formatPrice(item.currentPrice)}</td>
-                                                        <td className={`watchlist-page__right ${isUp ? 'watchlist-page__up' : 'watchlist-page__down'}`}>
-                                                            {isUp ? '+' : ''}{item.changeRate.toFixed(2)}%
-                                                        </td>
-                                                        <td className="watchlist-page__center">
-                                                            <button
-                                                                type="button"
-                                                                className="watchlist-page__remove-btn"
-                                                                onClick={(e) => handleRemove(e, item.stockCode)}
-                                                                disabled={removingCode === item.stockCode}
-                                                                title="관심 해제"
-                                                            >
-                                                                <Heart size={16} fill="currentColor" />
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })
+                                            data.items.map((item) => (
+                                                <WatchlistRow
+                                                    key={item.watchlistId}
+                                                    item={item}
+                                                    removingCode={removingCode}
+                                                    onRemove={handleRemove}
+                                                    onNavigate={handleNavigate}
+                                                />
+                                            ))
                                         )}
                                     </tbody>
                                 </table>
