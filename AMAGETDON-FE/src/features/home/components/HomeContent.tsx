@@ -1,14 +1,8 @@
 import { Loading } from '@/components/common'
+import { INVESTMENT_TYPE_CONFIG } from '@/constants/investmentType'
 
 import './HomeContent.css'
 import {useHome} from "@/features/home";
-
-// 투자 성향 표시 설정
-const INVESTMENT_TYPE_CONFIG: Record<'AGGRESSIVE' | 'NEUTRAL' | 'STABLE', { label: string; icon: string; color: string }> = {
-    AGGRESSIVE: { label: '공격형', icon: '🔥', color: '#e53e3e' },
-    NEUTRAL: { label: '중립형', icon: '⚖️', color: '#718096' },
-    STABLE: { label: '안정형', icon: '🛡️', color: '#3182ce' },
-};
 
 export const HomeContent = () => {
     const {

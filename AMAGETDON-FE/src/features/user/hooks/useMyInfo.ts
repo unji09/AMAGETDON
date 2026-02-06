@@ -2,12 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getMyInfo, updateMyInfo, type UserInfo, type InvestmentType, type LoginType } from '@/api/userApi.ts'
 import { logoutApi, withdrawApi } from '@/api/authApi.ts'
-
-const INVESTMENT_TYPE_LABELS: Record<InvestmentType, string> = {
-    AGGRESSIVE: '공격형',
-    NEUTRAL: '중립형',
-    STABLE: '안정형',
-}
+import { getInvestmentLabel } from '@/constants/investmentType'
 
 
 export const useMyInfo = () => {
@@ -25,7 +20,7 @@ export const useMyInfo = () => {
     const [error, setError] = useState<string | null>(null)
     const [successMsg, setSuccessMsg] = useState<string | null>(null)
 
-    const investmentTypeLabel = investmentType ? INVESTMENT_TYPE_LABELS[investmentType] : '-'
+    const investmentTypeLabel = getInvestmentLabel(investmentType)
     const isSocialLogin = loginType === 'KAKAO'
 
     useEffect(() => {

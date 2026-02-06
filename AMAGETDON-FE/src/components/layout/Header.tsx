@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import apiClient from '@/api/client';
+import { getInvestmentIcon } from '@/constants/investmentType';
 import './Header.css';
 
 // 사용자 정보 타입 (User 엔티티 기반)
@@ -266,7 +267,7 @@ export const Header = () => {
                                     onClick={handleProfileClick}
                                 >
                                     <div className="header-profile-avatar">
-                                        <span>{userInfo.nickname.charAt(0)}</span>
+                                        <span>{getInvestmentIcon(userInfo.investmentType)}</span>
                                     </div>
                                     <span className="header-profile-name">
                                         {userInfo.nickname}
