@@ -29,39 +29,45 @@ class VolumeTracker:
         self.conn = get_db_connection(self.conn)
 
     async def get_top_volume_stocks(self) -> List[str]:
-        """
-        종목조건검색 조회 (5분마다)
-        - 조건에 맞는 100개 종목 조회
-        - DB 필터링 → 순서대로 10개 Redis 저장
-        """
+      try:
+          logger.info("종목조건검색 조회 시작")
+          
+          stock_codes = await self.api_client.fetch_condition_search(
+              seq="0",
+              limiter=self.shared_limiter
+          )
+  
+          if not stock_codes:
+              logger.warning("조건검색 결과 없음 - Redis 기존 데이터 사용")
+              return self._get_from_redis()
+  
+          filtered = self._filter_existing_stocks(stock_codes)
+  
+          if filtered:
+              self.redis_client.delete(self.top_stocks_key)
+              self.redis_client.rpush(self.top_stocks_key, *filtered)
+              logger.info(f"TOP 10 저장 완료: {filtered}")
+              return filtered
+          else:
+              logger.warning("DB에 등록된 종목 없음 - Redis 기존 데이터 사용")
+              return self._get_from_redis()
+  
+      except Exception as e:
+          logger.error(f"종목조건검색 조회 오류: {e} - Redis 기존 데이터 사용")
+          return self._get_from_redis()
+  
+    def _get_from_redis(self) -> List[str]:
+        """Redis에 저장된 기존 TOP 종목 반환"""
         try:
-            logger.info("종목조건검색 조회 시작")
-            
-            # 공유 limiter 사용 (다른 API와 함께 1초 20건 제한)
-            stock_codes = await self.api_client.fetch_condition_search(
-                seq="0",
-                limiter=self.shared_limiter
-            )
-
-            if not stock_codes:
-                logger.warning("조건검색 결과 없음")
-                return []
-
-            # DB 필터링 → 순서대로 10개
-            filtered = self._filter_existing_stocks(stock_codes)
-
-            if filtered:
-                # TTL 없이, 기존 데이터 삭제 후 새로 저장
-                self.redis_client.delete(self.top_stocks_key)
-                self.redis_client.rpush(self.top_stocks_key, *filtered)
-                logger.info(f"TOP 10 저장 완료: {filtered}")
-                return filtered
+            existing = self.redis_client.lrange(self.top_stocks_key, 0, -1)
+            if existing:
+                logger.info(f"Redis 기존 데이터 사용: {len(existing)}개")
+                return list(existing)
             else:
-                logger.warning("DB에 등록된 종목 없음")
+                logger.warning("Redis에도 기존 데이터 없음")
                 return []
-
         except Exception as e:
-            logger.error(f"종목조건검색 조회 오류: {e}")
+            logger.error(f"Redis 조회 실패: {e}")
             return []
     
     def _filter_existing_stocks(self, stock_codes: List[str]) -> List[str]:
