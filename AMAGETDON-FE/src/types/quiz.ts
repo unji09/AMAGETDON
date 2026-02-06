@@ -32,6 +32,7 @@ export interface QuizResponse {
 export interface QuizSubmitRequest {
     quizId: number;
     answer: string; // 백엔드는 answer(string) 사용
+    quizSource: 'NORMAL' | 'CACHED'; // 추가
     oxAnswer?: boolean;
     choiceId?: number;
     oxAnswerValue?: boolean;
