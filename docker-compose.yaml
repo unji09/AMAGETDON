@@ -58,6 +58,8 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - MY_EMAIL_PASSWORD=${MY_EMAIL_PASSWORD}
       - REDIRECT_URL=${REDIRECT_URL}
+      - OPENVIDU_URL=${OPENVIDU_URL}
+      - OPENVIDU_SECRET=${OPENVIDU_SECRET}
       - TZ=Asia/Seoul
     depends_on:
       mysql:
