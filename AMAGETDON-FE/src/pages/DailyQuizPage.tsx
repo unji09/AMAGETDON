@@ -5,7 +5,7 @@ import { QuizCelebration } from "@/features/learning/components/quiz/QuizCelebra
 import { QuizFeedbackModal } from "@/features/learning/components/quiz/QuizFeedbackModal";
 import { QuizProgress } from "@/features/learning/components/quiz/QuizProgress";
 import { RewardNotification } from "@/features/learning/components/quiz/RewardNotification";
-import { SimpleFeedbackModal } from "@/features/learning/components/quiz/SimpleFeedbackModal";
+import { SimpleFeedbackModal } from "@/features/learning/components/quiz/SimpleFeedbackModal"; // 추가
 import type { QuizResponse, QuizSubmitResponse } from "@/types/quiz";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -226,23 +226,23 @@ export const DailyQuizPage = () => {
     );
   }
 
-    return (
-        <Layout>
-            <div className="daily-quiz-page">
-                {showCelebration ? (
-                    <QuizCelebration
-                        onClose={handleCloseCelebration}
-                        onContinue={handleContinueFromCelebration}
-                    />
-                ) : (
-                    <>
-                        <div className="daily-quiz-page__progress-wrapper">
-                            <QuizProgress
-                                current={quiz.quizSequence - 1}
-                                total={100}
-                                label="맞춘 문제"
-                            />
-                        </div>
+  return (
+    <Layout>
+      <div className="daily-quiz-page">
+        {showCelebration ? (
+          <QuizCelebration
+            onClose={handleCloseCelebration}
+            onContinue={handleContinueFromCelebration}
+          />
+        ) : (
+          <>
+            <div className="daily-quiz-page__progress-wrapper">
+              <QuizProgress
+                current={quiz.quizSequence - 1}
+                total={100}
+                label="맞춘 문제"
+              />
+            </div>
 
             <div className="daily-quiz-page__content">
               <QuizCard
