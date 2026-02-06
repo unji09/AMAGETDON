@@ -56,6 +56,8 @@ services:
       - REDIS_HOST=localhost
       - REDIS_PORT=6379
       - JWT_SECRET=${JWT_SECRET}
+      - MY_EMAIL_PASSWORD=${MY_EMAIL_PASSWORD}
+      - REDIRECT_URL=${REDIRECT_URL}
       - TZ=Asia/Seoul
     depends_on:
       mysql:
@@ -111,6 +113,9 @@ services:
       context: ./AMAGETDON-FE
       dockerfile: Dockerfile
     container_name: amagetdon-frontend
+    environment:
+      - VITE_KAKAO_JS_KEY=${VITE_KAKAO_JS_KEY}
+      - REDIRECT_URL=${REDIRECT_URL}
     network_mode: host
     restart: unless-stopped
 

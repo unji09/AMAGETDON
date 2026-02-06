@@ -34,7 +34,7 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: service.tester.20260130@gmail.com
-    password: MY_EMAIL_PASSWORD
+    password: ${MY_EMAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -64,3 +64,11 @@ fastapi:
 server:
   servlet:
     context-path: /api/v1
+
+kakao:
+  rest-api-key: ${REST_KAKAO_API_KEY}
+  redirect-uri: ${REDIRECT_URL}
+  
+cookie:
+  secure: false
+  same-site: Lax
