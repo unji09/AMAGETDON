@@ -13,3 +13,6 @@ export * from './Dropdown';
 export * from './AnimatedNumber';
 export * from './AnimatedCell';
 export * from './FlipText';
+export * from './PrivateRoute';
+export * from './PublicRoute';
+export * from './AuthRoute';

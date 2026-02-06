@@ -2,7 +2,7 @@
  * Toast 컴포넌트 스타일
  */
 
-.toast {
+.common-toast {
     position: fixed;
     top: 80px;
     right: 20px;
@@ -13,12 +13,12 @@
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 10000;
-    animation: toast-slide-in 0.3s ease-out;
+    animation: common-toast-slide-in 0.3s ease-out;
     min-width: 250px;
     max-width: 400px;
 }
 
-@keyframes toast-slide-in {
+@keyframes common-toast-slide-in {
     from {
         transform: translateX(100%);
         opacity: 0;
@@ -29,60 +29,60 @@
     }
 }
 
-.toast-icon {
+.common-toast-icon {
     font-size: var(--font-size-xl);
     font-weight: var(--font-weight-bold);
 }
 
-.toast-message {
+.common-toast-message {
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
     flex: 1;
 }
 
 /* Success */
-.toast-success {
+.common-toast-success {
     background-color: #10b981;
     color: var(--color-white);
 }
 
-.toast-success .toast-icon {
+.common-toast-success .common-toast-icon {
     color: var(--color-white);
 }
 
 /* Error */
-.toast-error {
+.common-toast-error {
     background-color: var(--color-chart-up);
     color: var(--color-white);
 }
 
-.toast-error .toast-icon {
+.common-toast-error .common-toast-icon {
     color: var(--color-white);
 }
 
 /* Warning */
-.toast-warning {
+.common-toast-warning {
     background-color: #f59e0b;
     color: var(--color-white);
 }
 
-.toast-warning .toast-icon {
+.common-toast-warning .common-toast-icon {
     color: var(--color-white);
 }
 
 /* Info */
-.toast-info {
+.common-toast-info {
     background-color: var(--color-chart-down);
     color: var(--color-white);
 }
 
-.toast-info .toast-icon {
+.common-toast-info .common-toast-icon {
     color: var(--color-white);
 }
 
 /* 반응형 */
 @media (max-width: 768px) {
-    .toast {
+    .common-toast {
         top: 70px;
         right: 10px;
         left: 10px;

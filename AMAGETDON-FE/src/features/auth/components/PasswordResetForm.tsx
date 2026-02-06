@@ -76,7 +76,7 @@ export const PasswordResetForm = () => {
                     <>
                         <p className="auth-description">
                             가입하신 이메일 주소를 입력하시면<br />
-                            비밀번호 재설정 링크를 보내드립니다.
+                            임시 비밀번호 보내드립니다
                         </p>
 
                         {errorDetails && (
