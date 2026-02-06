@@ -129,9 +129,9 @@ export const Header = () => {
     const isActive = (path: string) => {
         const currentPath = location.pathname;
 
-        // 홈은 정확히 일치해야 함
+        // 홈은 정확히 일치하거나 /ranking 경로일 때 활성화
         if (path === '/') {
-            return currentPath === '/';
+            return currentPath === '/' || currentPath === '/ranking';
         }
 
         // /learning/review-note 같은 구체적인 경로는 정확히 일치해야 함
