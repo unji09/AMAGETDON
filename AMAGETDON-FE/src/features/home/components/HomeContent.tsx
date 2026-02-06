@@ -1,6 +1,5 @@
 import {Loading} from '@/components/common'
 
-import type {AchievementItem} from '@/features/achievement/types/achievement'
 import './HomeContent.css'
 import {useHome} from "@/features/home";
 
