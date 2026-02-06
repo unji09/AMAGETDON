@@ -38,7 +38,7 @@ class QuizRepository:
     def count_unused_quizzes(self) -> int:
         """
         미사용 캐싱 퀴즈 개수 조회
-        1000개 미만인지 판단용
+        100개 이하인지 판단용
 
         Returns:
             is_used=False인 퀴즈 개수
