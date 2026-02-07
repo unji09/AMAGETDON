@@ -1,19 +1,32 @@
+import { Button } from '@/components/common';
 import './AchievementHeader.css';
 
 interface AchievementHeaderProps {
     currentTitle: string | null;
     totalCount: number;
     achievedCount: number;
+    onAnalyzeClick: () => void;
+    isAnalyzing?: boolean;
 }
+
+const MIN_ACHIEVEMENTS_FOR_ANALYSIS = 5;
 
 /**
  * 업적 페이지 상단
  * - 제목 + 칭호 뱃지 (우측)
  * - 설명
  * - 달성 현황 프로그레스 바 (총 보상 포함)
+ * - 성향 분석 버튼
  */
-export const AchievementHeader = ({ currentTitle, totalCount, achievedCount }: AchievementHeaderProps) => {
+export const AchievementHeader = ({
+    currentTitle,
+    totalCount,
+    achievedCount,
+    onAnalyzeClick,
+    isAnalyzing = false,
+}: AchievementHeaderProps) => {
     const progressPercent = totalCount > 0 ? (achievedCount / totalCount) * 100 : 0;
+    const canAnalyze = achievedCount >= MIN_ACHIEVEMENTS_FOR_ANALYSIS;
 
     return (
         <div className="achievement-header">
@@ -49,6 +62,22 @@ export const AchievementHeader = ({ currentTitle, totalCount, achievedCount }: A
                         style={{ width: `${progressPercent}%` }}
                     />
                 </div>
+            </div>
+
+            {/* 성향 분석 버튼 */}
+            <div className="achievement-header__analysis">
+                <Button
+                    variant={canAnalyze ? 'primary' : 'secondary'}
+                    onClick={onAnalyzeClick}
+                    disabled={!canAnalyze || isAnalyzing}
+                    fullWidth
+                >
+                    {isAnalyzing
+                        ? '분석 중...'
+                        : canAnalyze
+                            ? '업적 기반 성향 분석'
+                            : `업적 ${MIN_ACHIEVEMENTS_FOR_ANALYSIS}개 이상 달성 시 분석 가능`}
+                </Button>
             </div>
         </div>
     );

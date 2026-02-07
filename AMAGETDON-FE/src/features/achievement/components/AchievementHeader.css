@@ -113,6 +113,11 @@
     transition: width 0.5s ease;
 }
 
+/* ─── 성향 분석 버튼 ─── */
+.achievement-header__analysis {
+    margin-top: var(--spacing-4);
+}
+
 /* ─── 반응형 ─── */
 @media (max-width: 768px) {
     .achievement-header__top {
@@ -124,5 +129,4 @@
     .achievement-header__title {
         font-size: var(--font-size-2xl);
     }
-
 }
