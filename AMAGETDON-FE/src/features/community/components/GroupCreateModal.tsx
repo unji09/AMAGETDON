@@ -1,6 +1,11 @@
 /**
  * GroupCreateModal - 그룹 생성 모달
  * 공개/비밀 그룹 생성 기능
+ *
+ * ✅ [Fix] 참여 코드 보안 개선
+ * - 기본: ****** 마스킹 상태
+ * - 👁 눈 아이콘 클릭으로 토글
+ * - 복사는 마스킹 상태에서도 가능
  */
 
 import { useState, useEffect } from 'react';
@@ -20,6 +25,8 @@ const GroupCreateModal: React.FC<GroupCreateModalProps> = ({ isOpen, onClose, on
     const [joinCode, setJoinCode] = useState('');
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
+    const [showCode, setShowCode] = useState(false); // ✅ 코드 표시/숨김 토글
+    const [codeCopied, setCodeCopied] = useState(false); // ✅ 복사 완료 피드백
 
     // 참여코드 자동 생성 (비밀방일 경우)
     useEffect(() => {
@@ -87,13 +94,20 @@ const GroupCreateModal: React.FC<GroupCreateModalProps> = ({ isOpen, onClose, on
         setJoinCode('');
         setErrors({});
         setLoading(false);
+        setShowCode(false);
+        setCodeCopied(false);
         onClose();
     };
 
-    // 참여코드 복사
+    // ✅ 참여코드 복사 (마스킹 상태에서도 실제 코드 복사)
     const handleCopyCode = () => {
-        navigator.clipboard.writeText(joinCode);
-        alert('참여 코드가 복사되었습니다!');
+        navigator.clipboard.writeText(joinCode).then(() => {
+            setCodeCopied(true);
+            setTimeout(() => setCodeCopied(false), 2000);
+        }).catch(() => {
+            // fallback: clipboard API 미지원 시
+            alert('참여 코드: ' + joinCode);
+        });
     };
 
     if (!isOpen) return null;
@@ -190,7 +204,7 @@ const GroupCreateModal: React.FC<GroupCreateModalProps> = ({ isOpen, onClose, on
                         <div className="input-help">2명 ~ 100명까지 설정 가능합니다</div>
                     </div>
 
-                    {/* 참여 코드 (비밀방만) */}
+                    {/* ✅ 참여 코드 (비밀방만) - 마스킹 + 토글 + 복사 */}
                     {!isPublic && (
                         <div className="form-group">
                             <label className="form-label">참여 코드</label>
@@ -198,12 +212,36 @@ const GroupCreateModal: React.FC<GroupCreateModalProps> = ({ isOpen, onClose, on
                                 <div className="code-input-wrapper">
                                     <input
                                         type="text"
-                                        value={joinCode}
+                                        value={showCode ? joinCode : '••••••'}
                                         readOnly
                                         className="code-input"
                                     />
-                                    <button type="button" className="btn-small" onClick={handleCopyCode}>
-                                        복사
+                                    <button
+                                        type="button"
+                                        className="btn-icon"
+                                        onClick={() => setShowCode(!showCode)}
+                                        title={showCode ? '코드 숨기기' : '코드 보기'}
+                                    >
+                                        {showCode ? (
+                                            /* 눈 열림 아이콘 (보이는 상태) */
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#96773D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                                <circle cx="12" cy="12" r="3"/>
+                                            </svg>
+                                        ) : (
+                                            /* 눈 닫힘 아이콘 (숨긴 상태) */
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#96773D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                                                <line x1="1" y1="1" x2="23" y2="23"/>
+                                            </svg>
+                                        )}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`btn-small ${codeCopied ? 'btn-small--copied' : ''}`}
+                                        onClick={handleCopyCode}
+                                    >
+                                        {codeCopied ? '복사됨 ✓' : '복사'}
                                     </button>
                                 </div>
                                 <div className="code-info">

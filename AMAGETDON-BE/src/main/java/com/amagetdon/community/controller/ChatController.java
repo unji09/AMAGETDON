@@ -7,6 +7,7 @@ import com.amagetdon.community.dto.request.ChatMessageRequestDto;
 import com.amagetdon.community.entity.Room;
 import com.amagetdon.community.repository.RoomRepository;
 import com.amagetdon.community.service.ChatMessageService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -27,6 +28,7 @@ public class ChatController {
 
     private final ChatMessageService chatMessageService;
     private final RoomRepository roomRepository;
+    private final ObjectMapper objectMapper;
 
     @Value("${openvidu.url}")
     private String openViduUrl;
@@ -63,15 +65,22 @@ public class ChatController {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setBasicAuth("OPENVIDUAPP", openViduSecret);
 
+            // [Bug 1 수정] signal data에 userName, userId를 JSON으로 포함
+            Map<String, Object> signalData = new HashMap<>();
+            signalData.put("userName", request.sender());
+            signalData.put("userId", userId);
+            signalData.put("message", request.message());
+            signalData.put("type", request.type());
+
             Map<String, Object> body = new HashMap<>();
             body.put("session", request.openviduSessionId());
-            body.put("data", request.message());
+            body.put("data", objectMapper.writeValueAsString(signalData));
             body.put("type", request.type());
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
             restTemplate.postForEntity(url, entity, Void.class);
         } catch (Exception e) {
-            // OpenVidu signal 실패는 무시 (메시지는 이미 DB에 저장됨)
+            // OpenVidu signal 실패는 무시 (메시지는 이미 Redis에 저장됨)
         }
 
         return ResponseEntity.ok().build();
