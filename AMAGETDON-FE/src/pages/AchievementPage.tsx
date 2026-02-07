@@ -87,6 +87,8 @@ export const AchievementPage = () => {
             setToastMsg('투자 성향이 변경되었습니다.');
             setShowAnalysisModal(false);
             setAnalysisResult(null);
+            // 헤더 프로필 아이콘 갱신
+            window.dispatchEvent(new Event('userInfoUpdated'));
         } catch {
             setToastMsg('성향 변경에 실패했습니다.');
         } finally {

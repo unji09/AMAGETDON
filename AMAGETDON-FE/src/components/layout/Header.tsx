@@ -53,6 +53,15 @@ export const Header = () => {
         fetchUserInfo();
     }, [fetchUserInfo]);
 
+    // 사용자 정보 갱신 이벤트 리스너 (투자 성향 변경 등)
+    useEffect(() => {
+        const handleUserInfoUpdate = () => {
+            fetchUserInfo();
+        };
+        window.addEventListener('userInfoUpdated', handleUserInfoUpdate);
+        return () => window.removeEventListener('userInfoUpdated', handleUserInfoUpdate);
+    }, [fetchUserInfo]);
+
     // 네비게이션 아이템 (순서: 홈, 학습, 오답노트, 투자, 업적, 커뮤니티)
     const navItems = [
         {
