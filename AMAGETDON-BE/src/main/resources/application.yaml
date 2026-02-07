@@ -60,6 +60,8 @@ fastapi:
   url: ${FASTAPI_URL:http://fastapi:8000}
   quiz:
     generate-endpoint: /api/quiz/generate
+  personality:
+    analyze-endpoint: /api/personality/analyze
 
 server:
   servlet:

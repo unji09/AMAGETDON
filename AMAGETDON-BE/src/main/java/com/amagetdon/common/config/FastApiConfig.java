@@ -1,4 +1,4 @@
-package com.amagetdon.learning.config;
+package com.amagetdon.common.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -13,6 +13,9 @@ public class FastApiConfig {
 
     @Value("${fastapi.quiz.generate-endpoint}")
     private String generateEndpoint;
+
+    @Value("${fastapi.personality.analyze-endpoint}")
+    private String personalityAnalyzeEndpoint;
 
     @Bean
     public RestTemplate restTemplate() {
@@ -29,5 +32,13 @@ public class FastApiConfig {
 
     public String getFullGenerateUrl() {
         return fastApiUrl + generateEndpoint;
+    }
+
+    public String getPersonalityAnalyzeEndpoint() {
+        return personalityAnalyzeEndpoint;
+    }
+
+    public String getFullPersonalityAnalyzeUrl() {
+        return fastApiUrl + personalityAnalyzeEndpoint;
     }
 }
