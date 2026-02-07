@@ -1,0 +1,121 @@
+.personality-analysis {
+    padding: var(--spacing-4);
+    text-align: center;
+}
+
+.personality-analysis__title {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+    margin-bottom: var(--spacing-4);
+}
+
+.personality-analysis__desc {
+    font-size: var(--font-size-sm);
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: var(--spacing-5);
+}
+
+.personality-analysis__current {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--spacing-4);
+}
+
+.personality-analysis__confidence {
+    font-size: var(--font-size-xs);
+    color: #999;
+    margin-bottom: var(--spacing-5);
+}
+
+.personality-analysis__actions {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-3);
+}
+
+/* 성향 비교 레이아웃 */
+.personality-analysis__comparison {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-4);
+    margin-bottom: var(--spacing-4);
+}
+
+.personality-analysis__column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.personality-analysis__label {
+    font-size: var(--font-size-xs);
+    color: #999;
+    font-weight: var(--font-weight-medium);
+}
+
+.personality-analysis__arrow {
+    font-size: 24px;
+    color: #ccc;
+}
+
+/* 성향 카드 */
+.personality-type-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-4);
+    border-radius: 12px;
+    background: var(--type-bg);
+    border: 2px solid transparent;
+    min-width: 120px;
+    transition: all 0.2s ease;
+}
+
+.personality-type-card--clickable {
+    cursor: pointer;
+}
+
+.personality-type-card--clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.personality-type-card--selected {
+    border-color: var(--type-color);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.personality-type-card__icon {
+    font-size: 32px;
+}
+
+.personality-type-card__label {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
+    color: var(--type-color);
+}
+
+.personality-type-card__prob {
+    font-size: var(--font-size-xs);
+    color: #666;
+}
+
+/* 반응형 */
+@media (max-width: 480px) {
+    .personality-analysis__comparison {
+        flex-direction: column;
+    }
+
+    .personality-analysis__arrow {
+        transform: rotate(90deg);
+    }
+
+    .personality-type-card {
+        min-width: 140px;
+    }
+}
