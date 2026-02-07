@@ -19,7 +19,7 @@ interface MyRankingBanner {
 }
 
 export const RankingPage = () => {
-    const [activeTab, setActiveTab] = useState<RankingType>('learning');
+    const [activeTab, setActiveTab] = useState<RankingType>('profit');
     const [myRanking, setMyRanking] = useState<MyRankingBanner | null>(null);
     const [loadingMyRank, setLoadingMyRank] = useState(false);
 
@@ -92,16 +92,16 @@ export const RankingPage = () => {
                 {/* 탭 네비게이션 */}
                 <div className="ranking-tabs">
                     <button
-                        className={`ranking-tab ${activeTab === 'learning' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('learning')}
-                    >
-                        학습 랭킹
-                    </button>
-                    <button
                         className={`ranking-tab ${activeTab === 'profit' ? 'active' : ''}`}
                         onClick={() => setActiveTab('profit')}
                     >
                         수익 랭킹
+                    </button>
+                    <button
+                        className={`ranking-tab ${activeTab === 'learning' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('learning')}
+                    >
+                        학습 랭킹
                     </button>
                 </div>
 
