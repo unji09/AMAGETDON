@@ -98,7 +98,6 @@ export const useOpenVidu = ({
             });
 
             // participantEvicted - OpenVidu 비공식 이벤트 (타입 정의 없음)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (newSession as unknown as { on: (type: string, handler: (event: Record<string, unknown>) => void) => void }).on(
                 'participantEvicted',
                 (event: Record<string, unknown>) => {
