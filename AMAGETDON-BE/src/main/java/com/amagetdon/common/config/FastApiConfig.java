@@ -14,6 +14,9 @@ public class FastApiConfig {
     @Value("${fastapi.quiz.generate-endpoint}")
     private String generateEndpoint;
 
+    @Value("${fastapi.personality.analyze-endpoint}")
+    private String personalityAnalyzeEndpoint;
+
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();
@@ -29,5 +32,13 @@ public class FastApiConfig {
 
     public String getFullGenerateUrl() {
         return fastApiUrl + generateEndpoint;
+    }
+
+    public String getPersonalityAnalyzeEndpoint() {
+        return personalityAnalyzeEndpoint;
+    }
+
+    public String getFullPersonalityAnalyzeUrl() {
+        return fastApiUrl + personalityAnalyzeEndpoint;
     }
 }
