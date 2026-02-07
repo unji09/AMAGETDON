@@ -1,6 +1,6 @@
 package com.amagetdon.learning.service;
 
-import com.amagetdon.learning.config.FastApiConfig;
+import com.amagetdon.common.config.FastApiConfig;
 import com.amagetdon.learning.dto.fastapi.QuizGenerateRequest;
 import com.amagetdon.learning.dto.fastapi.QuizGenerateResponse;
 import lombok.RequiredArgsConstructor;

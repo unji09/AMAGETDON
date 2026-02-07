@@ -9,6 +9,11 @@ RUN npm ci
 
 # 소스 코드 복사 및 빌드
 COPY . .
+
+# 환경 변수 설정
+ARG VITE_KAKAO_JS_KEY
+ENV VITE_KAKAO_JS_KEY=$VITE_KAKAO_JS_KEY
+
 RUN npm install
 
 ARG VITE_KAKAO_JS_KEY
