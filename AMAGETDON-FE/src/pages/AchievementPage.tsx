@@ -49,11 +49,14 @@ export const AchievementPage = () => {
         fetchData();
     }, []);
 
-    // 성향 분석 버튼 클릭 핸들러
+    // 성향 분석 버튼 클릭 핸들러 (최소 1초 로딩)
     const handleAnalyzeClick = async () => {
         setAnalysisLoading(true);
         try {
-            const result = await analyzePersonality();
+            const [result] = await Promise.all([
+                analyzePersonality(),
+                new Promise(resolve => setTimeout(resolve, 1000)),
+            ]);
             if (result.success && result.can_analyze) {
                 setAnalysisResult(result);
                 setShowAnalysisModal(true);
