@@ -87,11 +87,6 @@ export const PersonalityAnalysisModal = ({
                                 {renderTypeCard(predicted_type, true)}
                             </div>
                         )}
-                        {confidence && (
-                            <p className="personality-analysis__confidence">
-                                신뢰도 {(confidence * 100).toFixed(0)}%
-                            </p>
-                        )}
                         <div className="personality-analysis__actions">
                             <Button variant="primary" onClick={handleConfirm}>
                                 확인
