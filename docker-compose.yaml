@@ -70,8 +70,8 @@ services:
       context: ./AMAGETDON-BE
       dockerfile: Dockerfile
     container_name: amagetdon-backend
-    expose:
-      - "8080"
+    ports:
+      - "8080:8080"
     environment:
       - DB_HOST=mysql
       - DB_PORT=3306
