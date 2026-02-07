@@ -61,9 +61,18 @@ export const PersonalityAnalysisModal = ({
         );
     };
 
+    const CONFETTI_COUNT = 20;
+
     return (
         <Modal isOpen onClose={onClose}>
             <div className="personality-analysis">
+                {/* 빵빠레 효과 */}
+                <div className="personality-analysis__confetti" aria-hidden="true">
+                    {Array.from({ length: CONFETTI_COUNT }, (_, i) => (
+                        <span key={i} className="personality-analysis__particle" />
+                    ))}
+                </div>
+
                 <h2 className="personality-analysis__title">
                     {isSameType ? '성향 분석 완료' : '새로운 성향 발견'}
                 </h2>

@@ -87,7 +87,7 @@ export const AchievementHeader = ({
                         {isAnalyzing
                             ? 'AI가 당신의 업적 패턴을 분석하고 있습니다'
                             : canAnalyze
-                                ? '달성한 업적을 분석하여 투자 성향을 알아보세요'
+                                ? '"내 성과 속에 숨겨진 투자 성향? AI 분석으로 확인하기'
                                 : `업적 ${remaining}개 더 달성하면 분석할 수 있어요`}
                     </p>
                 </div>
