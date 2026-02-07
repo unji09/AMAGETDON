@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ChevronRight, Check } from 'lucide-react';
 import { Modal, Button } from '@/components/common';
 import { INVESTMENT_TYPE_CONFIG } from '@/constants/investmentType';
 import type { PersonalityAnalyzeResponse } from '@/api/achievementApi';
@@ -44,11 +45,16 @@ export const PersonalityAnalysisModal = ({
                 onClick={onClick}
                 style={{ '--type-color': config.color, '--type-bg': config.bgColor } as React.CSSProperties}
             >
+                {isSelected && (
+                    <div className="personality-type-card__check">
+                        <Check size={14} />
+                    </div>
+                )}
                 <span className="personality-type-card__icon">{config.icon}</span>
                 <span className="personality-type-card__label">{config.label}</span>
                 {probabilities && (
                     <span className="personality-type-card__prob">
-                        {(probabilities[type] * 100).toFixed(1)}%
+                        {(probabilities[type] * 100).toFixed(0)}%
                     </span>
                 )}
             </div>
@@ -59,14 +65,13 @@ export const PersonalityAnalysisModal = ({
         <Modal isOpen onClose={onClose}>
             <div className="personality-analysis">
                 <h2 className="personality-analysis__title">
-                    {isSameType ? '성향 분석 완료' : '새로운 성향이 발견되었어요!'}
+                    {isSameType ? '성향 분석 완료' : '새로운 성향 발견'}
                 </h2>
 
                 {isSameType ? (
-                    // 같은 성향인 경우
                     <div className="personality-analysis__same">
                         <p className="personality-analysis__desc">
-                            업적 분석 결과, 현재 성향과 동일한 성향이 추천되었습니다.
+                            업적 분석 결과, 현재 성향이 가장 적합해요.
                         </p>
                         {predicted_type && (
                             <div className="personality-analysis__current">
@@ -75,7 +80,7 @@ export const PersonalityAnalysisModal = ({
                         )}
                         {confidence && (
                             <p className="personality-analysis__confidence">
-                                신뢰도: {(confidence * 100).toFixed(1)}%
+                                신뢰도 {(confidence * 100).toFixed(0)}%
                             </p>
                         )}
                         <div className="personality-analysis__actions">
@@ -85,16 +90,14 @@ export const PersonalityAnalysisModal = ({
                         </div>
                     </div>
                 ) : (
-                    // 다른 성향인 경우
                     <div className="personality-analysis__different">
                         <p className="personality-analysis__desc">
-                            달성한 업적을 분석한 결과, 새로운 성향이 추천되었습니다.<br />
-                            원하는 성향을 선택해주세요.
+                            새로운 성향이 추천되었어요. 변경할 성향을 선택해주세요.
                         </p>
 
                         <div className="personality-analysis__comparison">
                             <div className="personality-analysis__column">
-                                <span className="personality-analysis__label">현재 성향</span>
+                                <span className="personality-analysis__label">현재</span>
                                 {initial_type && renderTypeCard(
                                     initial_type,
                                     selectedType === initial_type,
@@ -102,10 +105,10 @@ export const PersonalityAnalysisModal = ({
                                 )}
                             </div>
 
-                            <div className="personality-analysis__arrow">→</div>
+                            <ChevronRight size={20} className="personality-analysis__arrow" />
 
                             <div className="personality-analysis__column">
-                                <span className="personality-analysis__label">추천 성향</span>
+                                <span className="personality-analysis__label">추천</span>
                                 {predicted_type && renderTypeCard(
                                     predicted_type,
                                     selectedType === predicted_type,
@@ -113,12 +116,6 @@ export const PersonalityAnalysisModal = ({
                                 )}
                             </div>
                         </div>
-
-                        {confidence && (
-                            <p className="personality-analysis__confidence">
-                                분석 신뢰도: {(confidence * 100).toFixed(1)}%
-                            </p>
-                        )}
 
                         <div className="personality-analysis__actions">
                             <Button variant="secondary" onClick={onClose}>
