@@ -97,14 +97,19 @@ export const useOpenVidu = ({
                 updateParticipantCount(newSession);
             });
 
-            (newSession as any).on('participantEvicted', (event: any) => {
-                console.warn('[useOpenVidu] participantEvicted:', event);
-                try {
-                    updateParticipantCount(newSession);
-                } catch (err) {
-                    console.warn('[useOpenVidu] participantEvicted 처리 중 에러:', err);
+            // participantEvicted - OpenVidu 비공식 이벤트 (타입 정의 없음)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (newSession as unknown as { on: (type: string, handler: (event: Record<string, unknown>) => void) => void }).on(
+                'participantEvicted',
+                (event: Record<string, unknown>) => {
+                    console.warn('[useOpenVidu] participantEvicted:', event);
+                    try {
+                        updateParticipantCount(newSession);
+                    } catch (err) {
+                        console.warn('[useOpenVidu] participantEvicted 처리 중 에러:', err);
+                    }
                 }
-            });
+            );
 
             // 메시지 수신 이벤트
             newSession.on('signal:chat', (event: SignalEvent) => {

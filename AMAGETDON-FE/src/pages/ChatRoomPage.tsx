@@ -272,13 +272,16 @@ const ChatRoomPage = () => {
         loadRoom();
     }, [roomId, navigate, addToast]);
 
+    /** ✅ [Fix 9] 캐시에서 메시지가 복원되었는지 추적 */
+    const hasCachedMessagesRef = useRef(messages.length > 0);
+
     // ✅ [Fix 9] 메시지 히스토리 로드 (캐시 → API fallback)
     useEffect(() => {
         if (!room || !roomId || historyLoadedRef.current) return;
 
         const loadMessageHistory = async () => {
             // 캐시에서 이미 복원된 경우 API 스킵
-            if (messages.length > 0) {
+            if (hasCachedMessagesRef.current) {
                 console.log('[ChatRoom] 캐시 메시지 사용, API 스킵');
                 historyLoadedRef.current = true;
                 return;
@@ -392,7 +395,7 @@ const ChatRoomPage = () => {
         setInputMessage('');
     };
 
-    const handleKeyPress = (e: React.KeyboardEvent) => {
+    const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSendMessage();
@@ -711,7 +714,7 @@ const ChatRoomPage = () => {
                                     placeholder="메시지를 입력하세요..."
                                     value={inputMessage}
                                     onChange={(e) => setInputMessage(e.target.value)}
-                                    onKeyPress={handleKeyPress}
+                                    onKeyDown={handleKeyDown}
                                     disabled={!connected}
                                 />
                             </div>
