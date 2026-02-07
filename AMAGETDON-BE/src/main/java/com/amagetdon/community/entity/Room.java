@@ -56,6 +56,10 @@ public class Room {
         }
     }
 
+    public void syncCurrentMemberCount(int actualCount) {
+        this.currentMemberCount = Math.max(0, actualCount);
+    }
+
     public boolean isEmpty() {
         return this.currentMemberCount != null && this.currentMemberCount <= 0;
     }

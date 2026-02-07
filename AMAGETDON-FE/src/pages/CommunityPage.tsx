@@ -1,8 +1,12 @@
 /**
  * 커뮤니티 페이지
+ *
+ * [Bug Fix 목록]
+ * Bug 2: 이미 그룹 참여 중일 때 토스트 에러 메시지 표시
+ * Bug 3: 15초 폴링으로 공개 그룹 목록 + 내 그룹 정보 자동 갱신
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import GroupCreateModal from '@/features/community/components/GroupCreateModal';
@@ -35,10 +39,34 @@ export const CommunityPage = () => {
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
     const [isSearchFocused, setIsSearchFocused] = useState(false);
 
+    // 폴링 중인지 추적 (초기 로드 vs 백그라운드 갱신 구분)
+    const isPollingRef = useRef(false);
+
     // 초기 데이터 로드
     useEffect(() => {
         loadData();
     }, []);
+
+    // [Bug 3 수정] 15초마다 데이터 자동 갱신 (인원 수 실시간 반영)
+    useEffect(() => {
+        const pollData = async () => {
+            isPollingRef.current = true;
+            try {
+                const [roomsData, myRoomData] = await Promise.all([
+                    getPublicRooms(searchQuery.trim() || undefined),
+                    getMyRoom(),
+                ]);
+                setRooms(roomsData.rooms);
+                setMyRoom(myRoomData);
+            } catch {
+                // 폴링 실패는 무시 (네트워크 일시 장애 등)
+            }
+            isPollingRef.current = false;
+        };
+
+        const intervalId = setInterval(pollData, 15000);
+        return () => clearInterval(intervalId);
+    }, [searchQuery]);
 
     // 데이터 로드
     const loadData = async () => {
@@ -94,9 +122,12 @@ export const CommunityPage = () => {
         }
     };
 
-    // 공개 방 참여
+    // [Bug 2 수정] 공개 방 참여 - 이미 그룹 참여 중일 때 토스트 표시
     const handleJoin = async (roomId: number) => {
-        if (myRoom) return; // 이미 그룹이 있으면 참여 불가
+        if (myRoom) {
+            showToast('그룹은 하나만 참여할 수 있습니다. 현재 그룹을 나간 후 다시 시도하세요.', 'error');
+            return;
+        }
         try {
             await joinPublicRoom(roomId);
             showToast('그룹에 참여했습니다!', 'success');
@@ -284,9 +315,9 @@ export const CommunityPage = () => {
                                                 {room.currentMemberCount}/{room.maxMemberCount}
                                             </span>
                                             <button
-                                                className={`group-join-btn ${isFull ? 'group-join-btn--disabled' : ''}`}
-                                                onClick={() => !isFull && !myRoom && handleJoin(room.roomId)}
-                                                disabled={isFull || !!myRoom}
+                                                className={`group-join-btn ${isFull || myRoom ? 'group-join-btn--disabled' : ''}`}
+                                                onClick={() => handleJoin(room.roomId)}
+                                                disabled={isFull}
                                             >
                                                 {isFull ? '정원 마감' : '참여하기'}
                                             </button>

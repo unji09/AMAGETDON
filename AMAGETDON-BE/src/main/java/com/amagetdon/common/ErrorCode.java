@@ -50,7 +50,7 @@ public enum ErrorCode {
     ACHIEVEMENT_NOT_FOUND("업적을 찾을 수 없습니다."),
 
     //Community
-    ALREADY_JOINED_ROOM("이미 가입된 그룹이 존재합니다."),
+    ALREADY_JOINED_ROOM("그룹은 하나만 참여할 수 있습니다. 현재 그룹을 나간 후 다시 시도하세요."),
     ROOM_FULL("정원이 가득 찼습니다."),
     ROOM_NOT_FOUND("존재하지 않는 그룹입니다."),
     PRIVATE_ROOM_ACCESS_DENIED("비공개 그룹은 참여 코드로만 입장할 수 있습니다."),
