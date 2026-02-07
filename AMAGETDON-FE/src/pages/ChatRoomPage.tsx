@@ -3,11 +3,19 @@
  * Figma 디자인 기반 (커뮤니티 대화)
  *
  * [Fix 목록]
- * Fix 1: ✅ apiClient로 닉네임 로드 (raw fetch → apiClient, Vite 프록시 문제 해결)
- * Fix 2: ✅ 창 닫기/로그아웃 시 자동 방 나가기 (beforeunload + 컴포넌트 unmount)
+ * Fix 1: ✅ apiClient로 닉네임 로드 (raw fetch → apiClient)
+ * Fix 2: ✅ 새로고침 시 방 유지 (beforeunload 방 나가기 제거)
  * Fix 3: 15초 폴링으로 방 정보(인원 수) 자동 갱신
- * Fix 4: participantCount 대신 room.currentMemberCount 사용
- * Fix 5: 마운트 시 getChatMessages로 메시지 히스토리 로드
+ * Fix 4: ✅ room.currentMemberCount 대신 실제 members API 카운트 사용
+ * Fix 5: 마운트 시 getChatMessages로 메시지 히스토리 로드 (새로고침 복원)
+ * Fix 6: ✅ 나가기 레이스 컨디션 제거 (cleanup에서 forceLeaveRoom 제거)
+ * Fix 7: ✅ handleLeaveRoom 멱등성 - 에러 시에도 navigate
+ * Fix 8: ✅ 아바타 제거 - 이름만 표시
+ * Fix 9: ✅ localStorage 메시지 캐시 - 새로고침 시 메시지 복원
+ *
+ * [새로고침 동작]
+ * - 새로고침 → 방에 머물고, localStorage 캐시에서 메시지 즉시 복원
+ * - 명시적 나가기 or 로그아웃 → 방 퇴장 + 캐시 삭제 + 채팅 초기화
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -37,19 +45,6 @@ interface Toast {
 
 type ConnectionStatus = 'connected' | 'connecting' | 'disconnected';
 
-const AVATAR_COLORS = [
-    { bg: '#C7D8B7', text: '#203C2E' },
-    { bg: '#E3D9BD', text: '#96773D' },
-    { bg: '#D4E5F7', text: '#2563EB' },
-    { bg: '#F5D5D5', text: '#DC0000' },
-    { bg: '#E8E0F0', text: '#6B21A8' },
-];
-
-const getAvatarColor = (nickname: string) => {
-    const index = nickname.charCodeAt(0) % AVATAR_COLORS.length;
-    return AVATAR_COLORS[index];
-};
-
 const URL_REGEX = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/g;
 
 const renderMessageWithLinks = (text: string) => {
@@ -75,7 +70,7 @@ const renderMessageWithLinks = (text: string) => {
 
 /**
  * ✅ Fix 1: apiClient 사용하여 닉네임 로드
- * raw fetch는 Vite 프록시를 안 타서 HTML이 반환됨 → SyntaxError 발생
+ * raw fetch는 Vite 프록시를 못 타서 HTML이 반환됨
  */
 const fetchMyNickname = async (): Promise<string> => {
     try {
@@ -90,13 +85,72 @@ const fetchMyNickname = async (): Promise<string> => {
     }
 };
 
+/**
+ * ✅ Fix 2 → 수정됨: 새로고침 시 방 유지
+ *
+ * [변경 사항]
+ * - beforeunload에서 forceLeaveRoom 호출 제거
+ * - 새로고침해도 방에 머물고, getChatMessages로 메시지 히스토리 복원
+ * - 명시적 나가기(handleLeaveRoom) 또는 로그아웃 시에만 방 퇴장
+ * - 탭/브라우저 완전 종료 시에도 서버 측에서 OpenVidu disconnect 감지 가능
+ */
+
+/**
+ * ✅ [Fix 9] localStorage 메시지 캐시
+ * - OpenVidu 시그널 메시지는 백엔드 DB에 저장되지 않음
+ * - 새로고침 시 메시지 복원을 위해 localStorage에 캐시
+ * - 방 나가기/로그아웃 시에만 삭제
+ */
+const MESSAGE_CACHE_PREFIX = 'chat_messages_room_';
+const MAX_CACHED_MESSAGES = 500; // 최대 캐시 메시지 수
+
+const getCachedMessages = (roomId: string): ChatMessage[] => {
+    try {
+        const cached = localStorage.getItem(`${MESSAGE_CACHE_PREFIX}${roomId}`);
+        if (cached) {
+            return JSON.parse(cached);
+        }
+    } catch (err) {
+        console.warn('[ChatRoom] 캐시 메시지 로드 실패:', err);
+    }
+    return [];
+};
+
+const saveCachedMessages = (roomId: string, messages: ChatMessage[]) => {
+    try {
+        // 최대 개수 제한 (오래된 메시지부터 제거)
+        const trimmed = messages.slice(-MAX_CACHED_MESSAGES);
+        localStorage.setItem(`${MESSAGE_CACHE_PREFIX}${roomId}`, JSON.stringify(trimmed));
+    } catch (err) {
+        console.warn('[ChatRoom] 캐시 메시지 저장 실패:', err);
+    }
+};
+
+const clearCachedMessages = (roomId: string) => {
+    try {
+        localStorage.removeItem(`${MESSAGE_CACHE_PREFIX}${roomId}`);
+    } catch {
+        // 무시
+    }
+};
+
 const ChatRoomPage = () => {
     const { roomId } = useParams<{ roomId: string }>();
     const navigate = useNavigate();
 
     const [room, setRoom] = useState<RoomResponse | null>(null);
     const [loading, setLoading] = useState(true);
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    // ✅ [Fix 9] 초기 메시지를 localStorage 캐시에서 로드
+    const [messages, setMessages] = useState<ChatMessage[]>(() => {
+        if (roomId) {
+            const cached = getCachedMessages(roomId);
+            if (cached.length > 0) {
+                console.log(`[ChatRoom] 캐시에서 ${cached.length}개 메시지 복원`);
+                return cached;
+            }
+        }
+        return [];
+    });
     const [inputMessage, setInputMessage] = useState('');
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [showParticipants, setShowParticipants] = useState(false);
@@ -106,16 +160,21 @@ const ChatRoomPage = () => {
     const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
     const [toasts, setToasts] = useState<Toast[]>([]);
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; messageId: string; text: string } | null>(null);
-
-    /** ✅ /users/me에서 가져온 정확한 닉네임 */
     const [myNickname, setMyNickname] = useState<string>('');
+
+    /**
+     * ✅ [Fix 4] 실제 멤버 수 (members API에서 가져온 값)
+     * room.currentMemberCount는 수동 증감이라 동기화가 깨질 수 있음
+     */
+    const [realMemberCount, setRealMemberCount] = useState<number | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const reconnectAttempts = useRef(0);
     const historyLoadedRef = useRef(false);
-
-    /** ✅ Fix 2: 정상적으로 나가기 했는지 추적 (중복 나가기 방지) */
+    /** ✅ 정상적으로 나가기 했는지 추적 (중복 나가기 방지) */
     const hasLeftRef = useRef(false);
+    /** ✅ 나가기 진행 중인지 (버튼 중복 클릭 방지) */
+    const isLeavingRef = useRef(false);
 
     const addToast = useCallback((type: Toast['type'], title: string, message?: string) => {
         const id = Date.now().toString();
@@ -176,56 +235,19 @@ const ChatRoomPage = () => {
         fetchMyNickname().then(setMyNickname);
     }, []);
 
-    /**
-     * ✅ Fix 2: 창 닫기 / 새로고침 / 탭 닫기 / 다른 페이지 이동 시 자동 방 나가기
-     *
-     * beforeunload: 브라우저 탭 닫기, 새로고침, 브라우저 종료
-     * cleanup (return): React 컴포넌트 언마운트 (다른 페이지 이동)
-     *
-     * fetch + keepalive: 페이지가 닫혀도 요청이 완료됨
-     * (axios는 beforeunload에서 동작이 보장되지 않음)
-     */
+    // ✅ [Fix 9] 메시지 변경 시 localStorage 캐시에 저장
     useEffect(() => {
-        if (!roomId) return;
+        if (roomId && messages.length > 0) {
+            saveCachedMessages(roomId, messages);
+        }
+    }, [roomId, messages]);
 
-        const forceLeaveRoom = () => {
-            if (hasLeftRef.current) return;
-            hasLeftRef.current = true;
-
-            const token = localStorage.getItem('accessToken');
-            if (!token) return;
-
-            // apiClient의 baseURL을 읽어서 fetch URL 구성
-            const baseURL = apiClient.defaults.baseURL || '';
-            const url = `${baseURL}/community/rooms/${roomId}/leave`;
-
-            try {
-                fetch(url, {
-                    method: 'DELETE',
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                    keepalive: true,
-                });
-                console.log('[ChatRoom] 자동 방 나가기 요청:', url);
-            } catch {
-                // 실패해도 무시 (페이지가 닫히는 중)
-            }
-        };
-
-        const handleBeforeUnload = () => {
-            forceLeaveRoom();
-        };
-
-        window.addEventListener('beforeunload', handleBeforeUnload);
-
-        return () => {
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-            // ✅ 컴포넌트 언마운트 시에도 방 나가기 (다른 페이지 이동, 로그아웃 등)
-            forceLeaveRoom();
-        };
-    }, [roomId]);
+    /**
+     * ✅ [Fix 6 수정] beforeunload에서 방 나가기 제거
+     * - 새로고침 시 방에 머물도록 변경
+     * - 메시지 히스토리는 getChatMessages API로 복원됨
+     * - OpenVidu 세션만 재연결하면 됨
+     */
 
     // 방 정보 로드
     useEffect(() => {
@@ -250,11 +272,19 @@ const ChatRoomPage = () => {
         loadRoom();
     }, [roomId, navigate, addToast]);
 
-    // [Bug 5] 메시지 히스토리 로드
+    // ✅ [Fix 9] 메시지 히스토리 로드 (캐시 → API fallback)
     useEffect(() => {
         if (!room || !roomId || historyLoadedRef.current) return;
 
         const loadMessageHistory = async () => {
+            // 캐시에서 이미 복원된 경우 API 스킵
+            if (messages.length > 0) {
+                console.log('[ChatRoom] 캐시 메시지 사용, API 스킵');
+                historyLoadedRef.current = true;
+                return;
+            }
+
+            // 캐시가 비어있으면 API에서 로드 시도
             try {
                 const chatMessages = await getChatMessages(Number(roomId));
                 if (chatMessages && chatMessages.length > 0) {
@@ -266,7 +296,7 @@ const ChatRoomPage = () => {
                             currentUserId = payload.userId || payload.sub ? Number(payload.sub) : null;
                         }
                     } catch {
-                        // ignore
+                        // 토큰 파싱 실패 시 무시
                     }
 
                     const historyMessages: ChatMessage[] = chatMessages.map((msg, index) => ({
@@ -296,19 +326,32 @@ const ChatRoomPage = () => {
         }
     }, [sessionId, myNickname, connected, connecting, connect]);
 
-    // [Bug 3] 15초 폴링
+    /**
+     * ✅ [Fix 4] 15초 폴링 - 방 정보 + 실제 멤버 수 갱신
+     * room.currentMemberCount 대신 members API의 totalMembers 사용
+     */
     useEffect(() => {
         if (!roomId) return;
+
         const pollRoomData = async () => {
             try {
+                // 방 기본 정보 갱신
                 const myRoom = await getMyRoom();
                 if (myRoom && myRoom.roomId === Number(roomId)) {
                     setRoom(myRoom);
                 }
+
+                // ✅ 실제 멤버 수 갱신 (members API)
+                const membersResponse = await getRoomMembers(Number(roomId));
+                setRealMemberCount(membersResponse.totalMembers);
             } catch {
-                // ignore
+                // 폴링 실패는 무시
             }
         };
+
+        // 최초 1회 즉시 실행 (멤버 수 초기화)
+        pollRoomData();
+
         const intervalId = setInterval(pollRoomData, 15000);
         return () => clearInterval(intervalId);
     }, [roomId]);
@@ -329,6 +372,8 @@ const ChatRoomPage = () => {
         try {
             const response: RoomMemberListResponse = await getRoomMembers(Number(roomId));
             setParticipants(response.members);
+            // ✅ 참여자 목록 로드 시 실제 멤버 수도 갱신
+            setRealMemberCount(response.totalMembers);
         } catch (err) {
             console.error('참여자 목록 로드 실패:', err);
         } finally {
@@ -361,20 +406,38 @@ const ChatRoomPage = () => {
         }
     };
 
-    // ✅ 정상 나가기 (버튼 클릭) - hasLeftRef 설정으로 beforeunload 중복 방지
+    /**
+     * ✅ [Fix 6 + Fix 7] 정상 나가기 (버튼 클릭)
+     * - isLeavingRef로 중복 클릭 방지 (토스트 3번 뜨는 문제 해결)
+     * - API 실패 시에도 무조건 /community로 이동
+     */
     const handleLeaveRoom = async () => {
-        if (!roomId) return;
+        if (!roomId || isLeavingRef.current) return;
+        isLeavingRef.current = true;
+        hasLeftRef.current = true;
+
+        // ✅ [Fix 9] 방 나가기 시 메시지 캐시 삭제
+        clearCachedMessages(roomId);
+
+        // OpenVidu 연결 해제 (실패해도 무시)
         try {
-            hasLeftRef.current = true; // beforeunload에서 중복 호출 방지
             disconnect();
+        } catch (err) {
+            console.warn('[ChatRoom] disconnect 실패 (무시):', err);
+        }
+
+        // 방 나가기 API 호출
+        try {
             await leaveRoom(Number(roomId));
             addToast('success', '그룹을 나갔습니다');
-            navigate('/community');
         } catch (err) {
-            hasLeftRef.current = false; // 실패 시 복구
-            console.error('그룹 나가기 실패:', err);
-            addToast('error', '그룹 나가기에 실패했습니다');
+            console.warn('[ChatRoom] leaveRoom API 실패 (무시하고 이동):', err);
+            // ✅ API 실패해도 에러 토스트 안 띄우고 그냥 이동
+            // 이미 나간 상태(NOT_ROOM_MEMBER)이거나 네트워크 오류일 수 있음
         }
+
+        // ✅ 무조건 커뮤니티로 이동
+        navigate('/community');
     };
 
     const handleMessageContextMenu = (e: React.MouseEvent, messageId: string, text: string) => {
@@ -426,6 +489,12 @@ const ChatRoomPage = () => {
         if (connectionStatus === 'connecting') return 'reconnecting';
         return connectionStatus;
     };
+
+    /**
+     * ✅ [Fix 4] 헤더에 표시할 멤버 수
+     * realMemberCount (members API) → room.currentMemberCount (fallback)
+     */
+    const displayMemberCount = realMemberCount ?? room?.currentMemberCount ?? 0;
 
     // 로딩 스켈레톤
     if (loading) {
@@ -511,11 +580,30 @@ const ChatRoomPage = () => {
                             <div className="chat-room-meta">
                                 <span className={`chat-online-dot ${getConnectionStatusClass()}`} />
                                 <span className="chat-participant-count">
-                                    {room.currentMemberCount}명 참여 중
+                                    {/* ✅ [Fix 4] 실제 멤버 수 표시 */}
+                                    {displayMemberCount}명 참여 중
                                 </span>
                                 <span className="chat-room-type-tag">
                                     {room.isPublic ? '공개방' : '비공개방'}
                                 </span>
+                                {/* ✅ 비공개방: 참여 코드 복사 버튼 */}
+                                {!room.isPublic && room.joinCode && (
+                                    <button
+                                        className="chat-copy-code-btn"
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(room.joinCode!)
+                                                .then(() => addToast('success', '참여 코드가 복사되었습니다'))
+                                                .catch(() => addToast('error', '복사에 실패했습니다'));
+                                        }}
+                                        title={`참여 코드: ${room.joinCode}`}
+                                    >
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                        </svg>
+                                        참여 코드 복사
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -573,8 +661,6 @@ const ChatRoomPage = () => {
                                                 );
                                             }
 
-                                            const avatarColor = getAvatarColor(msg.userName);
-
                                             return (
                                                 <div
                                                     key={msg.id}
@@ -583,12 +669,6 @@ const ChatRoomPage = () => {
                                                 >
                                                     {!msg.isMine && (
                                                         <>
-                                                            <div
-                                                                className="message-avatar"
-                                                                style={{ backgroundColor: avatarColor.bg, color: avatarColor.text }}
-                                                            >
-                                                                {msg.userName.charAt(0)}
-                                                            </div>
                                                             <div className="message-content-wrapper">
                                                                 <div className="message-header">
                                                                     <span className="message-sender">{msg.userName}</span>
@@ -688,7 +768,7 @@ const ChatRoomPage = () => {
                         <div className="leave-modal" onClick={(e) => e.stopPropagation()}>
                             <button className="leave-modal-close" onClick={() => setShowLeaveModal(false)}>✕</button>
                             <h3>그룹 나가기</h3>
-                            <p>정말 '{room.name}' 그룹을 나가시겠습니까?</p>
+                            <p>그룹을 나가시겠습니까?</p>
                             <div className="leave-modal-actions">
                                 <button className="leave-modal-cancel" onClick={() => setShowLeaveModal(false)}>취소</button>
                                 <button className="leave-modal-confirm" onClick={handleLeaveRoom}>나가기</button>

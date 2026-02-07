@@ -1,12 +1,6 @@
-/**
- * useOpenVidu - OpenVidu 세션 관리 Hook
- * 실시간 채팅을 위한 WebRTC 연결 관리
- */
-
 import { useState, useEffect, useRef } from 'react';
 import { OpenVidu, Session, Publisher, SignalEvent } from 'openvidu-browser';
 import { getOpenViduToken } from '@/api/communityApi';
-import { getCurrentUserNickname } from '@/utils/jwtUtils';
 
 interface SimpleMessage {
     userName: string;
@@ -17,6 +11,7 @@ interface SimpleMessage {
 
 interface UseOpenViduProps {
     sessionId: string | null;
+    userName: string;
     onMessageReceived: (message: SimpleMessage) => void;
     onParticipantChanged?: (count: number) => void;
     onSessionIdChanged?: (newSessionId: string) => void;
@@ -42,9 +37,10 @@ interface OpenViduMessageData {
 
 export const useOpenVidu = ({
                                 sessionId,
+                                userName,
                                 onMessageReceived,
                                 onParticipantChanged,
-                                onSessionIdChanged
+                                onSessionIdChanged,
                             }: UseOpenViduProps): UseOpenViduReturn => {
     const [session, setSession] = useState<Session | null>(null);
     const [publisher, setPublisher] = useState<Publisher | null>(null);
@@ -54,12 +50,21 @@ export const useOpenVidu = ({
     const [participantCount, setParticipantCount] = useState(0);
 
     const OV = useRef<OpenVidu | null>(null);
-    const currentUserNickname = useRef<string>('');
+    const currentUserNickname = useRef<string>(userName);
+
+    useEffect(() => {
+        currentUserNickname.current = userName;
+    }, [userName]);
 
     const updateParticipantCount = (newSession: Session) => {
-        const count = newSession.remoteConnections.size + 1;
-        setParticipantCount(count);
-        onParticipantChanged?.(count);
+        try {
+            const remoteCount = newSession.remoteConnections?.size ?? 0;
+            const count = remoteCount + 1;
+            setParticipantCount(count);
+            onParticipantChanged?.(count);
+        } catch (err) {
+            console.warn('[useOpenVidu] participantCount 업데이트 실패:', err);
+        }
     };
 
     const connect = async () => {
@@ -70,11 +75,14 @@ export const useOpenVidu = ({
 
         if (connecting) return;
 
+        if (!currentUserNickname.current || currentUserNickname.current === '알 수 없음') {
+            console.warn('[useOpenVidu] 닉네임이 설정되지 않았습니다. 연결을 지연합니다.');
+            return;
+        }
+
         try {
             setConnecting(true);
             setError(null);
-
-            currentUserNickname.current = getCurrentUserNickname();
 
             OV.current = new OpenVidu();
             const newSession = OV.current.initSession();
@@ -89,13 +97,26 @@ export const useOpenVidu = ({
                 updateParticipantCount(newSession);
             });
 
+            (newSession as any).on('participantEvicted', (event: any) => {
+                console.warn('[useOpenVidu] participantEvicted:', event);
+                try {
+                    updateParticipantCount(newSession);
+                } catch (err) {
+                    console.warn('[useOpenVidu] participantEvicted 처리 중 에러:', err);
+                }
+            });
+
             // 메시지 수신 이벤트
             newSession.on('signal:chat', (event: SignalEvent) => {
                 if (!event.data) return;
 
                 try {
                     const data = JSON.parse(event.data) as OpenViduMessageData;
-                    const isMine = !event.from || event.from.connectionId === newSession.connection.connectionId;
+
+                    const isMine =
+                        !event.from ||
+                        (newSession.connection != null &&
+                            event.from.connectionId === newSession.connection.connectionId);
 
                     const message: SimpleMessage = {
                         userName: data.sender || '알 수 없음',
@@ -117,8 +138,15 @@ export const useOpenVidu = ({
                 setParticipantCount(0);
             });
 
-            // 에러 이벤트
-            newSession.on('exception', (exception: { message?: string }) => {
+            newSession.on('exception', (exception: { name?: string; message?: string }) => {
+                if (
+                    exception.name === 'participantEvicted' ||
+                    exception.message?.includes('participantEvicted')
+                ) {
+                    console.warn('[useOpenVidu] participantEvicted exception 무시:', exception.message);
+                    return;
+                }
+                console.error('[useOpenVidu] exception:', exception);
                 setError(exception.message || '알 수 없는 오류');
             });
 
@@ -132,8 +160,11 @@ export const useOpenVidu = ({
                 onSessionIdChanged?.(actualSessionId);
             }
 
-            // 세션 연결
-            await newSession.connect(token, { clientData: currentUserNickname.current });
+            await newSession.connect(token, {
+                clientData: currentUserNickname.current,
+            });
+
+            console.log('[useOpenVidu] 연결 성공, 닉네임:', currentUserNickname.current);
 
             setSession(newSession);
             setPublisher(null);
@@ -141,6 +172,7 @@ export const useOpenVidu = ({
             updateParticipantCount(newSession);
         } catch (err) {
             const error = err as Error;
+            console.error('[useOpenVidu] 연결 실패:', error);
             setError(error.message || 'OpenVidu 연결에 실패했습니다.');
             setConnected(false);
         } finally {
@@ -150,7 +182,11 @@ export const useOpenVidu = ({
 
     const disconnect = () => {
         if (session) {
-            session.disconnect();
+            try {
+                session.disconnect();
+            } catch (err) {
+                console.warn('[useOpenVidu] disconnect 중 에러 (무시):', err);
+            }
             setSession(null);
             setPublisher(null);
             setConnected(false);
@@ -180,7 +216,11 @@ export const useOpenVidu = ({
     useEffect(() => {
         return () => {
             if (session) {
-                session.disconnect();
+                try {
+                    session.disconnect();
+                } catch (err) {
+                    console.warn('[useOpenVidu] cleanup disconnect 에러 (무시):', err);
+                }
             }
         };
     }, [session]);

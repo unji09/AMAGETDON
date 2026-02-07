@@ -351,10 +351,13 @@
     padding: 18px 20px;
     gap: 16px;
     margin-bottom: 0;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .code-input {
     flex: 1;
+    min-width: 0;
     height: 44px;
     background: white;
     border: 1px solid #E5E7EB;
@@ -366,6 +369,7 @@
     text-align: center;
     color: #1A1A1A;
     padding: 0 16px;
+    box-sizing: border-box;
 }
 
 .code-info {
@@ -498,5 +502,27 @@
 
     .number-input-group input {
         width: 150px;
+    }
+
+    /* 참여 코드 모바일 대응 */
+    .code-input-wrapper {
+        padding: 12px;
+        gap: 8px;
+    }
+
+    .code-input {
+        font-size: 16px;
+        padding: 0 10px;
+        min-width: 0;
+    }
+
+    .btn-small {
+        width: 60px;
+        height: 40px;
+        font-size: 12px;
+    }
+
+    .code-info {
+        padding: 12px;
     }
 }

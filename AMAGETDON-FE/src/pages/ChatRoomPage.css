@@ -92,6 +92,28 @@
     border-radius: 4px;
 }
 
+/* ✅ 참여 코드 복사 버튼 (비공개방 헤더) */
+.chat-copy-code-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border: 1px solid #d4a017;
+    border-radius: 4px;
+    background: #fef9e7;
+    color: #96773D;
+    font-size: 12px;
+    font-family: Arial, sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.chat-copy-code-btn:hover {
+    background: #f9e79f;
+    border-color: #b7950b;
+}
+
 /* 헤더 액션 버튼들 */
 .chat-header-actions {
     display: flex;
@@ -574,6 +596,7 @@
 }
 
 /* ==================== 나가기 모달 ==================== */
+/* Figma: 440x230, white, no border-radius */
 .leave-modal-overlay {
     position: fixed;
     top: 0;
@@ -588,28 +611,29 @@
 }
 
 .leave-modal {
-    width: 400px;
+    width: 440px;
+    height: 230px;
     background: white;
-    padding: 32px;
     position: relative;
-    border-radius: 12px;
+    outline: 1px #E0E0E0 solid;
+    outline-offset: -0.5px;
 }
 
 .leave-modal-close {
     position: absolute;
-    top: 16px;
+    top: 6px;
     right: 16px;
-    width: 32px;
-    height: 32px;
-    background: #F8F8F8;
+    width: 20px;
+    height: 20px;
+    background: #F5F5F5;
     border: none;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 11px;
     color: #666666;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
+    padding: 0;
 }
 
 .leave-modal-close:hover {
@@ -617,7 +641,10 @@
 }
 
 .leave-modal h3 {
-    margin: 0 0 16px 0;
+    position: absolute;
+    left: 20px;
+    top: 30px;
+    margin: 0;
     font-size: 20px;
     font-weight: 700;
     color: #282828;
@@ -625,40 +652,54 @@
 }
 
 .leave-modal p {
-    margin: 0 0 24px 0;
+    position: absolute;
+    left: 20px;
+    top: 98px;
+    margin: 0;
     font-size: 15px;
     color: #666666;
     font-family: Arial, sans-serif;
 }
 
 .leave-modal-actions {
-    display: flex;
-    gap: 12px;
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    top: 160px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
 }
 
 .leave-modal-cancel {
-    flex: 1;
-    height: 48px;
+    height: 50px;
     background: white;
-    border: 1px solid #E0E0E0;
+    border: none;
+    outline: 1px #E0E0E0 solid;
+    outline-offset: -0.5px;
     font-size: 15px;
     color: #666666;
     cursor: pointer;
     font-family: Arial, sans-serif;
-    border-radius: 8px;
+}
+
+.leave-modal-cancel:hover {
+    background: #F5F5F5;
 }
 
 .leave-modal-confirm {
-    flex: 1;
-    height: 48px;
-    background: #DC0000;
+    height: 50px;
+    background: #203C2E;
     border: none;
     font-size: 15px;
     font-weight: 700;
     color: white;
     cursor: pointer;
     font-family: Arial, sans-serif;
-    border-radius: 8px;
+}
+
+.leave-modal-confirm:hover {
+    background: #162B20;
 }
 
 /* ==================== 에러 상태 ==================== */
