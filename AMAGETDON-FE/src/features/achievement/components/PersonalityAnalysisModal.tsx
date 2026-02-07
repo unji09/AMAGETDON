@@ -26,7 +26,7 @@ export const PersonalityAnalysisModal = ({
 
     if (!isOpen || !result) return null;
 
-    const { initial_type, predicted_type, confidence, probabilities } = result;
+    const { initial_type, predicted_type, _confidence, probabilities } = result;
     const isSameType = initial_type === predicted_type;
 
     const handleConfirm = () => {
