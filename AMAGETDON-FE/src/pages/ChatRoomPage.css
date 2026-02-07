@@ -1,30 +1,21 @@
 /* ==================== 컨테이너 ==================== */
+/* Figma: 1800x920 content area, white bg */
 .chat-room-container {
     display: flex;
     flex-direction: column;
-
-    /* 1. 상하 여백 추가 (예: 위아래 32px씩 떨어뜨림) */
     margin: 32px auto;
-
-    /* 2. 높이 계산 변경 (70px(네비바) + 상하마진 64px = 134px 제외) */
     height: calc(100vh - 134px);
-
     background: white;
-    max-width: 1400px; /* 너무 넓으면 답답하므로 디자인에 맞춰 조절 */
-
-    /* 3. 모서리 둥글게 (답답함 해소의 핵심) */
-    border-radius: 12px;
-
-    /* 4. 테두리와 그림자 추가 (바탕과 분리되는 느낌) */
-    border: 1px solid #E0E0E0;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-
-    /* 컨테이너 밖으로 내용이 나가지 않도록 설정 */
+    max-width: 1800px;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
     overflow: hidden;
     position: relative;
 }
 
 /* ==================== 헤더 ==================== */
+/* Figma: 80px height, white bg, border-bottom */
 .chat-header {
     display: flex;
     justify-content: space-between;
@@ -42,30 +33,13 @@
     gap: 16px;
 }
 
-/* 방 아바타 (PDF: 56x56) */
-.chat-room-avatar {
-    width: 56px;
-    height: 56px;
-    background: #C7D8B7;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.chat-room-avatar span {
-    color: #203C2E;
-    font-size: 16px;
-    font-weight: 700;
-    font-family: Arial, sans-serif;
-}
-
 .chat-header-info {
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
 
+/* Figma: 20px bold #282828 */
 .chat-room-name {
     font-size: 20px;
     font-weight: 700;
@@ -80,7 +54,7 @@
     gap: 8px;
 }
 
-/* 온라인 도트 (PDF: 6x6, #8FAE5D) */
+/* Figma: 6x6 dot */
 .chat-online-dot {
     width: 6px;
     height: 6px;
@@ -101,19 +75,21 @@
     background: #DC0000;
 }
 
+/* Figma: 14px #666 */
 .chat-participant-count {
     font-size: 14px;
     color: #666666;
     font-family: Arial, sans-serif;
 }
 
-/* 공개방 태그 (PDF: 56x24, #F8F8F8) */
+/* Figma: 56x24, #F8F8F8, 12px */
 .chat-room-type-tag {
     padding: 4px 12px;
     background: #F8F8F8;
     font-size: 12px;
     color: #666666;
     font-family: Arial, sans-serif;
+    border-radius: 4px;
 }
 
 /* 헤더 액션 버튼들 */
@@ -122,7 +98,7 @@
     gap: 12px;
 }
 
-/* 참여자 보기 버튼 (PDF: 176x44, #F8F8F8) */
+/* Figma: 176x44, #F8F8F8, 1px #E0E0E0 border */
 .chat-action-btn.participants-btn {
     display: flex;
     align-items: center;
@@ -135,6 +111,7 @@
     color: #666666;
     cursor: pointer;
     font-family: Arial, sans-serif;
+    border-radius: 8px;
 }
 
 .chat-action-btn.participants-btn.active {
@@ -142,7 +119,7 @@
     border-color: #4CAF50;
 }
 
-/* 점 세 개 아이콘 (PDF: 5x5 간격 8px) */
+/* Figma: 5x5 dots */
 .dots-icon {
     display: flex;
     gap: 4px;
@@ -155,7 +132,7 @@
     border-radius: 50%;
 }
 
-/* 그룹 나가기 버튼 (PDF: 156x44, white) */
+/* Figma: 156x44, white, 1px #E0E0E0 border */
 .chat-action-btn.leave-btn {
     padding: 0 16px;
     height: 44px;
@@ -165,6 +142,7 @@
     color: #666666;
     cursor: pointer;
     font-family: Arial, sans-serif;
+    border-radius: 8px;
 }
 
 .chat-action-btn.leave-btn:hover {
@@ -202,128 +180,80 @@
     flex-shrink: 0;
 }
 
-.connection-status.connected {
-    background: #E8F5E9;
-}
-
-.connection-status.connected .status-dot {
-    width: 12px;
-    height: 12px;
-    background: #4CAF50;
-    border-radius: 50%;
-}
-
-.connection-status.connected .status-text {
-    color: #4CAF50;
-    font-size: 13px;
-    font-family: Arial, sans-serif;
-}
-
-/* 재연결 중 */
-.connection-status.reconnecting {
-    background: #FFF8E6;
-}
-
-.connection-status.reconnecting .status-dot {
-    width: 12px;
-    height: 12px;
-    background: #FADB13;
-    border-radius: 50%;
-    animation: pulse 1.5s ease-in-out infinite;
-}
-
-.connection-status.reconnecting .status-text {
-    color: #96773D;
-    font-size: 13px;
-    font-family: Arial, sans-serif;
-}
-
-/* 연결 끊김 */
 .connection-status.disconnected {
     background: #FFEBEE;
 }
 
-.connection-status.disconnected .status-dot {
-    width: 12px;
-    height: 12px;
-    background: #DC0000;
+.connection-status.reconnecting {
+    background: #FFF8E1;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
 }
 
-.connection-status.disconnected .status-text {
-    color: #DC0000;
-    font-size: 13px;
-    font-family: Arial, sans-serif;
-}
-
-/* 수동 재연결 버튼 */
-.reconnect-btn {
-    margin-left: auto;
-    padding: 8px 20px;
+.connection-status.disconnected .status-dot {
     background: #DC0000;
-    color: white;
-    border: none;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: Arial, sans-serif;
 }
 
-.reconnect-btn:hover {
-    background: #B00000;
+.connection-status.reconnecting .status-dot {
+    background: #FADB13;
+    animation: pulse 1.5s ease-in-out infinite;
 }
 
 @keyframes pulse {
     0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+    50% { opacity: 0.4; }
+}
+
+.status-text {
+    font-size: 14px;
+    color: #666666;
+    font-family: Arial, sans-serif;
+}
+
+.reconnect-btn {
+    margin-left: auto;
+    padding: 8px 16px;
+    background: #DC0000;
+    color: white;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    border-radius: 6px;
+}
+
+.reconnect-btn:hover {
+    background: #B30000;
 }
 
 /* ==================== 메시지 영역 ==================== */
+/* Figma: 흰색 배경, 스크롤 */
 .chat-messages {
     flex: 1;
     overflow-y: auto;
     padding: 24px 32px;
-    background: white;
-}
-
-/* 빈 채팅 */
-.chat-empty {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: #999999;
-}
-
-.chat-empty-icon {
-    width: 80px;
-    height: 80px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 16px;
-}
-
-.chat-empty p {
-    font-size: 16px;
-    font-weight: 600;
-    color: #666666;
-    margin: 0 0 8px 0;
-}
-
-.chat-empty-hint {
-    font-size: 14px;
-    color: #999999;
+    gap: 4px;
 }
 
 /* 날짜 구분선 */
+.chat-date-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
 .chat-date-divider {
     display: flex;
     align-items: center;
-    justify-content: center;
-    margin: 24px 0;
     gap: 16px;
+    margin: 24px 0 16px;
 }
 
 .chat-date-line {
@@ -332,37 +262,62 @@
     background: #E0E0E0;
 }
 
+/* Figma: 14px #999 */
 .chat-date-text {
+    font-size: 14px;
     color: #999999;
-    font-size: 13px;
-    font-family: Arial, sans-serif;
     white-space: nowrap;
+    font-family: Arial, sans-serif;
 }
 
-/* ==================== 메시지 아이템 ==================== */
+/* 빈 상태 */
+.chat-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 12px;
+    color: #999999;
+}
+
+.chat-empty-icon {
+    margin-bottom: 8px;
+}
+
+.chat-empty p {
+    font-size: 16px;
+    font-weight: 600;
+    color: #666666;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+.chat-empty-hint {
+    font-size: 14px;
+    color: #999999;
+    font-family: Arial, sans-serif;
+}
+
+/* ==================== 메시지 버블 ==================== */
 .chat-message {
     display: flex;
+    align-items: flex-start;
+    gap: 12px;
     margin-bottom: 16px;
 }
 
-/* 상대방 메시지 */
-.chat-message.others {
-    justify-content: flex-start;
-    align-items: flex-start;
-    gap: 12px;
-}
-
-/* 아바타 */
+/* Figma: 40x40 아바타 */
 .message-avatar {
-    width: 64px;
-    height: 64px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 17px;
+    font-size: 14px;
     font-weight: 700;
-    font-family: Arial, sans-serif;
     flex-shrink: 0;
+    border-radius: 8px;
 }
 
 .message-content-wrapper {
@@ -384,7 +339,7 @@
     gap: 8px;
 }
 
-/* 발신자 이름 */
+/* Figma: 15px bold #282828 */
 .message-sender {
     font-size: 15px;
     font-weight: 700;
@@ -392,18 +347,19 @@
     font-family: Arial, sans-serif;
 }
 
-/* 시간 */
+/* Figma: 13px #999 */
 .message-time {
     font-size: 13px;
     color: #999999;
     font-family: Arial, sans-serif;
 }
 
-/* 상대 메시지 버블 */
+/* ✅ Figma: 상대 메시지 버블 - #F8F8F8, 살짝 둥근 모서리 */
 .chat-message.others .message-bubble {
     background: #F8F8F8;
     padding: 12px 20px;
     max-width: 100%;
+    border-radius: 4px 12px 12px 12px;
 }
 
 /* 내 메시지 */
@@ -419,13 +375,15 @@
     padding-bottom: 4px;
 }
 
-/* 내 메시지 버블 */
+/* ✅ Figma: 내 메시지 버블 - #FADB13, 살짝 둥근 모서리 */
 .chat-message.mine .message-bubble {
     background: #FADB13;
     padding: 12px 20px;
     max-width: 856px;
+    border-radius: 12px 4px 12px 12px;
 }
 
+/* Figma: 16px #282828, line-height 1.5 */
 .message-content {
     margin: 0;
     font-size: 16px;
@@ -438,12 +396,12 @@
 
 /* 메시지 내 링크 */
 .message-link {
-    color: #2563EB;
+    color: #0046B4;
     text-decoration: underline;
 }
 
 .message-link:hover {
-    color: #1D4ED8;
+    color: #003490;
 }
 
 /* 시스템 메시지 */
@@ -463,6 +421,7 @@
 }
 
 /* ==================== 입력 영역 ==================== */
+/* Figma: 100px height, white bg, border-top */
 .chat-input-area {
     display: flex;
     align-items: center;
@@ -477,7 +436,7 @@
     flex: 1;
 }
 
-/* 입력창 */
+/* ✅ Figma: 56px height, #F8F8F8 bg, 살짝 둥근 모서리 */
 .chat-input {
     width: 100%;
     height: 56px;
@@ -488,6 +447,7 @@
     color: #282828;
     outline: none;
     font-family: Arial, sans-serif;
+    border-radius: 12px;
 }
 
 .chat-input::placeholder {
@@ -504,7 +464,7 @@
     cursor: not-allowed;
 }
 
-/* 전송 버튼 */
+/* ✅ Figma: 120x56, #203C2E bg, 살짝 둥근 모서리 */
 .chat-send-btn {
     width: 120px;
     height: 56px;
@@ -515,6 +475,7 @@
     font-weight: 700;
     cursor: pointer;
     font-family: Arial, sans-serif;
+    border-radius: 12px;
 }
 
 .chat-send-btn:hover:not(:disabled) {
@@ -567,6 +528,7 @@
     cursor: pointer;
     font-size: 14px;
     color: #666666;
+    border-radius: 4px;
 }
 
 .participants-list {
@@ -588,24 +550,11 @@
     align-items: center;
     gap: 12px;
     padding: 12px;
-    border-radius: 8px;
+    border-radius: 6px;
 }
 
 .participant-item:hover {
     background: white;
-}
-
-/* 참여자 아바타 */
-.participant-avatar {
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: 700;
-    font-family: Arial, sans-serif;
-    flex-shrink: 0;
 }
 
 .participant-name {
@@ -621,6 +570,7 @@
     color: white;
     font-size: 11px;
     font-weight: 700;
+    border-radius: 4px;
 }
 
 /* ==================== 나가기 모달 ==================== */
@@ -642,6 +592,7 @@
     background: white;
     padding: 32px;
     position: relative;
+    border-radius: 12px;
 }
 
 .leave-modal-close {
@@ -658,6 +609,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 4px;
 }
 
 .leave-modal-close:hover {
@@ -693,6 +645,7 @@
     color: #666666;
     cursor: pointer;
     font-family: Arial, sans-serif;
+    border-radius: 8px;
 }
 
 .leave-modal-confirm {
@@ -705,6 +658,7 @@
     color: white;
     cursor: pointer;
     font-family: Arial, sans-serif;
+    border-radius: 8px;
 }
 
 /* ==================== 에러 상태 ==================== */
@@ -738,13 +692,13 @@
     font-weight: 600;
     cursor: pointer;
     font-family: Arial, sans-serif;
+    border-radius: 8px;
 }
 
 .error-back-btn:hover {
     background: #2A4D3C;
 }
 
-/* 에러 배너 */
 .chat-error-banner {
     padding: 12px 24px;
     background: #FFEBEE;
@@ -760,9 +714,10 @@
     background: white;
     border: 1px solid #E0E0E0;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    border-radius: 4px;
     z-index: 1000;
     min-width: 120px;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .context-menu-item {
@@ -804,13 +759,13 @@
     gap: 12px;
     padding: 16px 20px;
     background: white;
-    border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     min-width: 280px;
     max-width: 400px;
     animation: slideInRight 0.3s ease;
     position: relative;
     overflow: hidden;
+    border-radius: 8px;
 }
 
 @keyframes slideInRight {
@@ -830,10 +785,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
     font-size: 12px;
     font-weight: 700;
     flex-shrink: 0;
+    border-radius: 50%;
 }
 
 .toast-success .toast-icon {
@@ -907,12 +862,8 @@
 }
 
 @keyframes progressShrink {
-    from {
-        width: 100%;
-    }
-    to {
-        width: 0;
-    }
+    from { width: 100%; }
+    to { width: 0; }
 }
 
 /* ==================== 스켈레톤 로딩 ==================== */
@@ -924,11 +875,6 @@
 @keyframes skeleton-pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.6; }
-}
-
-.skeleton-room-avatar {
-    width: 56px;
-    height: 56px;
 }
 
 .skeleton-title {
@@ -945,6 +891,7 @@
 .skeleton-btn {
     width: 140px;
     height: 44px;
+    border-radius: 8px;
 }
 
 .skeleton-date {
@@ -952,7 +899,6 @@
     height: 16px;
 }
 
-/* 스켈레톤 메시지 */
 .skeleton-message {
     display: flex;
     margin-bottom: 16px;
@@ -967,8 +913,9 @@
 }
 
 .skeleton-avatar {
-    width: 64px;
-    height: 64px;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
 }
 
 .skeleton-content {
@@ -985,24 +932,27 @@
 .skeleton-bubble {
     width: 400px;
     height: 80px;
+    border-radius: 4px 12px 12px 12px;
 }
 
 .skeleton-bubble-mine {
     width: 300px;
     height: 60px;
+    border-radius: 12px 4px 12px 12px;
 }
 
 .skeleton-input {
     flex: 1;
     height: 56px;
+    border-radius: 12px;
 }
 
 .skeleton-send-btn {
     width: 120px;
     height: 56px;
+    border-radius: 12px;
 }
 
-/* 로딩 상태 */
 .chat-loading {
     display: flex;
     flex-direction: column;
@@ -1020,24 +970,24 @@
     }
 
     .message-avatar {
-        width: 48px;
-        height: 48px;
-        font-size: 14px;
+        width: 36px;
+        height: 36px;
+        font-size: 13px;
     }
 }
 
 @media (max-width: 768px) {
+    .chat-room-container {
+        margin: 0;
+        height: calc(100vh - 70px);
+    }
+
     .chat-header {
         padding: 0 16px;
         flex-wrap: wrap;
         height: auto;
         padding: 12px 16px;
         gap: 12px;
-    }
-
-    .chat-room-avatar {
-        width: 40px;
-        height: 40px;
     }
 
     .chat-room-name {
@@ -1060,8 +1010,8 @@
     }
 
     .message-avatar {
-        width: 40px;
-        height: 40px;
+        width: 32px;
+        height: 32px;
         font-size: 12px;
     }
 
