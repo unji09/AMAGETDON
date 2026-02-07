@@ -61,6 +61,7 @@ services:
       - REDIRECT_URL=${REDIRECT_URL}
       - OPENVIDU_URL=${OPENVIDU_URL}
       - OPENVIDU_SECRET=${OPENVIDU_SECRET}
+      - FASTAPI_URL=http://localhost:8000
       - TZ=Asia/Seoul
     depends_on:
       mysql:
