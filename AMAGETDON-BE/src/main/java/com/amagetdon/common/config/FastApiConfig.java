@@ -1,4 +1,4 @@
-package com.amagetdon.learning.config;
+package com.amagetdon.common.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
