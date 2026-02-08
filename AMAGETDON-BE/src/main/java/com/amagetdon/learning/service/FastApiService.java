@@ -9,6 +9,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -55,6 +56,21 @@ public class FastApiService {
         } catch (Exception e) {
             log.error("FastAPI 퀴즈 생성 실패", e);
             throw new RuntimeException("퀴즈 생성 중 오류가 발생했습니다");
+        }
+    }
+
+    /**
+     * FastAPI에 퀴즈 생성을 비동기로 요청
+     * 백그라운드에서 실행되며 결과는 MySQL에 직접 저장됨
+     */
+    @Async("taskExecutor")
+    public void requestQuizGenerationAsync(Integer count, String difficulty, String quizType) {
+        try {
+            log.info("비동기 퀴즈 생성 요청 시작: count={}, difficulty={}, quizType={}", count, difficulty, quizType);
+            requestQuizGeneration(count, difficulty, quizType);
+            log.info("비동기 퀴즈 생성 완료");
+        } catch (Exception e) {
+            log.error("비동기 퀴즈 생성 실패", e);
         }
     }
 }
