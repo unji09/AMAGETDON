@@ -335,7 +335,7 @@ export const DailyQuizPage = () => {
             correctAnswer={getCorrectAnswerText()}
             addedToReviewNote={submitResult.addedToReviewNote}
             onNext={handleNext}
-            onClose={() => setShowFeedback(false)}
+            onExit={() => navigate('/learning')}
           />
         )}
 
