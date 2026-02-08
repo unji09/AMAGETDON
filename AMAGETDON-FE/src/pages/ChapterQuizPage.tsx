@@ -271,6 +271,25 @@ export const ChapterQuizPage = () => {
                         아직 답변하지 않은 문제가 있습니다. ({quizData.quizzes.length - answers.size}개 남음)
                     </div>
                 )}
+
+                {/* 모든 문제 답변 완료 시 최종 제출 버튼 */}
+                {answers.size === quizData.quizzes.length && !showResult && (
+                    <div className="chapter-quiz-page__final-submit">
+                        <p className="chapter-quiz-page__complete-message">
+                            모든 문제에 답변하셨습니다!
+                        </p>
+                        <button
+                            className="chapter-quiz-page__submit-btn"
+                            onClick={async () => {
+                                if (window.confirm('퀴즈를 제출하시겠습니까?')) {
+                                    await handleSubmit();
+                                }
+                            }}
+                        >
+                            최종 제출
+                        </button>
+                    </div>
+                )}
             </div>
         </Layout>
     );
