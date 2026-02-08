@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import java.util.Map;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
@@ -146,15 +145,5 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(e.getStatusCode())
                 .body(new ErrorResponse(e.getReason()));
-    }
-    
-    @ExceptionHandler(QuizGeneratingException.class)
-    public ResponseEntity<Map<String, String>> handleQuizGeneratingException(QuizGeneratingException e) {
-        log.info("퀴즈 생성 중: {}", e.getMessage());
-        return ResponseEntity.status(HttpStatus.ACCEPTED)
-                .body(Map.of(
-                        "status", "GENERATING",
-                        "message", e.getMessage()
-                ));
     }
 }
