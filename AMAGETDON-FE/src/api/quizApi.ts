@@ -28,12 +28,36 @@ export const getTodayQuizCount = async (): Promise<QuizCountResponse> => {
 };
 
 /**
+ * 무한 퀴즈 - 오늘의 퀴즈 조회 응답 타입
+ * 퀴즈 데이터 또는 생성 중 상태를 반환
+ */
+export interface DailyQuizResult {
+    status: 'OK' | 'GENERATING';
+    data?: QuizResponse;
+    message?: string;
+}
+
+/**
  * 무한 퀴즈 - 오늘의 퀴즈 조회
  * GET /api/v1/quizzes/daily
+ * 202 응답 시 생성 중 상태를 반환
  */
-export const fetchDailyQuiz = async (): Promise<QuizResponse> => {
-    const { data } = await apiClient.get(`${QUIZ_BASE}/daily`);
-    return data;
+export const fetchDailyQuiz = async (): Promise<DailyQuizResult> => {
+    const response = await apiClient.get(`${QUIZ_BASE}/daily`, {
+        validateStatus: (status) => status === 200 || status === 202,
+    });
+
+    if (response.status === 202) {
+        return {
+            status: 'GENERATING',
+            message: response.data.message || '퀴즈를 생성하고 있습니다',
+        };
+    }
+
+    return {
+        status: 'OK',
+        data: response.data,
+    };
 };
 
 /**
