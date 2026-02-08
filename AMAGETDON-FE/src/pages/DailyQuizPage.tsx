@@ -1,4 +1,4 @@
-import { fetchDailyQuiz, submitDailyQuiz } from "@/api/quizApi";
+import { fetchDailyQuiz, submitDailyQuiz, type DailyQuizResult } from "@/api/quizApi";
 import { Layout } from "@/components/layout";
 import { QuizCard } from "@/features/learning/components/quiz/QuizCard";
 import { QuizCelebration } from "@/features/learning/components/quiz/QuizCelebration";
@@ -7,7 +7,7 @@ import { QuizProgress } from "@/features/learning/components/quiz/QuizProgress";
 import { RewardNotification } from "@/features/learning/components/quiz/RewardNotification";
 import { SimpleFeedbackModal } from "@/features/learning/components/quiz/SimpleFeedbackModal";
 import type { QuizResponse, QuizSubmitResponse } from "@/types/quiz";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./DailyQuizPage.css";
 
@@ -29,8 +29,69 @@ export const DailyQuizPage = () => {
   const [userAnswerText, setUserAnswerText] = useState("");
   const [shuffledChoices, setShuffledChoices] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSimpleFeedback, setShowSimpleFeedback] = useState(false); // 101번 이후용
+  const retryCountRef = useRef(0);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const MAX_RETRIES = 10;
+
+  // 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+      }
+    };
+  }, []);
+
+  // 퀴즈 로드
+  const loadQuiz = useCallback(async (isRetry = false) => {
+    try {
+      if (!isRetry) {
+        setLoading(true);
+        setGenerating(false);
+        retryCountRef.current = 0;
+      }
+      setError(null);
+
+      const result: DailyQuizResult = await fetchDailyQuiz();
+
+      if (result.status === "GENERATING") {
+        // 생성 중 → 로딩 스피너 표시 후 자동 재시도
+        setLoading(false);
+        setGenerating(true);
+
+        if (retryCountRef.current < MAX_RETRIES) {
+          retryCountRef.current += 1;
+          retryTimerRef.current = setTimeout(() => {
+            loadQuiz(true);
+          }, 3000);
+        } else {
+          setGenerating(false);
+          setError("퀴즈 생성 시간이 초과되었습니다. 다시 시도해주세요.");
+        }
+        return;
+      }
+
+      // 정상 응답
+      setGenerating(false);
+      retryCountRef.current = 0;
+      setQuiz(result.data!);
+      setSubmitResult(null);
+      setShowFeedback(false);
+      setShowSimpleFeedback(false);
+      setShowCelebration(false);
+      setShuffledChoices(null);
+      setUserAnswerText("");
+    } catch (err) {
+      console.error("퀴즈 로드 실패:", err);
+      setGenerating(false);
+      setError("퀴즈를 불러오는데 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   // 초기 퀴즈 로드
   useEffect(() => {
@@ -40,28 +101,7 @@ export const DailyQuizPage = () => {
       return;
     }
     loadQuiz();
-  }, [navigate]);
-
-  // 퀴즈 로드
-  const loadQuiz = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await fetchDailyQuiz();
-      setQuiz(data);
-      setSubmitResult(null);
-      setShowFeedback(false);
-      setShowSimpleFeedback(false); // 추가
-      setShowCelebration(false);
-      setShuffledChoices(null);
-      setUserAnswerText("");
-    } catch (err) {
-      console.error("퀴즈 로드 실패:", err);
-      setError("퀴즈를 불러오는데 실패했습니다. 다시 시도해주세요.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [navigate, loadQuiz]);
 
   // 답안 제출
   const handleSubmit = async (
@@ -199,6 +239,25 @@ export const DailyQuizPage = () => {
     );
   }
 
+  // 퀴즈 생성 중 상태
+  if (generating) {
+    return (
+      <Layout>
+        <div className="daily-quiz-page">
+          <div className="daily-quiz-page__generating">
+            <div className="daily-quiz-page__spinner" />
+            <p className="daily-quiz-page__generating-text">
+              퀴즈를 생성하고 있습니다...
+            </p>
+            <p className="daily-quiz-page__generating-subtext">
+              잠시만 기다려 주세요
+            </p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   // 에러 상태
   if (error) {
     return (
@@ -206,7 +265,7 @@ export const DailyQuizPage = () => {
         <div className="daily-quiz-page">
           <div className="daily-quiz-page__error">
             {error}
-            <button onClick={loadQuiz} className="daily-quiz-page__retry-btn">
+            <button onClick={() => loadQuiz()} className="daily-quiz-page__retry-btn">
               다시 시도
             </button>
           </div>
