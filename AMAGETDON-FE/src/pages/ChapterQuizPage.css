@@ -114,6 +114,41 @@
     }
 }
 
+/* 최종 제출 */
+.chapter-quiz-page__final-submit {
+    width: 100%;
+    max-width: 700px;
+    margin-top: 24px;
+    text-align: center;
+    animation: fadeInUp 0.3s ease;
+}
+
+.chapter-quiz-page__complete-message {
+    font-size: 15px;
+    font-weight: 600;
+    color: #2E7D32;
+    margin-bottom: 16px;
+}
+
+.chapter-quiz-page__submit-btn {
+    width: 100%;
+    padding: 16px 24px;
+    background: #203C2E;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.chapter-quiz-page__submit-btn:hover {
+    background: #162B20;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(32, 60, 46, 0.3);
+}
+
 /* 미완료 문제 안내 */
 .chapter-quiz-page__incomplete-notice {
     width: 100%;
@@ -206,7 +241,8 @@
     .chapter-quiz-page__header,
     .chapter-quiz-page__progress-wrapper,
     .chapter-quiz-page__content,
-    .chapter-quiz-page__nav {
+    .chapter-quiz-page__nav,
+    .chapter-quiz-page__final-submit {
         max-width: 100%;
     }
 
