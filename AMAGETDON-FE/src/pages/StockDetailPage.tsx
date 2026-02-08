@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
-import { Layout } from '@/components/layout';
-import { ContainerContent } from '@/components/layout';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Layout, ContainerContent } from '@/components/layout';
+import { Button } from '@/components/common';
 import { StockHeader } from '@/features/investment/components/detail/StockHeader';
 import { CandleChart } from '@/features/investment/components/detail/CandleChart';
 import { TradingPanel } from '@/features/investment/components/detail/TradingPanel';
@@ -21,6 +21,7 @@ const INITIAL_LOADING_DURATION = 1500;  // 초기 로딩 고정 시간: 1.5초
 
 export const StockDetailPage = () => {
     const { stockCode } = useParams<{ stockCode: string }>();
+    const navigate = useNavigate();
     const { isOpen, statusText } = useMarketStatus();
     const [detail, setDetail] = useState<StockDetailData | null>(null);
     const [chart, setChart] = useState<CandleChartResponse | null>(null);
@@ -156,7 +157,10 @@ export const StockDetailPage = () => {
         if (!detail) {
             return (
                 <div className="stock-detail__error">
-                    종목 정보를 불러올 수 없습니다.
+                    <p>종목 정보를 불러올 수 없습니다.</p>
+                    <Button variant="primary" onClick={() => navigate('/investment')}>
+                        투자 메인으로 돌아가기
+                    </Button>
                 </div>
             );
         }
