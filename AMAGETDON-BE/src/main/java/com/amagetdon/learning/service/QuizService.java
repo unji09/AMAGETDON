@@ -13,8 +13,10 @@ import com.amagetdon.user.entity.User;
 import com.amagetdon.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.Collections;
@@ -47,6 +49,7 @@ public class QuizService {
     private static final Integer DAILY_QUIZ_LIMIT = 100;
     private static final Integer CACHED_QUIZ_BUFFER_SIZE = 100;
     private static final Integer REQUEST_GENERATE_QUIZ_COUNT = 10;
+    private static final Integer BUFFER_THRESHOLD = 20;
 
     /**
      * 오늘의 퀴즈 1개 조회
@@ -103,6 +106,7 @@ public class QuizService {
 
     /**
      * 101번~ 무한 퀴즈 조회 (캐싱 퀴즈)
+     * 캐시된 퀴즈가 있으면 즉시 반환, 없으면 비동기 생성 트리거 후 202 응답
      */
     private QuizResponse getDailyQuizOver100(Long userId, LocalDate today, Integer nextSequence) {
         // 1. 미사용 캐싱 퀴즈 조회
@@ -116,40 +120,28 @@ public class QuizService {
             log.info("캐싱 퀴즈 사용: cachedQuizId={}, userId={}, sequence={}",
                     cachedQuiz.getCachedQuizId(), userId, nextSequence);
 
+            // 선제적 보충: 남은 미사용 퀴즈가 임계값 이하이면 백그라운드 생성
+            triggerPreemptiveGeneration();
+
             return convertCachedQuizToResponse(cachedQuiz, nextSequence);
         }
 
-        // 2. 퀴즈 없음 → FastAPI 호출하여 생성
-        log.info("FastAPI 퀴즈 생성 요청");
-        fastApiService.requestQuizGeneration(1, "RANDOM", "RANDOM");
+        // 2. 캐시된 퀴즈 없음 → 비동기로 생성 트리거하고 202 응답
+        log.info("캐싱 퀴즈 없음, 비동기 생성 요청 트리거: userId={}", userId);
+        fastApiService.requestQuizGenerationAsync(REQUEST_GENERATE_QUIZ_COUNT, "RANDOM", "RANDOM");
 
-        // 3. 생성 요청 후 재조회 (polling 방식)
-        int maxRetries = 5;
-        int retryCount = 0;
+        throw new ResponseStatusException(HttpStatus.ACCEPTED, "퀴즈를 생성하고 있습니다");
+    }
 
-        while (retryCount < maxRetries) {
-            try {
-                Thread.sleep(1000); // 1초 대기
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException("퀴즈 생성 중 오류가 발생했습니다", e);
-            }
-
-            Optional<CachedQuiz> newQuizOpt = cachedQuizRepository.findRandomUnusedQuiz();
-            if (newQuizOpt.isPresent()) {
-                CachedQuiz newQuiz = newQuizOpt.get();
-                newQuiz.markAsUsed();
-                cachedQuizRepository.save(newQuiz);
-
-                log.info("생성된 캐싱 퀴즈 사용: cachedQuizId={}", newQuiz.getCachedQuizId());
-                return convertCachedQuizToResponse(newQuiz, nextSequence);
-            }
-
-            retryCount++;
+    /**
+     * 미사용 퀴즈가 임계값 이하이면 백그라운드로 추가 생성 요청
+     */
+    private void triggerPreemptiveGeneration() {
+        Integer unusedCount = cachedQuizRepository.countByIsUsed(false);
+        if (unusedCount <= BUFFER_THRESHOLD) {
+            log.info("캐싱 퀴즈 선제적 보충 트리거: 남은 미사용={}", unusedCount);
+            fastApiService.requestQuizGenerationAsync(REQUEST_GENERATE_QUIZ_COUNT, "RANDOM", "RANDOM");
         }
-
-        // 4. 최대 재시도 초과
-        throw new RuntimeException("퀴즈 생성에 실패했습니다. 다시 시도해주세요");
     }
 
     /**
