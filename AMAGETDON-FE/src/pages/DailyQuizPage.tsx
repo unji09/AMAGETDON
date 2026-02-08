@@ -345,6 +345,7 @@ export const DailyQuizPage = () => {
             isOpen={showSimpleFeedback}
             isCorrect={submitResult.isCorrect}
             onNext={handleNextSimple}
+            onExit={() => navigate('/learning')}
           />
         )}
 

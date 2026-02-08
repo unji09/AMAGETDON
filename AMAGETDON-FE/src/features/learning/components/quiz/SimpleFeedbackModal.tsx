@@ -6,6 +6,7 @@ interface SimpleFeedbackModalProps {
     isOpen: boolean;
     isCorrect: boolean;
     onNext: () => void;
+    onExit: () => void;
 }
 
 /**
@@ -18,11 +19,20 @@ export const SimpleFeedbackModal = ({
     isOpen,
     isCorrect,
     onNext,
+    onExit,
 }: SimpleFeedbackModalProps) => {
     if (!isOpen) return null;
 
     return (
-        <Modal isOpen={isOpen} onClose={onNext}>
+        <Modal
+            isOpen={isOpen}
+            onClose={() => {
+                if (window.confirm('퀴즈를 종료하시겠습니까?')) {
+                    onExit();
+                }
+            }}
+            preventOverlayClose
+        >
             <div className={`simple-feedback ${isCorrect ? 'simple-feedback--correct' : 'simple-feedback--wrong'}`}>
                 {/* 상태 아이콘 */}
                 <div className="simple-feedback__icon-wrap">
