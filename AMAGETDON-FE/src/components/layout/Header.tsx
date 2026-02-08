@@ -190,11 +190,6 @@ export const Header = () => {
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
 
-    // 잔액 포맷팅
-    const formatBalance = (balance: number) => {
-        return balance.toLocaleString();
-    };
-
     // 슬라이딩 인디케이터 위치 업데이트
     const updateIndicator = useCallback(() => {
         const activeIndex = navItems.findIndex(item => isActive(item.path));
@@ -299,9 +294,6 @@ export const Header = () => {
                                             {userInfo.currentTitle && (
                                                 <span className="profile-dropdown-title">{userInfo.currentTitle}</span>
                                             )}
-                                            <span className="profile-dropdown-balance">
-                                                {formatBalance(userInfo.balance)}원
-                                            </span>
                                         </div>
                                         <div className="profile-dropdown-divider" />
                                         <button
