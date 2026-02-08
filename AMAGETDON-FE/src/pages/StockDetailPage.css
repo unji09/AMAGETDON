@@ -75,3 +75,14 @@
         padding-bottom: 200px;
     }
 }
+
+.stock-detail__error {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-4);
+    height: 400px;
+    color: #888;
+    font-size: var(--font-size-base);
+}
