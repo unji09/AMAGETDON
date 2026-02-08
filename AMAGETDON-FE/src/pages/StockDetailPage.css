@@ -75,3 +75,12 @@
         padding-bottom: 200px;
     }
 }
+
+.stock-detail__error {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 400px;
+    color: #888;
+    font-size: var(--font-size-base);
+}

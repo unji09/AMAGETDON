@@ -10,10 +10,49 @@
     to { opacity: 1; }
 }
 
+.candle-chart__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-4);
+}
+
 .candle-chart__tabs {
     display: flex;
     gap: var(--spacing-1);
-    margin-bottom: var(--spacing-4);
+}
+
+.candle-chart__refresh {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f5f5f5;
+    border-radius: 8px;
+    color: #666;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.candle-chart__refresh:hover {
+    background: #e8e8e8;
+    color: var(--color-dark-gray);
+}
+
+.candle-chart__refresh:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.candle-chart__refresh--loading svg {
+    animation: chartRefreshSpin 1s linear infinite;
+}
+
+@keyframes chartRefreshSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 .candle-chart__tab {
