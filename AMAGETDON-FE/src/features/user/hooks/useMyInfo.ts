@@ -68,6 +68,8 @@ export const useMyInfo = () => {
             initialDataRef.current = res.data
             setPassword('')
             setSuccessMsg('변경사항이 저장되었습니다.')
+            // 헤더 닉네임 갱신
+            window.dispatchEvent(new Event('userInfoUpdated'))
         } catch {
             setError('변경사항 저장에 실패했습니다.')
         } finally {

@@ -55,6 +55,8 @@ export const AchievementDetailModal = ({
             await updateUserTitle(achievementName);
             onTitleChanged(achievementName);
             setToastMsg(`칭호가 "${achievementName}"(으)로 변경되었습니다.`);
+            // 헤더 칭호 갱신
+            window.dispatchEvent(new Event('userInfoUpdated'));
         } catch {
             setToastMsg('칭호 변경에 실패했습니다.');
         } finally {
