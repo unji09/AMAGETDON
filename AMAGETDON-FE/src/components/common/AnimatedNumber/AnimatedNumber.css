@@ -1,0 +1,83 @@
+.animated-number {
+    display: inline-block;
+    position: relative;
+    overflow: hidden;
+    vertical-align: baseline;
+}
+
+.animated-number__value {
+    display: inline-block;
+    transition: transform var(--animation-duration, 300ms) cubic-bezier(0.4, 0, 0.2, 1),
+                opacity var(--animation-duration, 300ms) ease;
+}
+
+/* 위로 올라가는 애니메이션 (값 증가) */
+.animated-number__value--up {
+    animation: slideUp var(--animation-duration, 300ms) cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 아래로 내려가는 애니메이션 (값 감소) */
+.animated-number__value--down {
+    animation: slideDown var(--animation-duration, 300ms) cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideUp {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    50% {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    51% {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideDown {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    50% {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    51% {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* 하이라이트 효과 */
+.animated-number--highlight-up {
+    color: var(--color-chart-up);
+}
+
+.animated-number--highlight-down {
+    color: var(--color-chart-down);
+}
+
+/* 펄스 효과 (변경 시 잠깐 밝아짐) */
+.animated-number--animating {
+    animation: pulse-highlight var(--animation-duration, 300ms) ease;
+}
+
+@keyframes pulse-highlight {
+    0%, 100% {
+        filter: brightness(1);
+    }
+    50% {
+        filter: brightness(1.2);
+    }
+}

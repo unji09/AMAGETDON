@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 @Entity
@@ -17,6 +19,10 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Transaction {
+    private static final BigDecimal BUY_FEE_RATE = new BigDecimal("0.00015");
+    private static final BigDecimal SELL_FEE_RATE = new BigDecimal("0.0015");
+    private static final int MINIMUM_FEE = 1;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long transactionId;
@@ -64,12 +70,19 @@ public class Transaction {
         transaction.quantity = quantity;
         transaction.price = price;
         transaction.totalAmount = (long) quantity * price;
-        transaction.feeAmount = calculateFee(transaction.totalAmount);
+        transaction.feeAmount = calculateFee(transactionType, transaction.totalAmount);
         return transaction;
     }
 
-    private static Integer calculateFee(Long amount) {
-        return (int) (amount * 0.00015);
+    private static Integer calculateFee(TransactionType transactionType, Long amount) {
+        BigDecimal feeRate = (transactionType == TransactionType.SELL) ? SELL_FEE_RATE : BUY_FEE_RATE;
+
+        BigDecimal calculatedFee = new BigDecimal(amount)
+                .multiply(feeRate)
+                .setScale(0, RoundingMode.CEILING);
+
+        int fee = calculatedFee.intValue();
+        return Math.max(fee, MINIMUM_FEE);
     }
 
     public Long getNetAmount() {

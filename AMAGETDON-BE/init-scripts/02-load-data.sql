@@ -5,7 +5,7 @@ LOAD DATA INFILE '/var/lib/mysql-files/chapters.csv'
     CHARACTER SET utf8mb4
     FIELDS TERMINATED BY ','
     ENCLOSED BY '"'
-    LINES TERMINATED BY '\r\n'
+    LINES TERMINATED BY '\n'
     IGNORE 1 ROWS
     (chapter_id, chapter_type, base_chapter_no, chapter_title,
      chapter_summary, chapter_content, created_at, updated_at);
@@ -18,7 +18,7 @@ LOAD DATA INFILE '/var/lib/mysql-files/quizzes.csv'
     CHARACTER SET utf8mb4
     FIELDS TERMINATED BY ','
     ENCLOSED BY '"'
-    LINES TERMINATED BY '\r\n'
+    LINES TERMINATED BY '\n'
     IGNORE 1 ROWS
     (quiz_id, chapter_id, quiz_type, quiz_title, quiz_content,
      answer_ox, difficulty, hint, explanation_text, created_at, updated_at);
@@ -31,7 +31,7 @@ LOAD DATA INFILE '/var/lib/mysql-files/quiz_choices.csv'
     CHARACTER SET utf8mb4
     FIELDS TERMINATED BY ','
     ENCLOSED BY '"'
-    LINES TERMINATED BY '\r\n'
+    LINES TERMINATED BY '\n'
     IGNORE 1 ROWS
     (choice_id, quiz_id, choice_no, choice_text, is_answer);
 
@@ -41,7 +41,7 @@ LOAD DATA INFILE '/var/lib/mysql-files/survey_questions.csv'
     CHARACTER SET utf8mb4
     FIELDS TERMINATED BY ','
     ENCLOSED BY '"'
-    LINES TERMINATED BY '\r\n'
+    LINES TERMINATED BY '\n'
     IGNORE 1 ROWS
     (question_id, question_text);
 
@@ -52,7 +52,7 @@ LOAD DATA INFILE '/var/lib/mysql-files/achievements.csv'
     CHARACTER SET utf8mb4
     FIELDS TERMINATED BY ','
     ENCLOSED BY '"'
-    LINES TERMINATED BY '\r\n'
+    LINES TERMINATED BY '\n'
     IGNORE 1 ROWS
     (achievement_id, achievement_name, achievement_icon, achievement_content,
      achievement_category, target_value, comparison_type, created_at, updated_at);

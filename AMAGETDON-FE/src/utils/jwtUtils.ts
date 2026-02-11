@@ -57,7 +57,7 @@ export const getCurrentUser = (): { userId: number; nickname: string; email: str
         }
 
         // ✅ FIXED: localStorage에서 nickname 우선 사용
-        const nickname = localStorage.getItem('userNickname') || payload.nickname || payload.email.split('@')[0];
+        const nickname = localStorage.getItem('userNickname') || payload.nickname || payload.email?.split('@')[0] || '';
         const email = localStorage.getItem('userEmail') || payload.email || '';
 
         return {

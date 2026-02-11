@@ -34,9 +34,9 @@ export const Toast = ({
     };
 
     return createPortal(
-        <div className={`toast toast-${type}`}>
-            <span className="toast-icon">{icons[type]}</span>
-            <span className="toast-message">{message}</span>
+        <div className={`common-toast common-toast-${type}`}>
+            <span className="common-toast-icon">{icons[type]}</span>
+            <span className="common-toast-message">{message}</span>
         </div>,
         document.body
     );

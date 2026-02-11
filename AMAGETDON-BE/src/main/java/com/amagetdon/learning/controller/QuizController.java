@@ -59,13 +59,13 @@ public class QuizController {
     @Operation(
             summary = "퀴즈 답안 제출",
             description = """
-                    오늘의 퀴즈 답안을 제출합니다. JWT 토큰에서 사용자 정보를 자동으로 추출합니다.
-                    
-                    - 정답: 보상 지급 (1번: 100,000원, 2-100번: 1,000원)
-                    - 오답: 오답노트에 자동 저장
-                    - OX 문제: answer에 "O" 또는 "X"
-                    - 객관식 문제: answer에 선택지 ID (문자열)
-                    """
+            오늘의 퀴즈 답안을 제출합니다. JWT 토큰에서 사용자 정보를 자동으로 추출합니다.
+            
+            - 정답: 보상 지급 (1번: 100,000원, 2-100번: 1,000원, 101번부터는 보상 없음)
+            - 오답: 오답노트에 자동 저장
+            - OX 문제: answer에 "O" 또는 "X"
+            - 객관식 문제: answer에 선택지 ID (문자열)
+            """
     )
     @ApiResponses({
             @ApiResponse(
@@ -124,8 +124,8 @@ public class QuizController {
 
     @GetMapping("/daily/count")
     @Operation(
-            summary = "오늘 푼 퀴즈 개수 조회",
-            description = "현재 사용자가 오늘 푼 퀴즈의 개수를 조회합니다. JWT 토큰에서 사용자 정보를 자동으로 추출합니다."
+            summary = "오늘 맞춘 퀴즈 개수 조회",
+            description = "현재 사용자가 오늘 맞춘 퀴즈의 개수를 조회합니다. JWT 토큰에서 사용자 정보를 자동으로 추출합니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -136,7 +136,7 @@ public class QuizController {
                             examples = @ExampleObject(
                                     value = """
                                             {
-                                              "count": 1
+                                              "count": 0
                                             }
                                             """
                             )

@@ -2,12 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getMyInfo, updateMyInfo, type UserInfo, type InvestmentType, type LoginType } from '@/api/userApi.ts'
 import { logoutApi, withdrawApi } from '@/api/authApi.ts'
-
-const INVESTMENT_TYPE_LABELS: Record<InvestmentType, string> = {
-    AGGRESSIVE: '공격형',
-    NEUTRAL: '중립형',
-    STABLE: '안정형',
-}
+import { getInvestmentLabel } from '@/constants/investmentType'
 
 
 export const useMyInfo = () => {
@@ -25,7 +20,7 @@ export const useMyInfo = () => {
     const [error, setError] = useState<string | null>(null)
     const [successMsg, setSuccessMsg] = useState<string | null>(null)
 
-    const investmentTypeLabel = investmentType ? INVESTMENT_TYPE_LABELS[investmentType] : '-'
+    const investmentTypeLabel = getInvestmentLabel(investmentType)
     const isSocialLogin = loginType === 'KAKAO'
 
     useEffect(() => {
@@ -45,14 +40,14 @@ export const useMyInfo = () => {
                 setLoginType(data.loginType)
             })
             .catch(() => {
-                setError('Failed to load user information.')
+                setError('사용자 정보를 불러오는데 실패했습니다.')
             })
             .finally(() => setLoading(false))
     }, [navigate])
 
     const handleSave = async () => {
         if (!nickname.trim()) {
-            setError('Please enter a nickname.')
+            setError('닉네임을 입력해주세요.')
             return
         }
 
@@ -72,9 +67,11 @@ export const useMyInfo = () => {
             const res = await updateMyInfo(payload)
             initialDataRef.current = res.data
             setPassword('')
-            setSuccessMsg('Changes saved successfully.')
+            setSuccessMsg('변경사항이 저장되었습니다.')
+            // 헤더 닉네임 갱신
+            window.dispatchEvent(new Event('userInfoUpdated'))
         } catch {
-            setError('Failed to save changes.')
+            setError('변경사항 저장에 실패했습니다.')
         } finally {
             setSaving(false)
         }

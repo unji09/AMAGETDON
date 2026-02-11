@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from 'react';
+import { useRef, useState, useEffect, type ReactNode } from 'react';
 import { Info, Lightbulb, X } from 'lucide-react';
 import { useLearnMode } from '../../../contexts/LearnModeContext';
 import { LEARN_DATA } from './learnData';
@@ -12,8 +12,40 @@ interface LearnSpotlightProps {
 export const LearnSpotlight = ({ id, children }: LearnSpotlightProps) => {
     const { isLearnMode, activeSpotlight, setActiveSpotlight } = useLearnMode();
     const ref = useRef<HTMLDivElement>(null);
+    const cardRef = useRef<HTMLDivElement>(null);
+    const [edge, setEdge] = useState<'left' | 'right' | null>(null);
     const learnItem = LEARN_DATA[id];
     const isActive = activeSpotlight === id;
+
+    // 요소 위치에 따라 edge 자동 감지 + 카드가 보이도록 스크롤
+    useEffect(() => {
+        if (isActive && ref.current) {
+            const rect = ref.current.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const cardWidth = 280;
+            const cardHalfWidth = cardWidth / 2;
+            const elementCenter = rect.left + rect.width / 2;
+
+            // 가로 위치 감지
+            if (elementCenter - cardHalfWidth < 16) {
+                setEdge('left');
+            } else if (elementCenter + cardHalfWidth > viewportWidth - 16) {
+                setEdge('right');
+            } else {
+                setEdge(null);
+            }
+
+            // 카드가 화면에 보이도록 스크롤 (약간의 딜레이 후)
+            setTimeout(() => {
+                if (cardRef.current) {
+                    cardRef.current.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest',
+                    });
+                }
+            }, 100);
+        }
+    }, [isActive]);
 
     const handleClick = () => {
         if (!isLearnMode) return;
@@ -27,10 +59,12 @@ export const LearnSpotlight = ({ id, children }: LearnSpotlightProps) => {
 
     if (!learnItem) return <>{children}</>;
 
+    const edgeClass = edge ? `learn-spotlight--edge-${edge}` : '';
+
     return (
         <div
             ref={ref}
-            className={`learn-spotlight ${isLearnMode ? 'learn-spotlight--enabled' : ''} ${isActive ? 'learn-spotlight--active' : ''}`}
+            className={`learn-spotlight ${isLearnMode ? 'learn-spotlight--enabled' : ''} ${isActive ? 'learn-spotlight--active' : ''} ${edgeClass}`}
             onClick={handleClick}
         >
             {children}
@@ -44,7 +78,7 @@ export const LearnSpotlight = ({ id, children }: LearnSpotlightProps) => {
 
             {/* 활성화된 설명 카드 */}
             {isActive && (
-                <div className="learn-spotlight__card">
+                <div ref={cardRef} className="learn-spotlight__card">
                     <button className="learn-spotlight__close" onClick={handleClose}>
                         <X size={16} />
                     </button>

@@ -1,0 +1,145 @@
+/**
+ * SimpleFeedbackModal 컴포넌트 스타일
+ * - 101번 이후 간소화된 피드백
+ * - QuizFeedbackModal과 통일감 유지
+ */
+
+.simple-feedback {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--spacing-8) var(--spacing-4);
+    min-height: 320px;
+    justify-content: center;
+}
+
+/* 아이콘 래퍼 */
+.simple-feedback__icon-wrap {
+    margin-bottom: var(--spacing-5);
+    animation: simple-icon-appear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes simple-icon-appear {
+    from {
+        transform: scale(0) rotate(-180deg);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+.simple-feedback__icon {
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+}
+
+.simple-feedback__icon--correct {
+    color: #8FAE5D;
+}
+
+.simple-feedback__icon--wrong {
+    color: #C94A3A;
+}
+
+/* 제목 */
+.simple-feedback__title {
+    font-size: 2rem;
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-3);
+    animation: simple-title-appear 0.3s ease-out 0.2s both;
+}
+
+@keyframes simple-title-appear {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.simple-feedback--correct .simple-feedback__title {
+    color: #8FAE5D;
+}
+
+.simple-feedback--wrong .simple-feedback__title {
+    color: #C94A3A;
+}
+
+/* 메시지 */
+.simple-feedback__message {
+    font-size: var(--font-size-base);
+    color: var(--color-medium-gray);
+    margin-bottom: var(--spacing-6);
+    animation: simple-message-appear 0.3s ease-out 0.3s both;
+}
+
+@keyframes simple-message-appear {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 버튼 */
+.simple-feedback__actions {
+    width: 100%;
+    max-width: 280px;
+    animation: simple-actions-appear 0.3s ease-out 0.4s both;
+}
+
+@keyframes simple-actions-appear {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .simple-feedback {
+        padding: var(--spacing-6) var(--spacing-3);
+        min-height: 280px;
+    }
+
+    .simple-feedback__icon-wrap {
+        margin-bottom: var(--spacing-4);
+    }
+
+    .simple-feedback__icon {
+        width: 64px;
+        height: 64px;
+    }
+
+    .simple-feedback__title {
+        font-size: 1.5rem;
+        margin-bottom: var(--spacing-2);
+    }
+
+    .simple-feedback__message {
+        font-size: var(--font-size-sm);
+        margin-bottom: var(--spacing-5);
+    }
+}
+
+/* 접근성: 애니메이션 감소 설정 */
+@media (prefers-reduced-motion: reduce) {
+    .simple-feedback__icon-wrap,
+    .simple-feedback__title,
+    .simple-feedback__message,
+    .simple-feedback__actions {
+        animation: none;
+    }
+}

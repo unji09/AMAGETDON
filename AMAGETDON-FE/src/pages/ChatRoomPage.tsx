@@ -1,19 +1,29 @@
 /**
  * ChatRoomPage - 채팅방 페이지
  * Figma 디자인 기반 (커뮤니티 대화)
- * - 로딩 스켈레톤
- * - 닉네임 아바타 (첫글자)
- * - 링크 자동 감지
- * - 연결 상태 표시
- * - 메시지 복사 기능
- * - 토스트 알림
+ *
+ * [Fix 목록]
+ * Fix 1: ✅ apiClient로 닉네임 로드 (raw fetch → apiClient)
+ * Fix 2: ✅ 새로고침 시 방 유지 (beforeunload 방 나가기 제거)
+ * Fix 3: 15초 폴링으로 방 정보(인원 수) 자동 갱신
+ * Fix 4: ✅ room.currentMemberCount 대신 실제 members API 카운트 사용
+ * Fix 5: 마운트 시 getChatMessages로 메시지 히스토리 로드 (새로고침 복원)
+ * Fix 6: ✅ 나가기 레이스 컨디션 제거 (cleanup에서 forceLeaveRoom 제거)
+ * Fix 7: ✅ handleLeaveRoom 멱등성 - 에러 시에도 navigate
+ * Fix 8: ✅ 아바타 제거 - 이름만 표시
+ * Fix 9: ✅ localStorage 메시지 캐시 - 새로고침 시 메시지 복원
+ *
+ * [새로고침 동작]
+ * - 새로고침 → 방에 머물고, localStorage 캐시에서 메시지 즉시 복원
+ * - 명시적 나가기 or 로그아웃 → 방 퇴장 + 캐시 삭제 + 채팅 초기화
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useOpenVidu } from '@/hooks/useOpenVidu';
-import { getMyRoom, leaveRoom, getRoomMembers } from '@/api/communityApi';
+import apiClient from '@/api/client';
+import { getMyRoom, leaveRoom, getRoomMembers, getChatMessages } from '@/api/communityApi';
 import type { RoomResponse, RoomMemberListResponse, RoomMemberDto } from '@/features/community/types/CommunityTypes';
 import './ChatRoomPage.css';
 
@@ -33,28 +43,10 @@ interface Toast {
     message?: string;
 }
 
-// 연결 상태 타입
 type ConnectionStatus = 'connected' | 'connecting' | 'disconnected';
 
-// 아바타 배경색 배열
-const AVATAR_COLORS = [
-    { bg: '#C7D8B7', text: '#203C2E' },
-    { bg: '#E3D9BD', text: '#96773D' },
-    { bg: '#D4E5F7', text: '#2563EB' },
-    { bg: '#F5D5D5', text: '#DC0000' },
-    { bg: '#E8E0F0', text: '#6B21A8' },
-];
-
-// 닉네임 기반 색상 선택
-const getAvatarColor = (nickname: string) => {
-    const index = nickname.charCodeAt(0) % AVATAR_COLORS.length;
-    return AVATAR_COLORS[index];
-};
-
-// URL 감지 정규식
 const URL_REGEX = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/g;
 
-// 메시지 내 링크 렌더링
 const renderMessageWithLinks = (text: string) => {
     const parts = text.split(URL_REGEX);
     return parts.map((part, index) => {
@@ -76,13 +68,89 @@ const renderMessageWithLinks = (text: string) => {
     });
 };
 
+/**
+ * ✅ Fix 1: apiClient 사용하여 닉네임 로드
+ * raw fetch는 Vite 프록시를 못 타서 HTML이 반환됨
+ */
+const fetchMyNickname = async (): Promise<string> => {
+    try {
+        const response = await apiClient.get('/users/me');
+        const nickname = response.data.nickname || '알 수 없음';
+        localStorage.setItem('userNickname', nickname);
+        console.log('[ChatRoom] 사용자 닉네임 로드:', nickname);
+        return nickname;
+    } catch (err) {
+        console.error('[ChatRoom] 닉네임 로드 실패:', err);
+        return localStorage.getItem('userNickname') || '알 수 없음';
+    }
+};
+
+/**
+ * ✅ Fix 2 → 수정됨: 새로고침 시 방 유지
+ *
+ * [변경 사항]
+ * - beforeunload에서 forceLeaveRoom 호출 제거
+ * - 새로고침해도 방에 머물고, getChatMessages로 메시지 히스토리 복원
+ * - 명시적 나가기(handleLeaveRoom) 또는 로그아웃 시에만 방 퇴장
+ * - 탭/브라우저 완전 종료 시에도 서버 측에서 OpenVidu disconnect 감지 가능
+ */
+
+/**
+ * ✅ [Fix 9] localStorage 메시지 캐시
+ * - OpenVidu 시그널 메시지는 백엔드 DB에 저장되지 않음
+ * - 새로고침 시 메시지 복원을 위해 localStorage에 캐시
+ * - 방 나가기/로그아웃 시에만 삭제
+ */
+const MESSAGE_CACHE_PREFIX = 'chat_messages_room_';
+const MAX_CACHED_MESSAGES = 500; // 최대 캐시 메시지 수
+
+const getCachedMessages = (roomId: string): ChatMessage[] => {
+    try {
+        const cached = localStorage.getItem(`${MESSAGE_CACHE_PREFIX}${roomId}`);
+        if (cached) {
+            return JSON.parse(cached);
+        }
+    } catch (err) {
+        console.warn('[ChatRoom] 캐시 메시지 로드 실패:', err);
+    }
+    return [];
+};
+
+const saveCachedMessages = (roomId: string, messages: ChatMessage[]) => {
+    try {
+        // 최대 개수 제한 (오래된 메시지부터 제거)
+        const trimmed = messages.slice(-MAX_CACHED_MESSAGES);
+        localStorage.setItem(`${MESSAGE_CACHE_PREFIX}${roomId}`, JSON.stringify(trimmed));
+    } catch (err) {
+        console.warn('[ChatRoom] 캐시 메시지 저장 실패:', err);
+    }
+};
+
+const clearCachedMessages = (roomId: string) => {
+    try {
+        localStorage.removeItem(`${MESSAGE_CACHE_PREFIX}${roomId}`);
+    } catch {
+        // 무시
+    }
+};
+
 const ChatRoomPage = () => {
     const { roomId } = useParams<{ roomId: string }>();
     const navigate = useNavigate();
 
     const [room, setRoom] = useState<RoomResponse | null>(null);
     const [loading, setLoading] = useState(true);
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    // ✅ [Fix 9] 초기 메시지를 localStorage 캐시에서 로드
+    const [messages, setMessages] = useState<ChatMessage[]>(() => {
+        if (roomId) {
+            const cached = getCachedMessages(roomId);
+            if (cached.length > 0) {
+                console.log(`[ChatRoom] 캐시에서 ${cached.length}개 메시지 복원`);
+                return cached;
+            }
+        }
+        return [];
+    });
     const [inputMessage, setInputMessage] = useState('');
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [showParticipants, setShowParticipants] = useState(false);
@@ -92,27 +160,34 @@ const ChatRoomPage = () => {
     const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
     const [toasts, setToasts] = useState<Toast[]>([]);
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; messageId: string; text: string } | null>(null);
+    const [myNickname, setMyNickname] = useState<string>('');
+
+    /**
+     * ✅ [Fix 4] 실제 멤버 수 (members API에서 가져온 값)
+     * room.currentMemberCount는 수동 증감이라 동기화가 깨질 수 있음
+     */
+    const [realMemberCount, setRealMemberCount] = useState<number | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const reconnectAttempts = useRef(0);
+    const historyLoadedRef = useRef(false);
+    /** ✅ 정상적으로 나가기 했는지 추적 (중복 나가기 방지) */
+    const hasLeftRef = useRef(false);
+    /** ✅ 나가기 진행 중인지 (버튼 중복 클릭 방지) */
+    const isLeavingRef = useRef(false);
 
-    // 토스트 추가
     const addToast = useCallback((type: Toast['type'], title: string, message?: string) => {
         const id = Date.now().toString();
         setToasts(prev => [...prev, { id, type, title, message }]);
-
-        // 자동 제거 (3초)
         setTimeout(() => {
             setToasts(prev => prev.filter(t => t.id !== id));
         }, 3000);
     }, []);
 
-    // 토스트 제거
     const removeToast = (id: string) => {
         setToasts(prev => prev.filter(t => t.id !== id));
     };
 
-    // SimpleMessage 타입 (useOpenVidu에서 전달받는 타입)
     interface SimpleMessage {
         userName: string;
         message: string;
@@ -133,12 +208,12 @@ const ChatRoomPage = () => {
         connected,
         connecting,
         error,
-        participantCount,
         connect,
         disconnect,
         sendMessage: sendOpenViduMessage,
     } = useOpenVidu({
         sessionId,
+        userName: myNickname,
         onMessageReceived: handleMessageReceived,
         onSessionIdChanged: handleSessionIdChanged,
     });
@@ -154,6 +229,25 @@ const ChatRoomPage = () => {
             setConnectionStatus('disconnected');
         }
     }, [connected, connecting]);
+
+    // ✅ 마운트 시 사용자 닉네임 로드
+    useEffect(() => {
+        fetchMyNickname().then(setMyNickname);
+    }, []);
+
+    // ✅ [Fix 9] 메시지 변경 시 localStorage 캐시에 저장
+    useEffect(() => {
+        if (roomId && messages.length > 0) {
+            saveCachedMessages(roomId, messages);
+        }
+    }, [roomId, messages]);
+
+    /**
+     * ✅ [Fix 6 수정] beforeunload에서 방 나가기 제거
+     * - 새로고침 시 방에 머물도록 변경
+     * - 메시지 히스토리는 getChatMessages API로 복원됨
+     * - OpenVidu 세션만 재연결하면 됨
+     */
 
     // 방 정보 로드
     useEffect(() => {
@@ -178,32 +272,111 @@ const ChatRoomPage = () => {
         loadRoom();
     }, [roomId, navigate, addToast]);
 
-    // OpenVidu 연결
+    /** ✅ [Fix 9] 캐시에서 메시지가 복원되었는지 추적 */
+    const hasCachedMessagesRef = useRef(messages.length > 0);
+
+    // ✅ [Fix 9] 메시지 히스토리 로드 (캐시 → API fallback)
     useEffect(() => {
-        if (sessionId && !connected && !connecting) {
+        if (!room || !roomId || historyLoadedRef.current) return;
+
+        const loadMessageHistory = async () => {
+            // 캐시에서 이미 복원된 경우 API 스킵
+            if (hasCachedMessagesRef.current) {
+                console.log('[ChatRoom] 캐시 메시지 사용, API 스킵');
+                historyLoadedRef.current = true;
+                return;
+            }
+
+            // 캐시가 비어있으면 API에서 로드 시도
+            try {
+                const chatMessages = await getChatMessages(Number(roomId));
+                if (chatMessages && chatMessages.length > 0) {
+                    let currentUserId: number | null = null;
+                    try {
+                        const token = localStorage.getItem('accessToken');
+                        if (token) {
+                            const payload = JSON.parse(atob(token.split('.')[1]));
+                            currentUserId = payload.userId || payload.sub ? Number(payload.sub) : null;
+                        }
+                    } catch {
+                        // 토큰 파싱 실패 시 무시
+                    }
+
+                    const historyMessages: ChatMessage[] = chatMessages.map((msg, index) => ({
+                        id: `history-${index}-${msg.createdAt}`,
+                        userName: msg.userName || '알 수 없음',
+                        message: msg.message,
+                        createdAt: msg.createdAt,
+                        isMine: currentUserId !== null && msg.userId === currentUserId,
+                        isSystem: msg.type === 'system',
+                    }));
+                    setMessages(historyMessages);
+                }
+                historyLoadedRef.current = true;
+            } catch (err) {
+                console.error('메시지 히스토리 로드 실패:', err);
+                historyLoadedRef.current = true;
+            }
+        };
+
+        loadMessageHistory();
+    }, [room, roomId]);
+
+    // OpenVidu 연결 - 닉네임이 준비된 후에만
+    useEffect(() => {
+        if (sessionId && myNickname && !connected && !connecting) {
             connect();
         }
-    }, [sessionId, connected, connecting, connect]);
+    }, [sessionId, myNickname, connected, connecting, connect]);
 
-    // 메시지 스크롤
+    /**
+     * ✅ [Fix 4] 15초 폴링 - 방 정보 + 실제 멤버 수 갱신
+     * room.currentMemberCount 대신 members API의 totalMembers 사용
+     */
+    useEffect(() => {
+        if (!roomId) return;
+
+        const pollRoomData = async () => {
+            try {
+                // 방 기본 정보 갱신
+                const myRoom = await getMyRoom();
+                if (myRoom && myRoom.roomId === Number(roomId)) {
+                    setRoom(myRoom);
+                }
+
+                // ✅ 실제 멤버 수 갱신 (members API)
+                const membersResponse = await getRoomMembers(Number(roomId));
+                setRealMemberCount(membersResponse.totalMembers);
+            } catch {
+                // 폴링 실패는 무시
+            }
+        };
+
+        // 최초 1회 즉시 실행 (멤버 수 초기화)
+        pollRoomData();
+
+        const intervalId = setInterval(pollRoomData, 15000);
+        return () => clearInterval(intervalId);
+    }, [roomId]);
+
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    // 컨텍스트 메뉴 닫기
     useEffect(() => {
         const handleClickOutside = () => setContextMenu(null);
         document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
 
-    // 참여자 목록 로드
     const loadParticipants = async () => {
         if (!roomId) return;
         setLoadingParticipants(true);
         try {
             const response: RoomMemberListResponse = await getRoomMembers(Number(roomId));
             setParticipants(response.members);
+            // ✅ 참여자 목록 로드 시 실제 멤버 수도 갱신
+            setRealMemberCount(response.totalMembers);
         } catch (err) {
             console.error('참여자 목록 로드 실패:', err);
         } finally {
@@ -211,30 +384,24 @@ const ChatRoomPage = () => {
         }
     };
 
-    // 참여자 보기 토글
     const handleToggleParticipants = () => {
-        if (!showParticipants) {
-            loadParticipants();
-        }
+        if (!showParticipants) loadParticipants();
         setShowParticipants(!showParticipants);
     };
 
-    // 메시지 전송
     const handleSendMessage = () => {
         if (!inputMessage.trim() || !connected) return;
         sendOpenViduMessage(inputMessage.trim());
         setInputMessage('');
     };
 
-    // 엔터 키 전송
-    const handleKeyPress = (e: React.KeyboardEvent) => {
+    const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSendMessage();
         }
     };
 
-    // 수동 재연결
     const handleManualReconnect = () => {
         if (sessionId && !connecting) {
             reconnectAttempts.current += 1;
@@ -242,32 +409,45 @@ const ChatRoomPage = () => {
         }
     };
 
-    // 그룹 나가기
+    /**
+     * ✅ [Fix 6 + Fix 7] 정상 나가기 (버튼 클릭)
+     * - isLeavingRef로 중복 클릭 방지 (토스트 3번 뜨는 문제 해결)
+     * - API 실패 시에도 무조건 /community로 이동
+     */
     const handleLeaveRoom = async () => {
-        if (!roomId) return;
+        if (!roomId || isLeavingRef.current) return;
+        isLeavingRef.current = true;
+        hasLeftRef.current = true;
+
+        // ✅ [Fix 9] 방 나가기 시 메시지 캐시 삭제
+        clearCachedMessages(roomId);
+
+        // OpenVidu 연결 해제 (실패해도 무시)
         try {
             disconnect();
+        } catch (err) {
+            console.warn('[ChatRoom] disconnect 실패 (무시):', err);
+        }
+
+        // 방 나가기 API 호출
+        try {
             await leaveRoom(Number(roomId));
             addToast('success', '그룹을 나갔습니다');
-            navigate('/community');
         } catch (err) {
-            console.error('그룹 나가기 실패:', err);
-            addToast('error', '그룹 나가기에 실패했습니다');
+            console.warn('[ChatRoom] leaveRoom API 실패 (무시하고 이동):', err);
+            // ✅ API 실패해도 에러 토스트 안 띄우고 그냥 이동
+            // 이미 나간 상태(NOT_ROOM_MEMBER)이거나 네트워크 오류일 수 있음
         }
+
+        // ✅ 무조건 커뮤니티로 이동
+        navigate('/community');
     };
 
-    // 메시지 우클릭 (컨텍스트 메뉴)
     const handleMessageContextMenu = (e: React.MouseEvent, messageId: string, text: string) => {
         e.preventDefault();
-        setContextMenu({
-            x: e.clientX,
-            y: e.clientY,
-            messageId,
-            text,
-        });
+        setContextMenu({ x: e.clientX, y: e.clientY, messageId, text });
     };
 
-    // 메시지 복사
     const handleCopyMessage = async () => {
         if (!contextMenu) return;
         try {
@@ -279,7 +459,6 @@ const ChatRoomPage = () => {
         setContextMenu(null);
     };
 
-    // 시간 포맷
     const formatTime = (dateString: string) => {
         const date = new Date(dateString);
         const hours = date.getHours();
@@ -289,17 +468,14 @@ const ChatRoomPage = () => {
         return `${period} ${displayHours}:${minutes}`;
     };
 
-    // 날짜 포맷
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
     };
 
-    // 날짜 그룹화
     const groupMessagesByDate = (msgs: ChatMessage[]) => {
         const groups: { date: string; messages: ChatMessage[] }[] = [];
         let currentDate = '';
-
         msgs.forEach(msg => {
             const msgDate = formatDate(msg.createdAt);
             if (msgDate !== currentDate) {
@@ -309,22 +485,25 @@ const ChatRoomPage = () => {
                 groups[groups.length - 1].messages.push(msg);
             }
         });
-
         return groups;
     };
 
-    // 연결 상태를 CSS 클래스로 변환 (connecting → reconnecting)
     const getConnectionStatusClass = () => {
         if (connectionStatus === 'connecting') return 'reconnecting';
         return connectionStatus;
     };
+
+    /**
+     * ✅ [Fix 4] 헤더에 표시할 멤버 수
+     * realMemberCount (members API) → room.currentMemberCount (fallback)
+     */
+    const displayMemberCount = realMemberCount ?? room?.currentMemberCount ?? 0;
 
     // 로딩 스켈레톤
     if (loading) {
         return (
             <Layout>
                 <div className="chat-room-container">
-                    {/* 헤더 스켈레톤 */}
                     <div className="chat-header">
                         <div className="chat-header-left">
                             <div className="chat-header-info">
@@ -337,8 +516,6 @@ const ChatRoomPage = () => {
                             <div className="skeleton skeleton-btn" />
                         </div>
                     </div>
-
-                    {/* 메시지 스켈레톤 */}
                     <div className="chat-messages">
                         <div className="chat-date-divider">
                             <div className="chat-date-line" />
@@ -355,8 +532,6 @@ const ChatRoomPage = () => {
                             </div>
                         ))}
                     </div>
-
-                    {/* 입력 영역 스켈레톤 */}
                     <div className="chat-input-area">
                         <div className="chat-input-wrapper">
                             <div className="skeleton skeleton-input" />
@@ -387,7 +562,6 @@ const ChatRoomPage = () => {
     return (
         <Layout>
             <div className="chat-room-container">
-                {/* 연결 상태 배너 */}
                 {connectionStatus !== 'connected' && (
                     <div className={`connection-status ${getConnectionStatusClass()}`}>
                         <div className="status-dot" />
@@ -402,7 +576,6 @@ const ChatRoomPage = () => {
                     </div>
                 )}
 
-                {/* 헤더 */}
                 <div className="chat-header">
                     <div className="chat-header-left">
                         <div className="chat-header-info">
@@ -410,11 +583,30 @@ const ChatRoomPage = () => {
                             <div className="chat-room-meta">
                                 <span className={`chat-online-dot ${getConnectionStatusClass()}`} />
                                 <span className="chat-participant-count">
-                                    {participantCount > 0 ? participantCount : room.currentMemberCount}명 참여 중
+                                    {/* ✅ [Fix 4] 실제 멤버 수 표시 */}
+                                    {displayMemberCount}명 참여 중
                                 </span>
                                 <span className="chat-room-type-tag">
                                     {room.isPublic ? '공개방' : '비공개방'}
                                 </span>
+                                {/* ✅ 비공개방: 참여 코드 복사 버튼 */}
+                                {!room.isPublic && room.joinCode && (
+                                    <button
+                                        className="chat-copy-code-btn"
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(room.joinCode!)
+                                                .then(() => addToast('success', '참여 코드가 복사되었습니다'))
+                                                .catch(() => addToast('error', '복사에 실패했습니다'));
+                                        }}
+                                        title={`참여 코드: ${room.joinCode}`}
+                                    >
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                        </svg>
+                                        참여 코드 복사
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -424,31 +616,20 @@ const ChatRoomPage = () => {
                             onClick={handleToggleParticipants}
                         >
                             <span className="dots-icon">
-                                <span className="dot" />
-                                <span className="dot" />
-                                <span className="dot" />
+                                <span className="dot" /><span className="dot" /><span className="dot" />
                             </span>
                             참여자 보기
                         </button>
-                        <button
-                            className="chat-action-btn leave-btn"
-                            onClick={() => setShowLeaveModal(true)}
-                        >
+                        <button className="chat-action-btn leave-btn" onClick={() => setShowLeaveModal(true)}>
                             그룹 나가기
                         </button>
                     </div>
                 </div>
 
-                {/* 메인 컨텐츠 */}
                 <div className="chat-main">
-                    {/* 채팅 영역 */}
                     <div className={`chat-messages-area ${showParticipants ? 'with-sidebar' : ''}`}>
-                        {/* 에러 상태 */}
-                        {error && (
-                            <div className="chat-error-banner">{error}</div>
-                        )}
+                        {error && <div className="chat-error-banner">{error}</div>}
 
-                        {/* 메시지 목록 */}
                         <div className="chat-messages">
                             {messages.length === 0 ? (
                                 <div className="chat-empty">
@@ -468,16 +649,13 @@ const ChatRoomPage = () => {
                             ) : (
                                 messageGroups.map((group, groupIndex) => (
                                     <div key={groupIndex} className="chat-date-group">
-                                        {/* 날짜 구분선 */}
                                         <div className="chat-date-divider">
                                             <div className="chat-date-line" />
                                             <span className="chat-date-text">{group.date}</span>
                                             <div className="chat-date-line" />
                                         </div>
 
-                                        {/* 메시지들 */}
                                         {group.messages.map((msg) => {
-                                            // 시스템 메시지
                                             if (msg.isSystem) {
                                                 return (
                                                     <div key={msg.id} className="system-message">
@@ -485,8 +663,6 @@ const ChatRoomPage = () => {
                                                     </div>
                                                 );
                                             }
-
-                                            const avatarColor = getAvatarColor(msg.userName);
 
                                             return (
                                                 <div
@@ -496,16 +672,6 @@ const ChatRoomPage = () => {
                                                 >
                                                     {!msg.isMine && (
                                                         <>
-                                                            {/* 아바타 */}
-                                                            <div
-                                                                className="message-avatar"
-                                                                style={{
-                                                                    backgroundColor: avatarColor.bg,
-                                                                    color: avatarColor.text,
-                                                                }}
-                                                            >
-                                                                {msg.userName.charAt(0)}
-                                                            </div>
                                                             <div className="message-content-wrapper">
                                                                 <div className="message-header">
                                                                     <span className="message-sender">{msg.userName}</span>
@@ -540,7 +706,6 @@ const ChatRoomPage = () => {
                             <div ref={messagesEndRef} />
                         </div>
 
-                        {/* 입력 영역 */}
                         <div className="chat-input-area">
                             <div className="chat-input-wrapper">
                                 <input
@@ -549,7 +714,7 @@ const ChatRoomPage = () => {
                                     placeholder="메시지를 입력하세요..."
                                     value={inputMessage}
                                     onChange={(e) => setInputMessage(e.target.value)}
-                                    onKeyPress={handleKeyPress}
+                                    onKeyDown={handleKeyDown}
                                     disabled={!connected}
                                 />
                             </div>
@@ -563,16 +728,12 @@ const ChatRoomPage = () => {
                         </div>
                     </div>
 
-                    {/* 참여자 사이드바 */}
                     {showParticipants && (
                         <div className="chat-participants-sidebar">
                             <div className="participants-header">
                                 <h3>참여자 목록</h3>
                                 <span className="participants-count">{participants.length}명</span>
-                                <button
-                                    className="participants-close-btn"
-                                    onClick={() => setShowParticipants(false)}
-                                >
+                                <button className="participants-close-btn" onClick={() => setShowParticipants(false)}>
                                     ✕
                                 </button>
                             </div>
@@ -580,32 +741,24 @@ const ChatRoomPage = () => {
                                 {loadingParticipants ? (
                                     <div className="participants-loading">불러오는 중...</div>
                                 ) : (
-                                    participants.map((member) => {
-                                        return (
-                                            <div key={member.memberId} className="participant-item">
-                                                <div className="participant-info">
-                                                    <span className="participant-name">
-                                                        {member.nickname}
-                                                        {member.isOwner && (
-                                                            <span className="owner-badge">방장</span>
-                                                        )}
-                                                    </span>
-                                                </div>
+                                    participants.map((member) => (
+                                        <div key={member.memberId} className="participant-item">
+                                            <div className="participant-info">
+                                                <span className="participant-name">
+                                                    {member.nickname}
+                                                    {member.isOwner && <span className="owner-badge">방장</span>}
+                                                </span>
                                             </div>
-                                        );
-                                    })
+                                        </div>
+                                    ))
                                 )}
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* 컨텍스트 메뉴 (메시지 우클릭) */}
                 {contextMenu && (
-                    <div
-                        className="context-menu"
-                        style={{ top: contextMenu.y, left: contextMenu.x }}
-                    >
+                    <div className="context-menu" style={{ top: contextMenu.y, left: contextMenu.x }}>
                         <button className="context-menu-item" onClick={handleCopyMessage}>
                             <span className="context-menu-icon">📋</span>
                             복사
@@ -613,34 +766,20 @@ const ChatRoomPage = () => {
                     </div>
                 )}
 
-                {/* 나가기 확인 모달 */}
                 {showLeaveModal && (
                     <div className="leave-modal-overlay" onClick={() => setShowLeaveModal(false)}>
                         <div className="leave-modal" onClick={(e) => e.stopPropagation()}>
-                            <button className="leave-modal-close" onClick={() => setShowLeaveModal(false)}>
-                                ✕
-                            </button>
+                            <button className="leave-modal-close" onClick={() => setShowLeaveModal(false)}>✕</button>
                             <h3>그룹 나가기</h3>
-                            <p>정말 '{room.name}' 그룹을 나가시겠습니까?</p>
+                            <p>그룹을 나가시겠습니까?</p>
                             <div className="leave-modal-actions">
-                                <button
-                                    className="leave-modal-cancel"
-                                    onClick={() => setShowLeaveModal(false)}
-                                >
-                                    취소
-                                </button>
-                                <button
-                                    className="leave-modal-confirm"
-                                    onClick={handleLeaveRoom}
-                                >
-                                    나가기
-                                </button>
+                                <button className="leave-modal-cancel" onClick={() => setShowLeaveModal(false)}>취소</button>
+                                <button className="leave-modal-confirm" onClick={handleLeaveRoom}>나가기</button>
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* 토스트 알림 */}
                 <div className="toast-container">
                     {toasts.map((toast) => (
                         <div key={toast.id} className={`toast toast-${toast.type}`}>
@@ -653,9 +792,7 @@ const ChatRoomPage = () => {
                                 <span className="toast-title">{toast.title}</span>
                                 {toast.message && <span className="toast-message">{toast.message}</span>}
                             </div>
-                            <button className="toast-close" onClick={() => removeToast(toast.id)}>
-                                ✕
-                            </button>
+                            <button className="toast-close" onClick={() => removeToast(toast.id)}>✕</button>
                             <div className="toast-progress" />
                         </div>
                     ))}

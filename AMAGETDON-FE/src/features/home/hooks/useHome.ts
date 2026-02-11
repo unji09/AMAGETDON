@@ -3,13 +3,16 @@ import {useNavigate} from 'react-router-dom';
 import {getMyInfo} from '@/api/userApi';
 import {getMyAchievements} from '@/api/achievementApi';
 import {getBaseChapters, getProgress} from '@/api/learningApi';
-import {fetchDailyQuiz} from '@/api/quizApi';
+import {getTodayQuizCount, fetchReviewNotes} from '@/api/quizApi';
+import {getMyLearningRanking, getMyProfitRanking, getLearningRankings, getProfitRankings} from '@/api/rankingApi';
 import type {AchievementItem} from '@/features/achievement/types/achievement';
+import type {MyLearningRanking, MyProfitRanking} from '@/features/ranking/types/rankingTypes';
 
 interface UserInfo {
     nickname: string;
     currentTitle: string | null;
     balance: number;
+    investmentType: 'AGGRESSIVE' | 'NEUTRAL' | 'STABLE' | null;
 }
 
 interface ProgressData {
@@ -23,6 +26,13 @@ interface ProgressData {
     } | null;
 }
 
+interface RankingData {
+    learningRank: MyLearningRanking | null;
+    profitRank: MyProfitRanking | null;
+    totalLearningUsers: number;
+    totalProfitUsers: number;
+}
+
 export const useHome = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
@@ -30,6 +40,7 @@ export const useHome = () => {
         nickname: '',
         currentTitle: null,
         balance: 0,
+        investmentType: null,
     });
     const [achievements, setAchievements] = useState<AchievementItem[]>([]);
     const [progressData, setProgressData] = useState<ProgressData>({
@@ -39,27 +50,37 @@ export const useHome = () => {
         nextChapter: null,
     });
     const [quizStreak, setQuizStreak] = useState(0);
+    const [reviewNoteCount, setReviewNoteCount] = useState(0);
+    const [rankingData, setRankingData] = useState<RankingData>({
+        learningRank: null,
+        profitRank: null,
+        totalLearningUsers: 0,
+        totalProfitUsers: 0,
+    });
 
     // 1단계: 필수 데이터 로드
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
         if (!token) {
-            navigate('/login', {replace: true});
+            navigate('/login', {replace: true} as any);
             return;
         }
 
+        // 필수 데이터 로드
         Promise.all([
             getMyInfo(),
             getMyAchievements('ALL'),
             getProgress(),
             getBaseChapters(),
+            fetchReviewNotes(),
         ])
-            .then(([userRes, achievementRes, progressRes, chaptersRes]) => {
+            .then(([userRes, achievementRes, progressRes, chaptersRes, reviewNotesRes]) => {
                 const data = userRes.data;
                 setUserData({
                     nickname: data.nickname,
                     currentTitle: data.currentTitle,
                     balance: data.balance,
+                    investmentType: data.investmentType,
                 });
                 setAchievements(achievementRes.achievements);
 
@@ -86,20 +107,36 @@ export const useHome = () => {
                     percentage,
                     nextChapter,
                 });
+
+                setReviewNoteCount(reviewNotesRes.totalCount);
+                // 랭킹 데이터는 별도로 로드 (실패해도 메인 페이지에 영향 없음)
+                Promise.allSettled([
+                    getMyLearningRanking(),
+                    getMyProfitRanking(),
+                    getLearningRankings(0, 1),
+                    getProfitRankings(0, 1),
+                ]).then(([learningRankRes, profitRankRes, learningListRes, profitListRes]) => {
+                    setRankingData({
+                        learningRank: learningRankRes.status === 'fulfilled' ? learningRankRes.value : null,
+                        profitRank: profitRankRes.status === 'fulfilled' ? profitRankRes.value : null,
+                        totalLearningUsers: learningListRes.status === 'fulfilled' ? learningListRes.value.totalElements : 0,
+                        totalProfitUsers: profitListRes.status === 'fulfilled' ? profitListRes.value.totalElements : 0,
+                    });
+                });
             })
             .catch(() => {
-                navigate('/login', {replace: true});
+                navigate('/login', {replace: true} as any);
             })
             .finally(() => setLoading(false));
     }, [navigate]);
 
-    // 2단계: 로딩 완료 후 퀴즈 애니메이션
+    // 2단계: 로딩 완료 후 퀴즈 개수 조회 및 애니메이션
     useEffect(() => {
         if (loading) return;
 
-        fetchDailyQuiz()
+        getTodayQuizCount()
             .then((res) => {
-                const target = res.quizSequence || 0;
+                const target = res.count;
                 let current = 0;
                 const increment = target / 50;
 
@@ -115,13 +152,8 @@ export const useHome = () => {
 
                 return () => clearInterval(timer);
             })
-            .catch((error) => {
-                // 400 에러 = 더 이상 퀴즈 없음 (100문제 완료)
-                if (error.response?.status === 400) {
-                    setQuizStreak(100);
-                } else {
-                    setQuizStreak(0);
-                }
+            .catch(() => {
+                setQuizStreak(0);
             });
     }, [loading]);
 
@@ -139,17 +171,22 @@ export const useHome = () => {
 
     const navigateToLearning = () => navigate('/learning');
 
+    const navigateToReviewNote = () => navigate('/learning/review-note');
+
     return {
         loading,
         userData,
         achievements,
         progressData,
         quizStreak,
+        reviewNoteCount,
+        rankingData,
         navigateToQuiz,
         navigateToDailyQuiz,
         navigateToMyInfo,
         navigateToRanking,
         navigateToAchievement,
         navigateToLearning,
+        navigateToReviewNote,
     };
 };

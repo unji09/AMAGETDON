@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { Layout } from '@/components/layout';
 import RankingList from '@/features/ranking/components/RankingList';
 import type { RankingType } from '@/features/ranking/types/rankingTypes';
 import { getMyLearningRanking, getMyProfitRanking } from '@/api/rankingApi';
@@ -18,7 +19,7 @@ interface MyRankingBanner {
 }
 
 export const RankingPage = () => {
-    const [activeTab, setActiveTab] = useState<RankingType>('learning');
+    const [activeTab, setActiveTab] = useState<RankingType>('profit');
     const [myRanking, setMyRanking] = useState<MyRankingBanner | null>(null);
     const [loadingMyRank, setLoadingMyRank] = useState(false);
 
@@ -80,49 +81,51 @@ export const RankingPage = () => {
     };
 
     return (
-        <div className="ranking-page">
-            {/* 페이지 헤더 */}
-            <div className="ranking-page-header">
-                <h1 className="ranking-page-title">랭킹</h1>
-                <p className="ranking-page-desc">학습과 투자 실력을 겨뤄보세요!</p>
-            </div>
-
-            {/* 탭 네비게이션 */}
-            <div className="ranking-tabs">
-                <button
-                    className={`ranking-tab ${activeTab === 'learning' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('learning')}
-                >
-                    학습 랭킹
-                </button>
-                <button
-                    className={`ranking-tab ${activeTab === 'profit' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('profit')}
-                >
-                    수익 랭킹
-                </button>
-            </div>
-
-            {/* 내 랭킹 배너 */}
-            {!loadingMyRank && myRanking && (
-                <div className="my-ranking-banner">
-                    <div className="banner-label">내 랭킹</div>
-                    <div className="banner-content">
-                        <span className="banner-rank">{myRanking.rank.toLocaleString()}위</span>
-                        <span className="banner-nickname">{myRanking.nickname}</span>
-                        <span className="banner-badge">ME</span>
-                        <span className={`banner-score ${getScoreClass()}`}>
-                            {formatScore(myRanking.score)}
-                        </span>
-                    </div>
+        <Layout>
+            <div className="ranking-page">
+                {/* 페이지 헤더 */}
+                <div className="ranking-page-header">
+                    <h1 className="ranking-page-title">랭킹</h1>
+                    <p className="ranking-page-desc">학습과 투자 실력을 겨뤄보세요!</p>
                 </div>
-            )}
 
-            {/* 랭킹 리스트 */}
-            <div className="ranking-page-content">
-                <RankingList type={activeTab} />
+                {/* 탭 네비게이션 */}
+                <div className="ranking-tabs">
+                    <button
+                        className={`ranking-tab ${activeTab === 'profit' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('profit')}
+                    >
+                        수익 랭킹
+                    </button>
+                    <button
+                        className={`ranking-tab ${activeTab === 'learning' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('learning')}
+                    >
+                        학습 랭킹
+                    </button>
+                </div>
+
+                {/* 내 랭킹 배너 */}
+                {!loadingMyRank && myRanking && (
+                    <div className="my-ranking-banner">
+                        <div className="banner-label">내 랭킹</div>
+                        <div className="banner-content">
+                            <span className="banner-rank">{myRanking.rank.toLocaleString()}위</span>
+                            <span className="banner-nickname">{myRanking.nickname}</span>
+                            <span className="banner-badge">ME</span>
+                            <span className={`banner-score ${getScoreClass()}`}>
+                                {formatScore(myRanking.score)}
+                            </span>
+                        </div>
+                    </div>
+                )}
+
+                {/* 랭킹 리스트 */}
+                <div className="ranking-page-content">
+                    <RankingList type={activeTab} />
+                </div>
             </div>
-        </div>
+        </Layout>
     );
 };
 

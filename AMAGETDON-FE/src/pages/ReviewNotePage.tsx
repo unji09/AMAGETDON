@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout';
 import { useReviewNote } from '@/features/learning/hooks/useReviewNote';
 import {
@@ -19,8 +18,7 @@ import './ReviewNotePage.css';
  * - 개별 삭제
  */
 export const ReviewNotePage = () => {
-    const navigate = useNavigate();
-    const { reviewNotes, totalCount, todayRewardReceived, loading, error, handleSubmit, handleDelete } = useReviewNote();
+    const { reviewNotes, totalCount, loading, error, handleSubmit, handleDelete } = useReviewNote();
 
     const [selectedNote, setSelectedNote] = useState<ReviewNoteDetail | null>(null);
     const [showModal, setShowModal] = useState(false);
@@ -166,7 +164,7 @@ export const ReviewNotePage = () => {
                 <ReviewNoteHeader totalCount={totalCount} />
 
                 {totalCount === 0 ? (
-                    <ReviewNoteEmpty onStartLearning={() => navigate('/learning')} />
+                    <ReviewNoteEmpty />
                 ) : (
                     <ReviewNoteList
                         reviewNotes={reviewNotes || {}}

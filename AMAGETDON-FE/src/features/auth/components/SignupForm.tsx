@@ -30,16 +30,42 @@ const WarningIcon = () => (
 )
 
 const getErrorDetails = (error: string) => {
-    if (error.includes('이미') || error.includes('exist') || error.includes('duplicate')) {
+    const lowerError = error.toLowerCase()
+
+    // 닉네임 중복
+    if (lowerError.includes('nickname') || lowerError.includes('닉네임')) {
         return {
-            title: '이메일 중복',
-            message: '이미 가입된 이메일입니다. 로그인하거나 다른 이메일을 사용해주세요.'
+            title: '닉네임 중복',
+            message: '이미 사용 중인 닉네임입니다. 다른 닉네임을 입력해주세요.'
         }
     }
-    if (error.includes('형식') || error.includes('format') || error.includes('invalid')) {
+    // 이메일 중복
+    if (lowerError.includes('email') || lowerError.includes('이메일')) {
+        if (lowerError.includes('exist') || lowerError.includes('duplicate') || lowerError.includes('이미') || lowerError.includes('중복')) {
+            return {
+                title: '이메일 중복',
+                message: '이미 가입된 이메일입니다. 로그인하거나 다른 이메일을 사용해주세요.'
+            }
+        }
+        if (lowerError.includes('형식') || lowerError.includes('format') || lowerError.includes('invalid')) {
+            return {
+                title: '이메일 형식 오류',
+                message: '이메일 형식이 올바르지 않습니다. 올바른 이메일 주소를 입력해주세요.'
+            }
+        }
+    }
+    // 일반 중복 에러
+    if (lowerError.includes('이미') || lowerError.includes('exist') || lowerError.includes('duplicate') || lowerError.includes('중복')) {
+        return {
+            title: '중복된 정보',
+            message: '이미 사용 중인 이메일 또는 닉네임입니다. 다른 값을 입력해주세요.'
+        }
+    }
+    // 형식 에러
+    if (lowerError.includes('형식') || lowerError.includes('format') || lowerError.includes('invalid')) {
         return {
             title: '입력 형식 오류',
-            message: '이메일 형식이 올바르지 않습니다. 올바른 이메일 주소를 입력해주세요.'
+            message: '입력 형식이 올바르지 않습니다. 다시 확인해주세요.'
         }
     }
     return {
@@ -84,7 +110,9 @@ export const SignupForm = () => {
 
     // 경고 메시지 결정
     const getWarningMessage = () => {
-        if (!isEmailValid) return '올바른 이메일 형식을 입력해주세요.'
+        if (form.email && !isEmailValid) return '올바른 이메일 형식을 입력해주세요.'
+        if (form.nickname && form.nickname.trim().length < 2) return '닉네임은 2자 이상 입력해주세요.'
+        if (form.password && form.password.length < 4) return '비밀번호는 4자 이상 입력해주세요.'
         return null
     }
 

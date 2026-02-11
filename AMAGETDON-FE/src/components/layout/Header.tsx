@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import apiClient from '@/api/client';
+import { getInvestmentIcon } from '@/constants/investmentType';
 import './Header.css';
 
 // 사용자 정보 타입 (User 엔티티 기반)
@@ -20,6 +21,11 @@ export const Header = () => {
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+
+    // 슬라이딩 인디케이터 상태
+    const navRef = useRef<HTMLElement>(null);
+    const linkRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+    const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0, opacity: 0 });
 
     // 사용자 정보 API 호출 함수
     const fetchUserInfo = useCallback(async () => {
@@ -45,6 +51,15 @@ export const Header = () => {
     // 컴포넌트 마운트 시 사용자 정보 로드
     useEffect(() => {
         fetchUserInfo();
+    }, [fetchUserInfo]);
+
+    // 사용자 정보 갱신 이벤트 리스너 (투자 성향 변경 등)
+    useEffect(() => {
+        const handleUserInfoUpdate = () => {
+            fetchUserInfo();
+        };
+        window.addEventListener('userInfoUpdated', handleUserInfoUpdate);
+        return () => window.removeEventListener('userInfoUpdated', handleUserInfoUpdate);
     }, [fetchUserInfo]);
 
     // 네비게이션 아이템 (순서: 홈, 학습, 오답노트, 투자, 업적, 커뮤니티)
@@ -92,7 +107,7 @@ export const Header = () => {
             ),
         },
         {
-            path: '/achievements',
+            path: '/achievement',
             label: '업적',
             icon: (
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -123,9 +138,9 @@ export const Header = () => {
     const isActive = (path: string) => {
         const currentPath = location.pathname;
 
-        // 홈은 정확히 일치해야 함
+        // 홈은 정확히 일치하거나 /ranking 경로일 때 활성화
         if (path === '/') {
-            return currentPath === '/';
+            return currentPath === '/' || currentPath === '/ranking';
         }
 
         // /learning/review-note 같은 구체적인 경로는 정확히 일치해야 함
@@ -175,10 +190,39 @@ export const Header = () => {
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
 
-    // 잔액 포맷팅
-    const formatBalance = (balance: number) => {
-        return balance.toLocaleString();
-    };
+    // 슬라이딩 인디케이터 위치 업데이트
+    const updateIndicator = useCallback(() => {
+        const activeIndex = navItems.findIndex(item => isActive(item.path));
+        const activeLink = linkRefs.current[activeIndex];
+        const nav = navRef.current;
+
+        if (activeLink && nav) {
+            const navRect = nav.getBoundingClientRect();
+            const linkRect = activeLink.getBoundingClientRect();
+            setIndicatorStyle({
+                left: linkRect.left - navRect.left,
+                width: linkRect.width,
+                opacity: 1,
+            });
+        } else {
+            setIndicatorStyle(prev => ({ ...prev, opacity: 0 }));
+        }
+    }, [location.pathname]);
+
+    // 경로 변경 시 인디케이터 업데이트
+    useEffect(() => {
+        if (userInfo) {
+            // 약간의 지연을 줘서 DOM이 렌더링된 후 계산
+            const timer = setTimeout(updateIndicator, 50);
+            return () => clearTimeout(timer);
+        }
+    }, [location.pathname, userInfo, updateIndicator]);
+
+    // 창 크기 변경 시 인디케이터 재계산
+    useEffect(() => {
+        window.addEventListener('resize', updateIndicator);
+        return () => window.removeEventListener('resize', updateIndicator);
+    }, [updateIndicator]);
 
     return (
         <>
@@ -191,18 +235,30 @@ export const Header = () => {
                         <span className="header-logo-text">AMAGETDON</span>
                     </Link>
 
-                    {/* 네비게이션 */}
-                    <nav className="header-nav">
-                        {navItems.map((item) => (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                className={`header-nav-link ${isActive(item.path) ? 'active' : ''}`}
-                            >
-                                {item.label}
-                            </Link>
-                        ))}
-                    </nav>
+                    {/* 네비게이션 - 로그인 시에만 표시 */}
+                    {userInfo && (
+                        <nav className="header-nav" ref={navRef}>
+                            {navItems.map((item, index) => (
+                                <Link
+                                    key={item.path}
+                                    ref={el => { linkRefs.current[index] = el; }}
+                                    to={item.path}
+                                    className={`header-nav-link ${isActive(item.path) ? 'active' : ''}`}
+                                >
+                                    {item.label}
+                                </Link>
+                            ))}
+                            {/* 슬라이딩 인디케이터 */}
+                            <span
+                                className="header-nav-indicator"
+                                style={{
+                                    transform: `translateX(${indicatorStyle.left}px)`,
+                                    width: `${indicatorStyle.width}px`,
+                                    opacity: indicatorStyle.opacity,
+                                }}
+                            />
+                        </nav>
+                    )}
 
                     {/* 프로필 영역 */}
                     <div className="header-profile-area">
@@ -215,7 +271,7 @@ export const Header = () => {
                                     onClick={handleProfileClick}
                                 >
                                     <div className="header-profile-avatar">
-                                        <span>{userInfo.nickname.charAt(0)}</span>
+                                        <span>{getInvestmentIcon(userInfo.investmentType)}</span>
                                     </div>
                                     <span className="header-profile-name">
                                         {userInfo.nickname}
@@ -238,9 +294,6 @@ export const Header = () => {
                                             {userInfo.currentTitle && (
                                                 <span className="profile-dropdown-title">{userInfo.currentTitle}</span>
                                             )}
-                                            <span className="profile-dropdown-balance">
-                                                {formatBalance(userInfo.balance)} GM
-                                            </span>
                                         </div>
                                         <div className="profile-dropdown-divider" />
                                         <button
@@ -269,27 +322,34 @@ export const Header = () => {
                                 )}
                             </>
                         ) : (
-                            <Link to="/login" className="header-login-btn">
-                                로그인
-                            </Link>
+                            <div className="header-auth-buttons">
+                                <Link to="/login" className="header-login-btn">
+                                    로그인
+                                </Link>
+                                <Link to="/signup" className="header-signup-btn">
+                                    회원가입
+                                </Link>
+                            </div>
                         )}
                     </div>
                 </div>
             </header>
 
-            {/* ========== 모바일 하단 탭바 ========== */}
-            <nav className="mobile-tabbar">
-                {navItems.map((item) => (
-                    <Link
-                        key={item.path}
-                        to={item.path}
-                        className={`tabbar-item ${isActive(item.path) ? 'active' : ''}`}
-                    >
-                        <span className="tabbar-icon">{item.icon}</span>
-                        <span className="tabbar-label">{item.label}</span>
-                    </Link>
-                ))}
-            </nav>
+            {/* ========== 모바일 하단 탭바 - 로그인 시에만 표시 ========== */}
+            {userInfo && (
+                <nav className="mobile-tabbar">
+                    {navItems.map((item) => (
+                        <Link
+                            key={item.path}
+                            to={item.path}
+                            className={`tabbar-item ${isActive(item.path) ? 'active' : ''}`}
+                        >
+                            <span className="tabbar-icon">{item.icon}</span>
+                            <span className="tabbar-label">{item.label}</span>
+                        </Link>
+                    ))}
+                </nav>
+            )}
         </>
     );
 };

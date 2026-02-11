@@ -43,7 +43,7 @@ spring:
             enable: true
 
 openvidu:
-  url: ${OPENVIDU_URL:http://openvidu:4443/}
+  url: ${OPENVIDU_URL:https://openvidu:4443/}
   secret: ${OPENVIDU_SECRET:MY_SECRET}
 
 springdoc:
@@ -60,6 +60,8 @@ fastapi:
   url: ${FASTAPI_URL:http://fastapi:8000}
   quiz:
     generate-endpoint: /api/quiz/generate
+  personality:
+    analyze-endpoint: /api/personality/analyze
 
 server:
   servlet:

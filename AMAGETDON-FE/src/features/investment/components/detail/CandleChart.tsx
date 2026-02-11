@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { RefreshCw } from 'lucide-react';
 import { createChart, CandlestickSeries, HistogramSeries, type IChartApi, type CandlestickData, type HistogramData, type Time } from 'lightweight-charts';
 import type { CandleData, ChartPeriod } from '../../types/investment';
 import './CandleChart.css';
@@ -16,9 +17,11 @@ interface CandleChartProps {
     candles: CandleData[];
     period: ChartPeriod;
     onPeriodChange: (period: ChartPeriod) => void;
+    onRefresh?: () => Promise<void>;
 }
 
-export const CandleChart = ({ candles, period, onPeriodChange }: CandleChartProps) => {
+export const CandleChart = ({ candles, period, onPeriodChange, onRefresh }: CandleChartProps) => {
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
 
@@ -30,6 +33,50 @@ export const CandleChart = ({ candles, period, onPeriodChange }: CandleChartProp
             chartRef.current.remove();
             chartRef.current = null;
         }
+
+        // x축 라벨 포맷터
+        const getTickMarkFormatter = (timestamp: number) => {
+            const date = new Date(timestamp * 1000);
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+
+            switch (period) {
+                case '1D':
+                    return `${hours}:${minutes}`;
+                case '1W':
+                    return `${month}/${day}`;
+                case '3M':
+                    return `${month}/${day}`;
+                case '1Y':
+                    return `${month}월`;
+                default:
+                    return `${month}/${day}`;
+            }
+        };
+
+        // 호버 툴팁 포맷터
+        const getTooltipFormatter = (timestamp: number) => {
+            const date = new Date(timestamp * 1000);
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+
+            switch (period) {
+                case '1D':
+                    return `${month}월 ${day}일 ${hours}:${minutes}`;
+                case '1W':
+                    return `${month}월 ${day}일 ${hours}:${minutes}`;
+                case '3M':
+                    return `${month}월 ${day}일`;
+                case '1Y':
+                    return `${date.getFullYear()}년 ${month}월 ${day}일`;
+                default:
+                    return `${month}월 ${day}일`;
+            }
+        };
 
         const chart = createChart(containerRef.current, {
             layout: {
@@ -44,8 +91,14 @@ export const CandleChart = ({ candles, period, onPeriodChange }: CandleChartProp
             width: containerRef.current.clientWidth,
             height: 360,
             crosshair: { mode: 0 },
-            timeScale: { borderColor: '#e0e0e0' },
+            timeScale: {
+                borderColor: '#e0e0e0',
+                tickMarkFormatter: (time: number) => getTickMarkFormatter(time),
+            },
             rightPriceScale: { borderColor: '#e0e0e0' },
+            localization: {
+                timeFormatter: (timestamp: number) => getTooltipFormatter(timestamp),
+            },
         });
 
         const candleSeries = chart.addSeries(CandlestickSeries, {
@@ -108,21 +161,44 @@ export const CandleChart = ({ candles, period, onPeriodChange }: CandleChartProp
             chart.remove();
             chartRef.current = null;
         };
-    }, [candles]);
+    }, [candles, period]);
+
+    const handleRefresh = async () => {
+        if (!onRefresh || isRefreshing) return;
+        setIsRefreshing(true);
+        try {
+            await onRefresh();
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
 
     return (
         <div className="candle-chart">
-            <div className="candle-chart__tabs">
-                {PERIOD_ORDER.map((p) => (
+            <div className="candle-chart__header">
+                <div className="candle-chart__tabs">
+                    {PERIOD_ORDER.map((p) => (
+                        <button
+                            key={p}
+                            type="button"
+                            className={`candle-chart__tab ${period === p ? 'candle-chart__tab--active' : ''}`}
+                            onClick={() => onPeriodChange(p)}
+                        >
+                            {PERIOD_LABELS[p]}
+                        </button>
+                    ))}
+                </div>
+                {onRefresh && (
                     <button
-                        key={p}
                         type="button"
-                        className={`candle-chart__tab ${period === p ? 'candle-chart__tab--active' : ''}`}
-                        onClick={() => onPeriodChange(p)}
+                        className={`candle-chart__refresh ${isRefreshing ? 'candle-chart__refresh--loading' : ''}`}
+                        onClick={handleRefresh}
+                        disabled={isRefreshing}
+                        title="차트 새로고침"
                     >
-                        {PERIOD_LABELS[p]}
+                        <RefreshCw size={16} />
                     </button>
-                ))}
+                )}
             </div>
             {candles.length === 0 ? (
                 <div className="candle-chart__empty">차트 데이터가 없습니다</div>
