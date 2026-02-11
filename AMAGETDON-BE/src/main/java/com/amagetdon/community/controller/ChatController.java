@@ -100,4 +100,31 @@ public class ChatController {
 
         return ResponseEntity.ok(response);
     }
+
+    // 읽지 않은 메시지 개수
+    @GetMapping("/unread/{roomId}")
+    public ResponseEntity<Map<String, Object>> getUnreadMessages(@PathVariable Long roomId) {
+
+        Long userId = SecurityUtil.getCurrentUserId();
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        int count = chatMessageService.getUnreadCount(roomId, userId);
+        Map<String, Object> response = new HashMap<>();
+        response.put("unreadCount", count);
+        return ResponseEntity.ok(response);
+    }
+
+    // 읽음 처리(채팅방 입장 시 프론트에서 호출)
+    @PostMapping("/read/{roomId}")
+    public ResponseEntity<Void> markAsRead(@PathVariable Long roomId) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        chatMessageService.markAsRead(roomId, userId);
+        return ResponseEntity.ok().build();
+    }
 }
