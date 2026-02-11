@@ -5,6 +5,8 @@ import com.amagetdon.auth.dto.request.AuthSignupRequest;
 import com.amagetdon.auth.dto.response.TokenResponse;
 import com.amagetdon.common.jwt.JwtProperties;
 import com.amagetdon.common.jwt.JwtTokenProvider;
+import com.amagetdon.community.dto.response.RoomResponseDto;
+import com.amagetdon.community.service.RoomService;
 import com.amagetdon.user.service.UserService;
 import com.amagetdon.user.dto.request.UserLoginRequest;
 import com.amagetdon.user.dto.request.UserSignupRequest;
@@ -19,6 +21,7 @@ public class AuthService {
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
+    private final RoomService roomService;
 
     public TokenResponse login(AuthLoginRequest request) {
         UserLoginRequest userLoginRequest = new UserLoginRequest(request.email(), request.password());
@@ -58,6 +61,11 @@ public class AuthService {
             userId = Long.parseLong(userIdStr);
         } catch (Exception e) {
             throw new SecurityException("인증 정보가 만료되었습니다. 다시 로그인 후 진행해주세요.");
+        }
+
+        RoomResponseDto myRoom = roomService.getMyRoom(userId);
+        if(myRoom != null) {
+            roomService.leaveRoom(userId, myRoom.getRoomId());
         }
 
         userService.withdraw(userId);
