@@ -181,8 +181,20 @@ public class RoomService {
 
     @Transactional
     public RoomLeaveResponseDto leaveRoom(Long userId, Long roomId) {
-        Member member = memberRepository.findByUserIdAndRoomIdAndIsActiveTrue(userId, roomId)
-                .orElseThrow(() -> new IllegalArgumentException(ErrorCode.NOT_ROOM_MEMBER.getMessage()));
+        // ✅ orElseThrow 대신 Optional로 체크
+        Optional<Member> memberOpt = memberRepository.findByUserIdAndRoomIdAndIsActiveTrue(userId, roomId);
+
+        // ✅ 이미 나간 사용자 → 에러 대신 성공 반환
+        if (memberOpt.isEmpty()) {
+            return RoomLeaveResponseDto.builder()
+                    .roomId(roomId)
+                    .isRoomDeleted(false)
+                    .leftAt(LocalDateTime.now())
+                    .build();
+        }
+
+        // 아래는 원본 로직 그대로
+        Member member = memberOpt.get();
 
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException(ErrorCode.ROOM_NOT_FOUND.getMessage()));

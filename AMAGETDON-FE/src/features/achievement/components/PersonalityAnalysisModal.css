@@ -1,0 +1,233 @@
+.personality-analysis {
+    padding: var(--spacing-5);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* ─── Confetti 빵빠레 효과 ─── */
+.personality-analysis__confetti {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.personality-analysis__particle {
+    position: absolute;
+    top: -10px;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    opacity: 0;
+    animation: personalityConfettiFall 2s ease-out forwards;
+}
+
+/* 20개 파티클 분산 배치 */
+.personality-analysis__particle:nth-child(1)  { left: 5%;  background: #f5d764; animation-delay: 0.0s; width: 6px; height: 10px; }
+.personality-analysis__particle:nth-child(2)  { left: 12%; background: #ff6b8a; animation-delay: 0.08s; border-radius: 50%; }
+.personality-analysis__particle:nth-child(3)  { left: 20%; background: #4ecdc4; animation-delay: 0.15s; width: 10px; height: 6px; }
+.personality-analysis__particle:nth-child(4)  { left: 28%; background: #f5d764; animation-delay: 0.03s; border-radius: 50%; }
+.personality-analysis__particle:nth-child(5)  { left: 35%; background: #a78bfa; animation-delay: 0.18s; }
+.personality-analysis__particle:nth-child(6)  { left: 42%; background: #ff6b8a; animation-delay: 0.1s; width: 6px; height: 10px; }
+.personality-analysis__particle:nth-child(7)  { left: 50%; background: #4ecdc4; animation-delay: 0.05s; }
+.personality-analysis__particle:nth-child(8)  { left: 58%; background: #f5d764; animation-delay: 0.2s; border-radius: 50%; }
+.personality-analysis__particle:nth-child(9)  { left: 65%; background: #ff9f43; animation-delay: 0.08s; width: 10px; height: 6px; }
+.personality-analysis__particle:nth-child(10) { left: 72%; background: #a78bfa; animation-delay: 0.13s; }
+.personality-analysis__particle:nth-child(11) { left: 80%; background: #ff6b8a; animation-delay: 0.05s; border-radius: 50%; }
+.personality-analysis__particle:nth-child(12) { left: 88%; background: #4ecdc4; animation-delay: 0.18s; width: 6px; height: 10px; }
+.personality-analysis__particle:nth-child(13) { left: 95%; background: #f5d764; animation-delay: 0.1s; }
+.personality-analysis__particle:nth-child(14) { left: 8%;  background: #ff9f43; animation-delay: 0.22s; border-radius: 50%; }
+.personality-analysis__particle:nth-child(15) { left: 16%; background: #a78bfa; animation-delay: 0.12s; width: 10px; height: 6px; }
+.personality-analysis__particle:nth-child(16) { left: 24%; background: #4ecdc4; animation-delay: 0.25s; }
+.personality-analysis__particle:nth-child(17) { left: 38%; background: #f5d764; animation-delay: 0.15s; border-radius: 50%; }
+.personality-analysis__particle:nth-child(18) { left: 55%; background: #ff6b8a; animation-delay: 0.2s; width: 6px; height: 10px; }
+.personality-analysis__particle:nth-child(19) { left: 75%; background: #ff9f43; animation-delay: 0.08s; }
+.personality-analysis__particle:nth-child(20) { left: 85%; background: #a78bfa; animation-delay: 0.18s; border-radius: 50%; }
+
+@keyframes personalityConfettiFall {
+    0% {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg) scale(1);
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(280px) rotate(720deg) scale(0.3);
+    }
+}
+
+.personality-analysis__title {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-dark-gray);
+    margin-bottom: var(--spacing-3);
+}
+
+.personality-analysis__desc {
+    font-size: var(--font-size-sm);
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: var(--spacing-4);
+}
+
+.personality-analysis__current {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--spacing-3);
+}
+
+.personality-analysis__confidence {
+    font-size: var(--font-size-xs);
+    color: #888;
+    margin-bottom: var(--spacing-4);
+}
+
+.personality-analysis__actions {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-3);
+}
+
+/* 성향 비교 레이아웃 */
+.personality-analysis__comparison {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-3);
+    margin-bottom: var(--spacing-3);
+    padding: var(--spacing-3);
+    background: #f8f8f8;
+    border-radius: 12px;
+}
+
+.personality-analysis__column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-1);
+}
+
+.personality-analysis__label {
+    font-size: 11px;
+    color: #888;
+    font-weight: var(--font-weight-medium);
+}
+
+.personality-analysis__arrow {
+    color: #ccc;
+    flex-shrink: 0;
+}
+
+/* 성향 카드 */
+.personality-type-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: var(--spacing-3) var(--spacing-4);
+    border-radius: 10px;
+    background: var(--type-bg);
+    border: 2px solid transparent;
+    min-width: 90px;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.personality-type-card--clickable {
+    cursor: pointer;
+}
+
+.personality-type-card--clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.personality-type-card--selected {
+    border-color: var(--type-color);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    transform: scale(1.05);
+}
+
+.personality-type-card__check {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    background: var(--type-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: checkPop 0.3s ease-out;
+}
+
+@keyframes checkPop {
+    from { transform: scale(0); }
+    to { transform: scale(1); }
+}
+
+.personality-type-card__icon {
+    font-size: 28px;
+}
+
+.personality-type-card__label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--type-color);
+}
+
+.personality-type-card__prob {
+    font-size: 11px;
+    color: #888;
+}
+
+/* 반응형 - 모바일 최적화 */
+@media (max-width: 480px) {
+    .personality-analysis {
+        padding: var(--spacing-4);
+    }
+
+    .personality-analysis__title {
+        font-size: var(--font-size-lg);
+    }
+
+    .personality-analysis__desc {
+        font-size: var(--font-size-xs);
+        margin-bottom: var(--spacing-3);
+    }
+
+    .personality-analysis__comparison {
+        gap: var(--spacing-2);
+        padding: var(--spacing-2);
+    }
+
+    .personality-type-card {
+        min-width: 80px;
+        padding: var(--spacing-2) var(--spacing-3);
+    }
+
+    .personality-type-card__icon {
+        font-size: 24px;
+    }
+
+    .personality-type-card__label {
+        font-size: var(--font-size-xs);
+    }
+
+    .personality-analysis__actions {
+        flex-direction: column;
+        gap: var(--spacing-2);
+    }
+
+    .personality-analysis__actions button {
+        width: 100%;
+    }
+}

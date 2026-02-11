@@ -9,7 +9,7 @@ interface QuizFeedbackModalProps {
     correctAnswer: string;
     addedToReviewNote: boolean;
     onNext: () => void;
-    onClose: () => void;
+    onExit: () => void;
 }
 
 /**
@@ -26,12 +26,20 @@ export const QuizFeedbackModal = ({
                                       correctAnswer,
                                       addedToReviewNote,
                                       onNext,
-                                      onClose,
+                                      onExit,
                                   }: QuizFeedbackModalProps) => {
     if (!isOpen) return null;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose}>
+        <Modal
+            isOpen={isOpen}
+            onClose={() => {
+                if (window.confirm('퀴즈를 종료하시겠습니까?')) {
+                    onExit();
+                }
+            }}
+            preventOverlayClose
+        >
             <div className={`quiz-feedback ${isCorrect ? 'quiz-feedback--correct' : 'quiz-feedback--wrong'}`}>
                 {/* 상태 아이콘 */}
                 <div className="quiz-feedback__icon-wrap">

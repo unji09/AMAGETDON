@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { RefreshCw } from 'lucide-react';
 import { createChart, CandlestickSeries, HistogramSeries, type IChartApi, type CandlestickData, type HistogramData, type Time } from 'lightweight-charts';
 import type { CandleData, ChartPeriod } from '../../types/investment';
 import './CandleChart.css';
@@ -16,9 +17,11 @@ interface CandleChartProps {
     candles: CandleData[];
     period: ChartPeriod;
     onPeriodChange: (period: ChartPeriod) => void;
+    onRefresh?: () => Promise<void>;
 }
 
-export const CandleChart = ({ candles, period, onPeriodChange }: CandleChartProps) => {
+export const CandleChart = ({ candles, period, onPeriodChange, onRefresh }: CandleChartProps) => {
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
 
@@ -160,19 +163,42 @@ export const CandleChart = ({ candles, period, onPeriodChange }: CandleChartProp
         };
     }, [candles, period]);
 
+    const handleRefresh = async () => {
+        if (!onRefresh || isRefreshing) return;
+        setIsRefreshing(true);
+        try {
+            await onRefresh();
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
+
     return (
         <div className="candle-chart">
-            <div className="candle-chart__tabs">
-                {PERIOD_ORDER.map((p) => (
+            <div className="candle-chart__header">
+                <div className="candle-chart__tabs">
+                    {PERIOD_ORDER.map((p) => (
+                        <button
+                            key={p}
+                            type="button"
+                            className={`candle-chart__tab ${period === p ? 'candle-chart__tab--active' : ''}`}
+                            onClick={() => onPeriodChange(p)}
+                        >
+                            {PERIOD_LABELS[p]}
+                        </button>
+                    ))}
+                </div>
+                {onRefresh && (
                     <button
-                        key={p}
                         type="button"
-                        className={`candle-chart__tab ${period === p ? 'candle-chart__tab--active' : ''}`}
-                        onClick={() => onPeriodChange(p)}
+                        className={`candle-chart__refresh ${isRefreshing ? 'candle-chart__refresh--loading' : ''}`}
+                        onClick={handleRefresh}
+                        disabled={isRefreshing}
+                        title="차트 새로고침"
                     >
-                        {PERIOD_LABELS[p]}
+                        <RefreshCw size={16} />
                     </button>
-                ))}
+                )}
             </div>
             {candles.length === 0 ? (
                 <div className="candle-chart__empty">차트 데이터가 없습니다</div>
