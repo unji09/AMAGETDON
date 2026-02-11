@@ -57,9 +57,11 @@ services:
       - REDIS_PORT=6379
       - JWT_SECRET=${JWT_SECRET}
       - MY_EMAIL_PASSWORD=${MY_EMAIL_PASSWORD}
+      - REST_KAKAO_API_KEY=${REST_KAKAO_API_KEY}
       - REDIRECT_URL=${REDIRECT_URL}
       - OPENVIDU_URL=${OPENVIDU_URL}
       - OPENVIDU_SECRET=${OPENVIDU_SECRET}
+      - FASTAPI_URL=http://localhost:8000
       - TZ=Asia/Seoul
     depends_on:
       mysql:
@@ -114,6 +116,8 @@ services:
     build:
       context: ./AMAGETDON-FE
       dockerfile: Dockerfile
+      args:
+        - VITE_KAKAO_JS_KEY=${VITE_KAKAO_JS_KEY}
     container_name: amagetdon-frontend
     environment:
       - VITE_KAKAO_JS_KEY=${VITE_KAKAO_JS_KEY}
