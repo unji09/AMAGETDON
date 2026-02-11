@@ -35,4 +35,10 @@ public class Member {
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime joinedAt;
+
+    private LocalDateTime lastReadAt;
+
+    public void updateLastReadAt(LocalDateTime time) {
+        this.lastReadAt = time;
+    }
 }
