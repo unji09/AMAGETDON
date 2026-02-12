@@ -9,7 +9,7 @@ import com.amagetdon.community.entity.Member;
 import com.amagetdon.community.entity.Room;
 import com.amagetdon.community.repository.MemberRepository;
 import com.amagetdon.community.repository.RoomRepository;
-import com.amagetdon.user.entity.User;
+import com.amagetdon.user.dto.response.UserResponseDto;
 import com.amagetdon.user.service.UserService;
 import io.openvidu.java.client.*;
 import jakarta.transaction.Transactional;
@@ -250,11 +250,11 @@ public class RoomService {
 
         List<RoomMemberDto> memberDtos = members.stream()
                 .map(member -> {
-                    User user = userService.getUserInfo(member.getUserId());
+                    UserResponseDto user = userService.getUserInfo(member.getUserId());
                     return RoomMemberDto.builder()
                             .memberId(member.getId())
                             .userId(member.getUserId())
-                            .nickname(user.getNickname())
+                            .nickname(user.nickname())
                             .joinedAt(member.getJoinedAt())
                             .isOwner(member.getUserId().equals(room.getOwnerId()))
                             .build();
