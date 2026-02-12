@@ -1,7 +1,9 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-from models.quiz_models import CachedQuiz, CachedQuizChoice
 from typing import Optional
+
+from models.quiz_models import CachedQuiz, CachedQuizChoice
+from sqlalchemy import func
+from sqlalchemy.orm import Session, joinedload
+
 
 class QuizRepository:
     """캐싱 퀴즈 데이터베이스 접근 레이어"""
@@ -43,9 +45,11 @@ class QuizRepository:
         Returns:
             is_used=False인 퀴즈 개수
         """
-        return self.db.query(func.count(CachedQuiz.cached_quiz_id))\
-            .filter(CachedQuiz.is_used == False)\
+        return (
+            self.db.query(func.count(CachedQuiz.cached_quiz_id))
+            .filter(CachedQuiz.is_used == False)
             .scalar()
+        )
 
     def count_all_quizzes(self) -> int:
         """
@@ -55,3 +59,19 @@ class QuizRepository:
             전체 퀴즈 개수
         """
         return self.db.query(func.count(CachedQuiz.cached_quiz_id)).scalar()
+
+    def get_all_quizzes(self) -> list[CachedQuiz]:
+        return (
+            self.db.query(CachedQuiz)
+            .options(joinedload(CachedQuiz.choices))
+            .order_by(CachedQuiz.cached_quiz_id)
+            .all()
+        )
+
+    def find_random_quiz(self) -> Optional[CachedQuiz]:
+        return (
+            self.db.query(CachedQuiz)
+            .options(joinedload(CachedQuiz.choices))
+            .order_by(func.rand())
+            .first()
+        )
