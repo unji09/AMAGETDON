@@ -362,3 +362,67 @@ class QuizService:
             json.dump(quiz_data_list, f, ensure_ascii=False, indent=2)
 
         print(f"백업 완료: {filename} (총 {len(quiz_data_list)}개)")
+
+    def export_all_to_csv(self) -> str:
+        import csv
+
+        quizzes = self.repository.get_all_quizzes()
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_dir = "backup/quizzes"
+        os.makedirs(backup_dir, exist_ok=True)
+        csv_path = f"{backup_dir}/quizzes_{timestamp}.csv"
+
+        with open(csv_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(
+                [
+                    "cached_quiz_id",
+                    "quiz_type",
+                    "quiz_content",
+                    "answer_ox",
+                    "difficulty",
+                    "hint",
+                    "explanation_text",
+                    "choice1_text",
+                    "choice1_is_answer",
+                    "choice2_text",
+                    "choice2_is_answer",
+                    "choice3_text",
+                    "choice3_is_answer",
+                    "choice4_text",
+                    "choice4_is_answer",
+                ]
+            )
+
+            for quiz in quizzes:
+                choices = (
+                    sorted(quiz.choices, key=lambda c: c.choice_no)
+                    if quiz.choices
+                    else []
+                )
+
+                choice_data = []
+                for i in range(4):
+                    if i < len(choices):
+                        choice_data.extend(
+                            [choices[i].choice_text, choices[i].is_answer]
+                        )
+                    else:
+                        choice_data.extend(["", ""])
+
+                writer.writerow(
+                    [
+                        quiz.cached_quiz_id,
+                        quiz.quiz_type,
+                        quiz.quiz_content,
+                        quiz.answer_ox,
+                        quiz.difficulty,
+                        quiz.hint,
+                        quiz.explanation_text,
+                        *choice_data,
+                    ]
+                )
+
+        print(f"CSV 내보내기 완료: {csv_path} (총 {len(quizzes)}개)")
+        return csv_path
