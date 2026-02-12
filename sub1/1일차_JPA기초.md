@@ -1,0 +1,109 @@
+### JPA 기본 구조 및 영속성 관리 핵심 정리
+<br><br>
+
+**1. JPA의 역할과 목적**
+
+JPA는 자바 객체와 관계형 데이터베이스 테이블을 매핑하여, 객체 중심의 데이터 접근 방식을 가능하게 하는 ORM 기술이다.
+개발자는 SQL 중심이 아닌 엔티티 중심으로 로직을 설계할 수 있으며, 데이터베이스 의존성을 낮출 수 있다 
+<br><br>
+
+
+**2. 엔티티 매핑 구조와 JPA 기본 구성 요소**
+
+2.1. 엔티티(Entity) 매핑 구조 <br>
+@Entity
+public class Member {
+
+    @Id
+    private Long id;
+
+    private String name;
+}
+
+
+@Entity
+해당 클래스가 JPA가 관리하는 엔티티 객체임을 의미한다.
+
+@Id
+엔티티의 기본 키(PK)로 사용되며, 데이터베이스의 PK와 매핑된다.
+
+@Table, @Column
+테이블명과 컬럼명을 직접 지정할 수 있으나,
+지정하지 않을 경우 엔티티명/필드명을 기준으로 관례적으로 매핑된다.
+
+
+2.2. JPA 기본 구성요소 <br>
+```java
+EntityManagerFactory emf =
+        Persistence.createEntityManagerFactory("hello");
+EntityManager em = emf.createEntityManager();
+EntityTransaction tx = em.getTransaction();
+```
+
+EntityManagerFactory
+애플리케이션 전체에서 하나만 생성하여 공유한다.
+
+EntityManager
+엔티티를 영속성 컨텍스트에서 관리하는 객체로, 요청 단위로 생성·사용·종료된다.
+
+Transaction
+JPA의 모든 데이터 변경 작업은 반드시 트랜잭션 내부에서 수행되어야 한다.
+
+JPA는 데이터베이스별 차이를 Dialect(방언) 를 통해 추상화하여, 동일한 코드로 다양한 DB를 지원한다 
+<br><br>
+
+
+**3. 영속성 컨텍스트(Persistence Context)**
+
+영속성 컨텍스트는 엔티티를 저장하고 관리하는 논리적 공간으로,
+JPA 동작의 핵심 개념이다 
+<br>
+
+
+엔티티는 다음과 같은 생명주기를 가진다.
+
+비영속 → 영속 → 준영속 → 삭제
+
+개발자는 EntityManager를 통해 영속성 컨텍스트에 접근한다.
+<br><br>
+
+
+**4. 영속성 컨텍스트의 핵심 기능**
+
+1차 캐시
+동일 엔티티 조회 시 DB 접근 없이 캐시에서 반환
+
+동일성 보장
+같은 트랜잭션 내 동일 엔티티는 항상 같은 객체
+
+쓰기 지연
+SQL은 즉시 실행되지 않고 커밋 시점에 일괄 처리
+
+변경 감지(Dirty Checking)
+엔티티 수정 시 update 호출 없이 자동 반영
+
+플러시(Flush)
+커밋 시점에 영속성 컨텍스트 변경 내용을 DB에 동기화 
+<br><br>
+
+
+
+**5. JPQL 핵심 개념**
+
+JPQL은 테이블이 아닌 엔티티 객체를 대상으로 조회하는 객체 지향 쿼리 언어이다.
+SQL을 추상화하여 데이터베이스에 종속되지 않는 조회를 가능하게 한다
+
+- JPQL 조회 및 페이징으로의 활용<br>
+```java
+List<Member> result =
+    em.createQuery("select m from Member m", Member.class)
+      .setFirstResult(5)
+      .setMaxResults(8)
+      .getResultList();
+```
+
+JPQL은 테이블이 아닌 엔티티 객체를 대상으로 조회한다.
+
+페이징 처리 또한 DB 방언에 맞게 자동 변환된다.
+
+이를 통해 DB 독립적인 조회 로직 작성이 가능하다.
