@@ -1,0 +1,161 @@
+/**
+ * FloatingChatButton 스타일
+ * Figma: 56x56 원형, #203C2E, 그림자
+ */
+
+/* 컨테이너 - 고정 위치 */
+.floating-chat-container {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    z-index: 999;
+}
+
+/* Figma: 56x56, #203C2E, 원형, 그림자 */
+.floating-chat-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #203C2E;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(32, 60, 46, 0.3);
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.floating-chat-btn:hover {
+    background: #162B20;
+    transform: scale(1.08);
+    box-shadow: 0 6px 24px rgba(32, 60, 46, 0.4);
+}
+
+.floating-chat-btn:active {
+    transform: scale(0.96);
+}
+
+/* 바운스 애니메이션 (새 메시지 도착 시) */
+.floating-chat-btn--bounce {
+    animation: floatingBounce 0.6s ease;
+}
+
+@keyframes floatingBounce {
+    0%, 100% { transform: scale(1); }
+    20% { transform: scale(1.15); }
+    40% { transform: scale(0.95); }
+    60% { transform: scale(1.08); }
+    80% { transform: scale(0.98); }
+}
+
+/* 채팅 아이콘 */
+.floating-chat-icon {
+    display: block;
+}
+
+/* Figma: 읽지 않은 메시지 배지 - #DC0000, 흰색 테두리 */
+.floating-chat-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #DC0000;
+    color: #FFFFFF;
+    border-radius: 12px;
+    min-width: 22px;
+    height: 22px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    border: 2px solid white;
+    box-sizing: border-box;
+    line-height: 1;
+    animation: badgeAppear 0.3s ease;
+}
+
+@keyframes badgeAppear {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Figma: 호버 툴팁 - #282828 배경, 흰색 텍스트, 12px bold */
+.floating-chat-tooltip {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    right: 0;
+    background: #282828;
+    color: #FFFFFF;
+    padding: 6px 16px;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: Arial, sans-serif;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    animation: tooltipFadeIn 0.15s ease;
+    pointer-events: none;
+}
+
+.floating-chat-tooltip-text {
+    display: block;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Figma: 툴팁 아래 화살표 */
+.floating-chat-tooltip-arrow {
+    position: absolute;
+    bottom: -5px;
+    right: 20px;
+    width: 10px;
+    height: 10px;
+    background: #282828;
+    transform: rotate(45deg);
+}
+
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .floating-chat-container {
+        bottom: 20px;
+        right: 20px;
+    }
+
+    .floating-chat-btn {
+        width: 50px;
+        height: 50px;
+    }
+
+    .floating-chat-icon {
+        width: 24px;
+        height: 17px;
+    }
+
+    .floating-chat-badge {
+        min-width: 20px;
+        height: 20px;
+        font-size: 10px;
+    }
+}

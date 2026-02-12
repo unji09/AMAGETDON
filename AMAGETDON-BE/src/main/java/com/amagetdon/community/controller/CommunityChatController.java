@@ -38,39 +38,39 @@ public class CommunityChatController {
         Long userId = SecurityUtil.getCurrentUserId();
         log.info("🎫 [CommunityChatController] Connection 요청 - sessionId: {}, userId: {}", sessionId, userId);
 
-        // ✅ recreateSession() 사용 - 세션이 없으면 자동 재생성
+        // recreateSession() 사용 - 세션이 없으면 자동 재생성
         String token = openViduService.recreateSession(sessionId, params);
 
-        // ✅ 새 세션 ID 가져오기 (토큰에서 추출)
+        // 새 세션 ID 가져오기 (토큰에서 추출)
         String actualSessionId = extractSessionIdFromToken(token);
 
-        // ✅ DB의 Room 업데이트 (세션 ID가 변경된 경우)
+        // DB의 Room 업데이트 (세션 ID가 변경된 경우)
         if (!sessionId.equals(actualSessionId)) {
-            log.warn("⚠️ [CommunityChatController] 세션 ID 변경됨: {} → {}", sessionId, actualSessionId);
+            log.warn("[CommunityChatController] 세션 ID 변경됨: {} → {}", sessionId, actualSessionId);
             try {
                 roomRepository.findByOpenviduSessionId(sessionId).ifPresent(room -> {
                     // ✅ FIXED: Room이 삭제되었는지 확인
                     if (roomRepository.existsById(room.getId())) {
                         room.updateOpenViduSessionId(actualSessionId);
                         roomRepository.save(room);
-                        log.info("✅ [CommunityChatController] Room 업데이트 완료 - roomId: {}, new sessionId: {}",
+                        log.info("[CommunityChatController] Room 업데이트 완료 - roomId: {}, new sessionId: {}",
                                 room.getId(), actualSessionId);
                     } else {
-                        log.warn("⚠️ [CommunityChatController] Room이 이미 삭제됨 - roomId: {}", room.getId());
+                        log.warn("[CommunityChatController] Room이 이미 삭제됨 - roomId: {}", room.getId());
                     }
                 });
             } catch (Exception e) {
-                // ✅ FIXED: Room이 삭제된 경우 무시
-                log.warn("⚠️ [CommunityChatController] Room 업데이트 실패 (이미 삭제됨) - sessionId: {}", sessionId, e);
+                // Room이 삭제된 경우 무시
+                log.warn("[CommunityChatController] Room 업데이트 실패 (이미 삭제됨) - sessionId: {}", sessionId, e);
             }
         }
 
-        // ✅ 토큰과 실제 세션 ID 모두 반환
+        // 토큰과 실제 세션 ID 모두 반환
         Map<String, String> response = new HashMap<>();
         response.put("token", token);
         response.put("sessionId", actualSessionId);
 
-        log.info("✅ [CommunityChatController] Connection 생성 완료 - sessionId: {}", actualSessionId);
+        log.info("[CommunityChatController] Connection 생성 완료 - sessionId: {}", actualSessionId);
         return ResponseEntity.ok(response);
     }
 
@@ -86,7 +86,7 @@ public class CommunityChatController {
                 return sessionPart;
             }
         } catch (Exception e) {
-            log.error("❌ [CommunityChatController] 토큰에서 sessionId 추출 실패", e);
+            log.error("[CommunityChatController] 토큰에서 sessionId 추출 실패", e);
         }
         return null;
     }

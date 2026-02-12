@@ -9,6 +9,7 @@ import com.amagetdon.community.repository.RoomRepository;
 import com.amagetdon.community.service.ChatMessageService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -21,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/chat")
 @RequiredArgsConstructor
@@ -38,6 +40,11 @@ public class ChatController {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+    /**
+     * 메시지 전송
+     * 1. Redis에 저장 (메시지 영속화)
+     * 2. OpenVidu signal 전송 (상대방에게 실시간 전달)
+     */
     @PostMapping("/send")
     public ResponseEntity<Void> sendMessage(@RequestBody ChatMessageRequestDto request) {
         Long userId = SecurityUtil.getCurrentUserId();
@@ -48,6 +55,7 @@ public class ChatController {
         Room room = roomRepository.findByOpenviduSessionId(request.openviduSessionId())
                 .orElseThrow(() -> new IllegalArgumentException(ErrorCode.ROOM_NOT_FOUND.getMessage()));
 
+        // 1. Redis 저장
         chatMessageService.saveMessage(
                 room.getId(),
                 userId,
@@ -56,7 +64,7 @@ public class ChatController {
                 request.type()
         );
 
-        // OpenVidu signal 전송 (에러 발생 시 무시)
+        // 2. OpenVidu signal 전송 (에러 발생 시 무시 - 메시지는 이미 저장됨)
         try {
             String baseUrl = openViduUrl.endsWith("/") ? openViduUrl : openViduUrl + "/";
             String url = baseUrl + "openvidu/api/signal";
@@ -65,7 +73,6 @@ public class ChatController {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setBasicAuth("OPENVIDUAPP", openViduSecret);
 
-            // [Bug 1 수정] signal data에 userName, userId를 JSON으로 포함
             Map<String, Object> signalData = new HashMap<>();
             signalData.put("userName", request.sender());
             signalData.put("userId", userId);
@@ -79,8 +86,10 @@ public class ChatController {
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
             restTemplate.postForEntity(url, entity, Void.class);
+
+            log.info("메시지 전송 완료 - roomId: {}, userId: {}", room.getId(), userId);
         } catch (Exception e) {
-            // OpenVidu signal 실패는 무시 (메시지는 이미 Redis에 저장됨)
+            log.warn("OpenVidu signal 전송 실패 (메시지는 Redis에 저장됨) - {}", e.getMessage());
         }
 
         return ResponseEntity.ok().build();
@@ -104,7 +113,6 @@ public class ChatController {
     // 읽지 않은 메시지 개수
     @GetMapping("/unread/{roomId}")
     public ResponseEntity<Map<String, Object>> getUnreadMessages(@PathVariable Long roomId) {
-
         Long userId = SecurityUtil.getCurrentUserId();
         if (userId == null) {
             return ResponseEntity.status(401).build();
@@ -116,7 +124,7 @@ public class ChatController {
         return ResponseEntity.ok(response);
     }
 
-    // 읽음 처리(채팅방 입장 시 프론트에서 호출)
+    // 읽음 처리
     @PostMapping("/read/{roomId}")
     public ResponseEntity<Void> markAsRead(@PathVariable Long roomId) {
         Long userId = SecurityUtil.getCurrentUserId();
