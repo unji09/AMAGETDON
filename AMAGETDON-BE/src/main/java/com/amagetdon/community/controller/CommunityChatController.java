@@ -1,7 +1,6 @@
 package com.amagetdon.community.controller;
 
 import com.amagetdon.common.security.SecurityUtil;
-import com.amagetdon.community.entity.Room;
 import com.amagetdon.community.repository.RoomRepository;
 import com.amagetdon.community.service.OpenViduService;
 import io.openvidu.java.client.OpenViduHttpException;

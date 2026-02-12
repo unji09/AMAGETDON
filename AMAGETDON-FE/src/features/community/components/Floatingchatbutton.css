@@ -9,6 +9,12 @@
     bottom: 32px;
     right: 32px;
     z-index: 999;
+    transition: transform 0.2s ease;
+    transform-origin: bottom right;
+}
+
+.floating-chat-container:hover {
+    transform: scale(1.08);
 }
 
 /* Figma: 56x56, #203C2E, 원형, 그림자 */
@@ -29,12 +35,11 @@
 
 .floating-chat-btn:hover {
     background: #162B20;
-    transform: scale(1.08);
     box-shadow: 0 6px 24px rgba(32, 60, 46, 0.4);
 }
 
 .floating-chat-btn:active {
-    transform: scale(0.96);
+    background: #0F1D15;
 }
 
 /* 바운스 애니메이션 (새 메시지 도착 시) */
@@ -103,7 +108,6 @@
     font-weight: 700;
     font-family: Arial, sans-serif;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    animation: tooltipFadeIn 0.15s ease;
     pointer-events: none;
 }
 
@@ -123,17 +127,6 @@
     height: 10px;
     background: #282828;
     transform: rotate(45deg);
-}
-
-@keyframes tooltipFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(4px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 /* 반응형 */
