@@ -119,6 +119,9 @@ services:
     restart: unless-stopped
     networks:
       - amagetdon-network
+    volumes:
+      - ./fastapi:/app
+      - ./backup:/app/backup
 
   # Stock Collector Service
   # network_mode: host 사용 - 한투 API 외부 접속 필요
