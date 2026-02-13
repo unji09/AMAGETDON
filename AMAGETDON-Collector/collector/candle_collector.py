@@ -303,7 +303,7 @@ class CandleCollector:
 
         total_batches = (len(stock_codes) + batch_size - 1) // batch_size
 
-        connector = aiohttp.TCPConnector(limit=18)
+        connector = aiohttp.TCPConnector(limit=20)
         timeout = aiohttp.ClientTimeout(total=600)
         session = aiohttp.ClientSession(connector=connector, timeout=timeout)
 

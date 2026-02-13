@@ -73,7 +73,7 @@ class CandleFiller:
         if start_time >= end_time:
             return 0
 
-        connector = aiohttp.TCPConnector(limit=18)
+        connector = aiohttp.TCPConnector(limit=20)
         async with aiohttp.ClientSession(connector=connector) as session:
             candles_dict = await self.api_client.fetch_minute_candles_by_date_async(
                 session=session,

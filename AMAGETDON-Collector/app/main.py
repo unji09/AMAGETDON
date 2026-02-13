@@ -62,7 +62,7 @@ def _has_candle_data_for_period(cursor, interval_type: str, total_stocks: int, m
     return has_sufficient
 
 #서버 시작 시 초기화(종목/업종 파싱, 30분봉/일봉/주봉 수집)
-async def check_and_initialize(rate_limit: int = 18):
+async def check_and_initialize(rate_limit: int = 20):
     start_time = time.time()
     logger.info("=== [START] 서버 초기화 시작 ===")
 
@@ -161,7 +161,7 @@ async def run_rest_collection_loop():
     
     rest_candle_builder = RealtimeCandleBuilder()
 
-    connector = aiohttp.TCPConnector(limit=18)
+    connector = aiohttp.TCPConnector(limit=20)
     timeout = aiohttp.ClientTimeout(total=30)
     session = aiohttp.ClientSession(connector=connector, timeout=timeout)
 
@@ -284,7 +284,7 @@ async def fill_ws_missing_candles(stock_codes: list, token_manager):
         result = await CandleFiller.fill_missing_candles_parallel(
             token_manager=token_manager,
             stock_codes=stock_codes,
-            rate_limit=18,
+            rate_limit=20,
             fill_1m=True,
             fill_5m=True,
             fill_30m=True,
@@ -308,7 +308,7 @@ async def fill_new_user_stocks(new_stocks: list, token_manager):
     result = await CandleFiller.fill_missing_candles_parallel(
         token_manager=token_manager,
         stock_codes=new_stocks,
-        rate_limit=18,
+        rate_limit=20,
         fill_1m=True,
         fill_5m=True,
         fill_30m=True,
@@ -336,7 +336,7 @@ async def start_collection():
     logger.info("기존 Approval Key 삭제 - 새로 발급 예정")
 
     # 공유 rate limiter 생성 (1초에 18건, 여유있게)
-    shared_limiter = HardRateLimiter(18)
+    shared_limiter = HardRateLimiter(20)
 
     # volume_tracker에 공유 limiter 전달
     volume_tracker = VolumeTracker(token_manager, shared_limiter=shared_limiter)
@@ -356,7 +356,7 @@ async def start_collection():
     candle_loop_task = asyncio.create_task(run_volume_rank_loop())
 
 #주식 시장 마감 호출(전체 종목 누락 업데이트)
-async def stop_collection(rate_limit: int = 18):
+async def stop_collection(rate_limit: int = 20):
     global collection_active, ws_collector, token_manager, volume_tracker
     global rest_loop_task, candle_loop_task
 
@@ -407,7 +407,7 @@ async def stop_collection(rate_limit: int = 18):
     fill_result = await CandleFiller.fill_missing_candles_parallel(
         token_manager=token_manager,
         stock_codes=stocks,
-        rate_limit=18,
+        rate_limit=20,
         fill_1m=True,
         fill_5m=True,
         fill_30m=True,
@@ -420,13 +420,25 @@ async def stop_collection(rate_limit: int = 18):
     result = await candle_collector.collect_batch_parallel(
         stock_codes=stocks,
         interval_type='1d',
-        rate_limit=18,
+        rate_limit=20,
         batch_size=100,
         days=1  # 장 마감 시 오늘 하루치만
     )
     retries = result.get('total_retries', 0)
     logger.info(f"일봉 수집: {result['success_count']}성공, {result['fail_count']}실패, {retries}재시도, {result['elapsed_time']:.1f}초")
     candle_collector.close()
+
+    # 오래된 데이터 정리
+    from utils.db import cleanup_old_data
+    cleanup_conn = pymysql.connect(**DB_CONFIG)
+    cleanup_result = cleanup_old_data(cleanup_conn)
+    cleanup_conn.close()
+    logger.info(f"=== 데이터 정리 완료 ===")
+    logger.info(f"  - stock_prices: {cleanup_result['stock_prices']}건 삭제")
+    for interval in ['1m', '5m', '30m', '1d', '1w']:
+        count = cleanup_result.get(interval, 0)
+        if count > 0:
+            logger.info(f"  - {interval} 캔들: {count}건 삭제")
 
     total_elapsed = time.time() - start_time
     logger.info(f"장 마감 처리 완료: {total_elapsed:.1f}초")
@@ -458,7 +470,7 @@ async def weekly_update():
     result = await candle_collector.collect_batch_parallel(
         stock_codes=stocks,
         interval_type='1w',
-        rate_limit=18,
+        rate_limit=20,
         batch_size=100,
         days=7  # 주봉 업데이트 시 이번 주 하나만
     )
@@ -470,7 +482,7 @@ async def weekly_update():
     logger.info(f"주봉 업데이트 완료: {result['success_count']}성공, {result['fail_count']}실패, {retries}재시도, {elapsed:.1f}초")
 
 #재무 데이터 업데이트
-async def update_financials(rate_limit: int = 18, batch_size: int = 100):
+async def update_financials(rate_limit: int = 20, batch_size: int = 100):
     from utils.rate_limiter import HardRateLimiter, BatchRetryStats
 
     start_time = time.time()
@@ -509,7 +521,7 @@ async def update_financials(rate_limit: int = 18, batch_size: int = 100):
             return stock_code, data, retry_count
 
         try:
-            connector = aiohttp.TCPConnector(limit=18)
+            connector = aiohttp.TCPConnector(limit=20)
             timeout = aiohttp.ClientTimeout(total=600)
             session = aiohttp.ClientSession(connector=connector, timeout=timeout)
 

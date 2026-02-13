@@ -181,7 +181,7 @@ class StockParser:
 
         token_manager = TokenManager.get_instance()
         api_client = KISApiClient(token_manager)
-        limiter = HardRateLimiter(18)
+        limiter = HardRateLimiter(20)
 
         cursor.execute("SELECT sector_code FROM sector WHERE sector_level = 'SMALL'")
         db_sector_codes = set(row[0] for row in cursor.fetchall())
@@ -203,7 +203,7 @@ class StockParser:
             )
             return stock_code, result, retry_count
 
-        connector = aiohttp.TCPConnector(limit=18)
+        connector = aiohttp.TCPConnector(limit=20)
         timeout = aiohttp.ClientTimeout(total=600)
         session = aiohttp.ClientSession(connector=connector, timeout=timeout)
 
