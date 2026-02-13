@@ -5,9 +5,9 @@
 *20~30대 초보 투자자를 위한 실전형 주식 교육 서비스*
 
 ![랜딩페이지1](./src/img/landing_page_01.png)
-![랜딩페이지2](C:\Users\SSAFY\Desktop\src\img\landing_page_02.gif)![](C:\Users\SSAFY\Desktop\src\img\landing_page_03.png)
+![랜딩페이지2](./src/img/landing_page_02.gif)![](./src/img/landing_page_03.png)
 
-![랜딩페이지4](C:\Users\SSAFY\Desktop\src\img\landing_page_04.png)
+![랜딩페이지4](./src/img/landing_page_04.png)
 
 [🌐 데모 보기](https://amagetdon.site) |[🪧 Jira 보드](https://ssafy.atlassian.net/jira/software/c/projects/S14P11A207/boards/11751?useStoredSettings=true) | [🐛 이슈 리포트](https://lab.ssafy.com/s14-webmobile1-sub1/S14P11A207)
 
@@ -67,17 +67,17 @@ AmaGetDon은 **투자와 학습을 완벽하게 결합**한 플랫폼으로, 사
 
 - **초기 설문 조사**: 5개 문항으로 투자 성향 분류
 
-![초기 투자 성향 진단](C:\Users\SSAFY\Desktop\src\img\investment_type_01.png)
+![초기 투자 성향 진단](./src/img/investment_type_01.png)
 
 - **AI 기반 재분석**: 5개 이상 업적 달성 시 실제 행동 패턴으로 재진단
 
-![투자 성향 재 분석](C:\Users\SSAFY\Desktop\src\img\achievements_invenstment_type.gif)
+![투자 성향 재 분석](./src/img/achievements_invenstment_type.gif)
 
 - **3가지 성향**: 공격형(AGGRESSIVE), 중립형(NEUTRAL), 안정형(STABLE)
 
 ### 2. 📚 맞춤형 학습 커리큘럼
 
-![맞춤형 학습](C:\Users\SSAFY\Desktop\src\img\learning_chapters_02.gif)
+![맞춤형 학습](./src/img/learning_chapters_02.gif)
 
 - **26개 챕터**: 기본 커리큘럼 + 성향별 맞춤 커리큘럼
 - **순차적 언락**: 이전 챕터 60% 이상 정답 시 다음 챕터 오픈
@@ -86,7 +86,7 @@ AmaGetDon은 **투자와 학습을 완벽하게 결합**한 플랫폼으로, 사
 
 ### 3. 🎯 무한 랜덤 퀴즈 (오늘의 학습)
 
-![](C:\Users\SSAFY\Desktop\src\img\infinite_quiz.gif)
+![](./src/img/infinite_quiz.gif)
 
 - **매일 새로운 퀴즈**: 980개 퀴즈 풀 + AI 자동 생성
 - **유연한 학습량**: 최소 1문제 ~ 최대 100문제
@@ -95,7 +95,7 @@ AmaGetDon은 **투자와 학습을 완벽하게 결합**한 플랫폼으로, 사
 
 ### 4. 📝 오답노트 & 복습 시스템
 
-<img title="" src="file:///C:/Users/SSAFY/Desktop/src/img/review_note_01.gif" alt="" width="600">
+<img title="" src="./src/img/review_note_01.gif" alt="" width="600">
 
 - **자동 저장**: 틀린 문제 자동 수집
 - **챕터별 그룹화**: 취약 영역 한눈에 파악
@@ -104,7 +104,7 @@ AmaGetDon은 **투자와 학습을 완벽하게 결합**한 플랫폼으로, 사
 
 ### 5. 💰 실전 모의투자
 
-<img title="" src="file:///C:/Users/SSAFY/Desktop/src/img/realtime_stock.gif" alt="" width="600">
+<img title="" src="./src/img/realtime_stock.gif" alt="" width="600">
 
 - **실시간 시세**: 한국투자증권 API 연동
 - **초기 자금**: 300만원
@@ -123,7 +123,7 @@ AmaGetDon은 **투자와 학습을 완벽하게 결합**한 플랫폼으로, 사
 
 ### 6. 🏆 업적 시스템
 
-<img title="" src="file:///C:/Users/SSAFY/Desktop/src/img/achievements_01.gif" alt="" width="600">
+<img title="" src="./src/img/achievements_01.gif" alt="" width="600">
 
 **18개 업적**으로 성장 과정을 기록:
 
@@ -149,7 +149,7 @@ AmaGetDon은 **투자와 학습을 완벽하게 결합**한 플랫폼으로, 사
 
 ### 7. 👥 스터디룸 (커뮤니티)
 
-<img title="" src="file:///C:/Users/SSAFY/Desktop/src/img/community_chat.gif" alt="" width="600">
+<img title="" src="./src/img/community_chat.gif" alt="" width="600">
 
 - **화상 채팅**: OpenVidu 기반 실시간 영상 통화
 - **텍스트 채팅**: Redis 기반 실시간 메시지
@@ -159,7 +159,7 @@ AmaGetDon은 **투자와 학습을 완벽하게 결합**한 플랫폼으로, 사
 
 ### 8. 📊 랭킹 시스템
 
-<img title="" src="file:///C:/Users/SSAFY/Desktop/src/img/ranking_01.gif" alt="" width="600">
+<img title="" src="./src/img/ranking_01.gif" alt="" width="600">
 
 **학습 랭킹**
 
@@ -184,11 +184,11 @@ AmaGetDon은 **투자와 학습을 완벽하게 결합**한 플랫폼으로, 사
 
 | 기술                                                                                               | 버전     | 용도              |
 | ------------------------------------------------------------------------------------------------ | ------ | --------------- |
-| <img src="file:///C:/Users/SSAFY/Desktop/src/img/Spring.png" title="" alt="" width="70">         | 3.x    | 메인 백엔드 프레임워크    |
-| <img src="file:///C:/Users/SSAFY/Desktop/src/img/Java.png" title="" alt="Java" width="72">       | 17+    | 백엔드 언어          |
-| <img src="file:///C:/Users/SSAFY/Desktop/src/img/MySQL.png" title="" alt="MySQL" width="65">     | 8.0+   | 주 데이터베이스        |
-| <img src="file:///C:/Users/SSAFY/Desktop/src/img/Redis.png" title="" alt="Redis" width="72">     | 7.0+   | 캐싱, 세션, 랭킹, 채팅  |
-| <img src="file:///C:/Users/SSAFY/Desktop/src/img/FastAPI.png" title="" alt="FastAPI" width="80"> | 0.100+ | AI 퀴즈 생성, 성향 분석 |
+| <img src="./src/img/Spring.png" title="" alt="" width="70">         | 3.x    | 메인 백엔드 프레임워크    |
+| <img src="./src/img/Java.png" title="" alt="Java" width="72">       | 17+    | 백엔드 언어          |
+| <img src="./src/img/MySQL.png" title="" alt="MySQL" width="65">     | 8.0+   | 주 데이터베이스        |
+| <img src="./src/img/Redis.png" title="" alt="Redis" width="72">     | 7.0+   | 캐싱, 세션, 랭킹, 채팅  |
+| <img src="./src/img/FastAPI.png" title="" alt="FastAPI" width="80"> | 0.100+ | AI 퀴즈 생성, 성향 분석 |
 
 **선택 이유:**
 
@@ -200,8 +200,8 @@ AmaGetDon은 **투자와 학습을 완벽하게 결합**한 플랫폼으로, 사
 
 | 기술                                                                                            | 버전   | 용도       |
 | --------------------------------------------------------------------------------------------- | ---- | -------- |
-| <img src="file:///C:/Users/SSAFY/Desktop/src/img/React.png" title="" alt="React" width="102"> | 18.x | UI 프레임워크 |
-| <img src="file:///C:/Users/SSAFY/Desktop/src/img/TypeScript.png" title="" alt="" width="109"> | ES6+ | 프론트엔드 언어 |
+| <img src="./src/img/React.png" title="" alt="React" width="102"> | 18.x | UI 프레임워크 |
+| <img src="./src/img/TypeScript.png" title="" alt="" width="109"> | ES6+ | 프론트엔드 언어 |
 
 **선택 이유:**
 
@@ -211,8 +211,8 @@ AmaGetDon은 **투자와 학습을 완벽하게 결합**한 플랫폼으로, 사
 
 | 기술                                                                                              | 용도      |
 | ----------------------------------------------------------------------------------------------- | ------- |
-| <img src="file:///C:/Users/SSAFY/Desktop/src/img/Docker.png" title="" alt="Docker" width="118"> | 컨테이너화   |
-| <img src="file:///C:/Users/SSAFY/Desktop/src/img/AWS.png" title="" alt="AWS" width="91">        | 클라우드 배포 |
+| <img src="./src/img/Docker.png" title="" alt="Docker" width="118"> | 컨테이너화   |
+| <img src="./src/img/AWS.png" title="" alt="AWS" width="91">        | 클라우드 배포 |
 
 ### External API & Services
 
@@ -940,7 +940,7 @@ amagetdon/
 
 ### 1. 랜딩 페이지
 
-![](C:\Users\SSAFY\Desktop\src\img\landing_page_05.gif)
+![](./src/img/landing_page_05.gif)
 
 - 서비스 소개
 - 주요 기능 안내
@@ -948,7 +948,7 @@ amagetdon/
 
 ### 2. 메인 대시보드
 
-<img title="" src="file:///C:/Users/SSAFY/Desktop/src/img/dash_board_01.gif" alt="" width="800">
+<img title="" src="./src/img/dash_board_01.gif" alt="" width="800">
 
 - 오늘의 학습 현황
 - 자산 요약
@@ -957,7 +957,7 @@ amagetdon/
 
 ### 3. 학습 커리큘럼
 
-<img title="" src="file:///C:/Users/SSAFY/Desktop/src/img/learning_curriculum_01.gif" alt="" width="800">
+<img title="" src="./src/img/learning_curriculum_01.gif" alt="" width="800">
 
 - 챕터 진행 상황
 - 로드맵 시각화
@@ -965,7 +965,7 @@ amagetdon/
 
 ### 4. 오늘의 퀴즈
 
-<img title="" src="file:///C:/Users/SSAFY/Desktop/src/img/infinite_quiz.gif" alt="" width="800">
+<img title="" src="./src/img/infinite_quiz.gif" alt="" width="800">
 
 - 랜덤 퀴즈
 - 정답/오답 피드백
@@ -973,7 +973,7 @@ amagetdon/
 
 ### 5. 모의투자
 
-<img title="" src="file:///C:/Users/SSAFY/Desktop/src/img/realtime_stock.gif" alt="" width="800">
+<img title="" src="./src/img/realtime_stock.gif" alt="" width="800">
 
 - 실시간 차트
 - 매수/매도 주문
@@ -981,7 +981,7 @@ amagetdon/
 
 ### 6. 업적 시스템
 
-<img title="" src="file:///C:/Users/SSAFY/Desktop/src/img/achievements_01.gif" alt="" width="800">
+<img title="" src="./src/img/achievements_01.gif" alt="" width="800">
 
 - 업적 목록
 - 달성/미달성 구분
@@ -989,7 +989,7 @@ amagetdon/
 
 ### 7. 스터디룸
 
-<img title="" src="file:///C:/Users/SSAFY/Desktop/src/img/community_chat.gif" alt="" width="800">
+<img title="" src="./src/img/community_chat.gif" alt="" width="800">
 
 - 화상 채팅
 - 텍스트 채팅
@@ -997,7 +997,7 @@ amagetdon/
 
 ### 8. 랭킹
 
-<img title="" src="file:///C:/Users/SSAFY/Desktop/src/img/ranking_01.gif" alt="" width="800">
+<img title="" src="./src/img/ranking_01.gif" alt="" width="800">
 
 - 학습 랭킹
 - 수익 랭킹
