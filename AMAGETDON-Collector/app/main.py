@@ -1,6 +1,5 @@
 import time
 import pymysql
-import threading
 import asyncio
 import aiohttp
 from datetime import datetime, timedelta
@@ -12,7 +11,6 @@ from collector.websocket_collector import WebSocketCollector
 from collector.candle_filler import CandleFiller
 from collector.candle_collector import CandleCollector
 from config.config import DB_CONFIG
-from core.stock_manager import StockManager
 from core.token_manager import TokenManager
 from utils.logger import logger
 from utils.market_hours import is_market_open
@@ -32,10 +30,6 @@ shared_limiter = None
 
 # 특정 interval의 캔들 데이터가 오늘 기준으로 충분히 존재하는지 확인
 def _has_candle_data_for_period(cursor, interval_type: str, total_stocks: int, min_stock_ratio: float = 0.8) -> bool:
-    """
-    오늘 날짜 기준으로 해당 interval_type의 캔들 데이터가 충분히 있는지 확인
-    - RETENTION_DAYS 기간 내 데이터가 있는 종목 비율로 판단
-    """
     retention_days = {
         '30m': 7,
         '1d': 90,
@@ -45,7 +39,6 @@ def _has_candle_data_for_period(cursor, interval_type: str, total_stocks: int, m
     days = retention_days.get(interval_type, 7)
     start_date = (datetime.now() - timedelta(days=days)).date()
 
-    # 해당 기간 내 캔들이 있는 종목 수
     cursor.execute("""
         SELECT COUNT(DISTINCT stock_code)
         FROM chart_candles
@@ -95,7 +88,6 @@ async def check_and_initialize(rate_limit: int = 20):
 
         logger.info("과거 캔들 데이터 확인 중...")
 
-        # 각 interval별로 DB에 충분한 데이터가 있는지 확인
         total_stocks = len(stocks)
         intervals_to_collect = []
         for interval in ['30m', '1d', '1w']:
@@ -148,7 +140,7 @@ async def check_and_initialize(rate_limit: int = 20):
 
 #REST 수집(5초마다) + 새 유저 종목 분봉 보정 + 분봉 생성
 async def run_rest_collection_loop():
-    from utils.rate_limiter import HardRateLimiter, BatchRetryStats
+    from utils.rate_limiter import BatchRetryStats
     from utils.db import get_db_connection, save_stock_price
     from config.config import REDIS_KEYS
 
@@ -156,7 +148,6 @@ async def run_rest_collection_loop():
 
     api_client = KISApiClient(token_manager)
     
-    # 공유 limiter 사용 (전역 shared_limiter)
     limiter = shared_limiter
     
     rest_candle_builder = RealtimeCandleBuilder()
@@ -207,7 +198,6 @@ async def run_rest_collection_loop():
                             conn.close()
                             batch_stats.record_success(retry_count)
 
-                            # 분봉 생성을 위해 틱 데이터 추가
                             rest_candle_builder.on_tick(stock_code, {
                                 'time': now,
                                 'price': dto.current_price,
@@ -231,7 +221,6 @@ async def run_rest_collection_loop():
             logger.error(f"REST 수집 루프 오류: {e}")
             await asyncio.sleep(5)
 
-    # 종료 시 남은 틱 데이터로 캔들 생성
     if rest_candle_builder:
         rest_candle_builder.close()
     await session.close()
@@ -255,7 +244,6 @@ async def run_volume_rank_loop():
                 ws_collector.subscribe_stocks(top_stocks)
                 logger.info(f"거래량 TOP 구독 갱신: {len(top_stocks)}개")
 
-                # 새로 추가된 웹소켓 종목만 누락 보정
                 top_stocks_set = set(top_stocks)
                 new_ws_stocks = list(top_stocks_set - prev_top_stocks)
                 if new_ws_stocks:
@@ -331,20 +319,16 @@ async def start_collection():
 
     token_manager = TokenManager.get_instance()
 
-    # 웹소켓 Approval Key 강제 재발급 (서버 시작 시 새 연결을 위해)
     token_manager.redis_client.delete(token_manager.ws_approval_key)
     logger.info("기존 Approval Key 삭제 - 새로 발급 예정")
 
-    # 공유 rate limiter 생성 (1초에 18건, 여유있게)
     shared_limiter = HardRateLimiter(20)
 
-    # volume_tracker에 공유 limiter 전달
     volume_tracker = VolumeTracker(token_manager, shared_limiter=shared_limiter)
 
     ws_collector = WebSocketCollector(token_manager)
     ws_collector.connect()
     
-    # 초기 종목조건검색 조회
     top_10_stocks = await volume_tracker.get_top_volume_stocks()
     if top_10_stocks:
         ws_collector.subscribe_stocks(top_10_stocks)
@@ -422,13 +406,12 @@ async def stop_collection(rate_limit: int = 20):
         interval_type='1d',
         rate_limit=20,
         batch_size=100,
-        days=1  # 장 마감 시 오늘 하루치만
+        days=1  
     )
     retries = result.get('total_retries', 0)
     logger.info(f"일봉 수집: {result['success_count']}성공, {result['fail_count']}실패, {retries}재시도, {result['elapsed_time']:.1f}초")
     candle_collector.close()
 
-    # 오래된 데이터 정리
     from utils.db import cleanup_old_data
     cleanup_conn = pymysql.connect(**DB_CONFIG)
     cleanup_result = cleanup_old_data(cleanup_conn)
@@ -472,7 +455,7 @@ async def weekly_update():
         interval_type='1w',
         rate_limit=20,
         batch_size=100,
-        days=7  # 주봉 업데이트 시 이번 주 하나만
+        days=7 
     )
     candle_collector.close()
     tm.close()

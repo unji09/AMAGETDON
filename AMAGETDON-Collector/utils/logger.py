@@ -3,7 +3,6 @@ import logging
 def setup_logger():
     logger = logging.getLogger("amagetdon")
 
-    # 이미 핸들러가 있으면 중복 추가 방지
     if logger.handlers:
         return logger
 
@@ -18,7 +17,6 @@ def setup_logger():
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
-    # 상위 로거로 전파 방지
     logger.propagate = False
 
     return logger

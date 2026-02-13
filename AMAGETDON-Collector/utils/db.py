@@ -82,14 +82,13 @@ def save_candles(conn, candles: List[CandleDTO]):
     cursor.executemany(query, data)
     conn.commit()
 
+#거래 정지 종목 삭제
 def delete_stock(conn, stock_code: str):
-    """거래 정지 종목 삭제"""
     cursor = conn.cursor()
     cursor.execute("DELETE FROM stock WHERE stock_code = %s", (stock_code,))
     conn.commit()
 
 def delete_stocks(conn, stock_codes: List[str]):
-    """거래 정지 종목 일괄 삭제"""
     if not stock_codes:
         return
     cursor = conn.cursor()
@@ -97,15 +96,13 @@ def delete_stocks(conn, stock_codes: List[str]):
     cursor.execute(f"DELETE FROM stock WHERE stock_code IN ({placeholders})", stock_codes)
     conn.commit()
 
+# stock_prices 전체 삭제 + 캔들 보관 기간 초과분 삭제
 def cleanup_old_data(conn) -> dict:
-    """장 마감 후 오래된 데이터 정리: stock_prices 전체 삭제 + 캔들 보관 기간 초과분 삭제"""
     cursor = conn.cursor()
 
-    # stock_prices 전체 삭제
     cursor.execute("DELETE FROM stock_prices")
     result = {'stock_prices': cursor.rowcount}
 
-    # 캔들 보관 기간별 삭제 (1m은 1일, 5m은 1일, 30m은 7일, 1d는 90일, 1w는 365일)
     retention = {'1m': 1, '5m': 1, '30m': 7, '1d': 90, '1w': 365}
     for interval_type, days in retention.items():
         cutoff = datetime.now() - timedelta(days=days)
@@ -118,8 +115,8 @@ def cleanup_old_data(conn) -> dict:
     conn.commit()
     return result
 
+# 해당 종목의 가장 최근 캔들 조회
 def get_latest_candle(conn, stock_code: str, interval_type: str) -> Optional[dict]:
-    """해당 종목의 가장 최근 캔들 조회"""
     cursor = conn.cursor()
     query = """
     SELECT candle_time, open_price, high_price, low_price, close_price, volume

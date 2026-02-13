@@ -142,7 +142,6 @@ class CandleFiller:
                 )
                 candles_to_save.append(candle_5m)
             else:
-                # 1분봉이 없으면 가장 최근 5분봉 복사
                 latest = get_latest_candle(self.conn, stock_code, '5m')
                 if latest:
                     candle_5m = CandleDTO(
@@ -197,7 +196,6 @@ class CandleFiller:
                 )
                 candles_to_save.append(candle_30m)
             else:
-                # 5분봉이 없으면 가장 최근 30분봉 복사
                 latest = get_latest_candle(self.conn, stock_code, '30m')
                 if latest:
                     candle_30m = CandleDTO(
@@ -258,11 +256,9 @@ class CandleFiller:
         expected_5m = []
         start = datetime(target_date.year, target_date.month, target_date.day, 9, 0)
 
-        # 오늘이면 현재 시간까지만, 과거면 15:25까지
         if target_date == today:
             if now.hour < 9:
-                return []  # 장 시작 전
-            # 현재 시간 기준 마지막 완료된 5분봉 슬롯
+                return []
             end = now.replace(second=0, microsecond=0)
         else:
             end = datetime(target_date.year, target_date.month, target_date.day, 15, 25)
@@ -296,11 +292,9 @@ class CandleFiller:
         expected_30m = []
         start = datetime(target_date.year, target_date.month, target_date.day, 9, 0)
 
-        # 오늘이면 현재 시간까지만, 과거면 15:00까지
         if target_date == today:
             if now.hour < 9:
-                return []  # 장 시작 전
-            # 현재 시간 기준 마지막 완료된 30분봉 슬롯
+                return [] 
             end = now.replace(second=0, microsecond=0)
         else:
             end = datetime(target_date.year, target_date.month, target_date.day, 15, 0)
