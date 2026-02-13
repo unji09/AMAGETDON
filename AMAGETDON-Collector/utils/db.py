@@ -97,6 +97,29 @@ def delete_stocks(conn, stock_codes: List[str]):
     cursor.execute(f"DELETE FROM stock WHERE stock_code IN ({placeholders})", stock_codes)
     conn.commit()
 
+def build_fallback_candle(conn, stock_code: str, interval_type: str, candle_time: datetime) -> Optional[CandleDTO]:
+    """데이터 없을 때 가장 최근 캔들의 종가로 대체 캔들 생성 (저장하지 않음)"""
+    latest = get_latest_candle(conn, stock_code, interval_type)
+    if latest:
+        return CandleDTO(
+            stock_code=stock_code,
+            interval_type=interval_type,
+            candle_time=candle_time,
+            open_price=latest['close_price'],
+            high_price=latest['close_price'],
+            low_price=latest['close_price'],
+            close_price=latest['close_price'],
+            volume=0
+        )
+    return None
+
+def create_fallback_candle(conn, stock_code: str, interval_type: str, candle_time: datetime) -> Optional[CandleDTO]:
+    """데이터 없을 때 가장 최근 캔들의 종가로 대체 캔들 생성 및 저장"""
+    candle = build_fallback_candle(conn, stock_code, interval_type, candle_time)
+    if candle:
+        save_candles(conn, [candle])
+    return candle
+
 def get_latest_candle(conn, stock_code: str, interval_type: str) -> Optional[dict]:
     """해당 종목의 가장 최근 캔들 조회"""
     cursor = conn.cursor()
