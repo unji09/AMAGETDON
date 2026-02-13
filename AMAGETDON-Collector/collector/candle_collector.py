@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from core.token_manager import TokenManager
 from models.dto import CandleDTO, StockDTO
 from utils.logger import logger
-from utils.db import get_db_connection, save_stock_price, save_candles, get_latest_candle
+from utils.db import get_db_connection, save_stock_price, save_candles, create_fallback_candle
 from utils.kis_api_client import KISApiClient
 from utils.rate_limiter import HardRateLimiter, BatchRetryStats
 
@@ -48,49 +48,6 @@ class CandleCollector:
 
     def connect_db(self):
         self.conn = get_db_connection(self.conn)
-
-    # [미사용] 비동기 수집/업데이트 - collect_batch_parallel 사용
-    # async def collect_or_update_async(self, stock_code: str, interval_type: str):
-    #     try:
-    #         last_time = self._get_last_candle_time(stock_code, interval_type)
-    #
-    #         if last_time is None:
-    #             days = self.RETENTION_DAYS[interval_type]
-    #             logger.info(f"{stock_code} {interval_type} 초기 수집: {days}일")
-    #             await self._collect_candles_async(stock_code, interval_type, days)
-    #         else:
-    #             now = datetime.now()
-    #             days_diff = (now - last_time).days + 1
-    #             days_diff = max(days_diff, 1)
-    #
-    #             logger.info(f"{stock_code} {interval_type} 업데이트 수집: {days_diff}일")
-    #             await self._collect_candles_async(stock_code, interval_type, days_diff)
-    #
-    #     except Exception as e:
-    #         logger.error(f"{stock_code} {interval_type} 수집 실패: {e}")
-
-    # [미사용] _collect_candles_async - collect_batch_parallel 사용
-    # async def _collect_candles_async(self, stock_code: str, interval_type: str, days: int):
-    #     try:
-    #         if interval_type in ['5m', '30m']:
-    #             candles = await self._collect_minute_based_candles(stock_code, interval_type, days)
-    #         elif interval_type == '1d':
-    #             candles = await self._collect_daily_candles(stock_code, days)
-    #         elif interval_type == '1w':
-    #             candles = await self._collect_weekly_candles(stock_code, days)
-    #         else:
-    #             logger.error(f"지원하지 않는 interval_type: {interval_type}")
-    #             return
-    #
-    #         if candles:
-    #             self.connect_db()
-    #             save_candles(self.conn, candles)
-    #             logger.info(f"{stock_code} {interval_type} 캔들 {len(candles)}개 저장")
-    #         else:
-    #             logger.warning(f"{stock_code} {interval_type} 캔들 데이터 없음")
-    #
-    #     except Exception as e:
-    #         logger.error(f"{stock_code} {interval_type} 수집 실패: {e}")
 
     #해당 종목의 마지막 시간 조회
     def _get_last_candle_time(self, stock_code: str, interval_type: str) -> Optional[datetime]:
@@ -222,61 +179,18 @@ class CandleCollector:
             logger.error(f"캔들 집계 실패: {e}")
             return None
 
-    # [미사용] 일봉 수집 - _collect_and_save_daily_candles_direct 사용
-    # async def _collect_daily_candles(self, stock_code: str, days: int) -> List[CandleDTO]:
-    #     start_date = (datetime.now() - timedelta(days=days)).strftime('%Y%m%d')
-    #     end_date = datetime.now().strftime('%Y%m%d')
-    #
-    #     async with aiohttp.ClientSession() as session:
-    #         candles_list = await self.api_client.fetch_daily_candles_async(
-    #             session=session,
-    #             stock_code=stock_code,
-    #             start_date=start_date,
-    #             end_date=end_date,
-    #             period_code='D'
-    #         )
-    #
-    #     return [
-    #         CandleDTO(
-    #             stock_code=stock_code,
-    #             interval_type='1d',
-    #             candle_time=c['date'],
-    #             open_price=c['open'],
-    #             high_price=c['high'],
-    #             low_price=c['low'],
-    #             close_price=c['close'],
-    #             volume=c['volume']
-    #         )
-    #         for c in candles_list
-    #     ]
-
-    # [미사용] 주봉 수집 - _collect_and_save_weekly_candles_direct 사용
-    # async def _collect_weekly_candles(self, stock_code: str, days: int) -> List[CandleDTO]:
-    #     start_date = (datetime.now() - timedelta(days=days)).strftime('%Y%m%d')
-    #     end_date = datetime.now().strftime('%Y%m%d')
-    #
-    #     async with aiohttp.ClientSession() as session:
-    #         candles_list = await self.api_client.fetch_daily_candles_async(
-    #             session=session,
-    #             stock_code=stock_code,
-    #             start_date=start_date,
-    #             end_date=end_date,
-    #             period_code='W'  # 주봉
-    #         )
-    #
-    #     return [
-    #         CandleDTO(
-    #             stock_code=stock_code,
-    #             interval_type='1w',
-    #             candle_time=c['date'],
-    #             open_price=c['open'],
-    #             high_price=c['high'],
-    #             low_price=c['low'],
-    #             close_price=c['close'],
-    #             volume=c['volume']
-    #         )
-    #         for c in candles_list
-    #     ]
+    async def _fallback_or_fail(self, db_lock, stock_code, interval_type, candle_time, reason):
+        """데이터 없을 때 최근 캔들로 대체하거나 실패 반환"""
+        async with db_lock:
+            db_conn = get_db_connection(None)
+            fallback = create_fallback_candle(db_conn, stock_code, interval_type, candle_time)
+            db_conn.close()
+        name = self._get_stock_name(stock_code)
+        if fallback:
+            logger.info(f"{stock_code}({name}) {interval_type}: {reason} - 최근 캔들로 대체")
+            return {'success': 1, 'fail': 0, 'candles': 1, 'retries': 0}
+        logger.warning(f"{stock_code}({name}) {interval_type}: {reason}")
+        return {'success': 0, 'fail': 1, 'candles': 0, 'retries': 0}
 
     def close(self):
         if self.conn:
@@ -303,7 +217,7 @@ class CandleCollector:
 
         total_batches = (len(stock_codes) + batch_size - 1) // batch_size
 
-        connector = aiohttp.TCPConnector(limit=18)
+        connector = aiohttp.TCPConnector(limit=20)
         timeout = aiohttp.ClientTimeout(total=600)
         session = aiohttp.ClientSession(connector=connector, timeout=timeout)
 
@@ -394,38 +308,15 @@ class CandleCollector:
                 target_date = (datetime.now() - timedelta(days=i)).date()
                 date_str = target_date.strftime('%Y%m%d')
 
-                result = await self.api_client.fetch_minute_candles_direct(
+                result = await self.api_client.fetch_minute_candles(
                     session, stock_code, date_str, limiter
                 )
                 if result:
                     all_candles.update(result)
 
             if not all_candles:
-                # 분봉 데이터 없으면 가장 최근 캔들 복사
-                async with db_lock:
-                    db_conn = get_db_connection(None)
-                    latest = get_latest_candle(db_conn, stock_code, interval_type)
-                    if latest:
-                        today = datetime.now().replace(hour=9, minute=0, second=0, microsecond=0)
-                        candle = CandleDTO(
-                            stock_code=stock_code,
-                            interval_type=interval_type,
-                            candle_time=today,
-                            open_price=latest['close_price'],
-                            high_price=latest['close_price'],
-                            low_price=latest['close_price'],
-                            close_price=latest['close_price'],
-                            volume=0
-                        )
-                        save_candles(db_conn, [candle])
-                        db_conn.close()
-                        name = self._get_stock_name(stock_code)
-                        logger.info(f"{stock_code}({name}) {interval_type}: 분봉 없음 - 최근 캔들로 대체")
-                        return {'success': 1, 'fail': 0, 'candles': 1, 'retries': 0}
-                    db_conn.close()
-                name = self._get_stock_name(stock_code)
-                logger.warning(f"{stock_code}({name}) {interval_type}: 분봉 데이터 없음")
-                return {'success': 0, 'fail': 1, 'candles': 0, 'retries': 0}
+                today = datetime.now().replace(hour=9, minute=0, second=0, microsecond=0)
+                return await self._fallback_or_fail(db_lock, stock_code, interval_type, today, "분봉 데이터 없음")
 
             aggregated = self._aggregate_candles(stock_code, interval_type, all_candles, minute_unit)
 
@@ -437,31 +328,8 @@ class CandleCollector:
 
                 return {'success': 1, 'fail': 0, 'candles': len(aggregated), 'retries': 0}
             else:
-                # 집계된 캔들이 없으면 가장 최근 캔들 복사
-                async with db_lock:
-                    db_conn = get_db_connection(None)
-                    latest = get_latest_candle(db_conn, stock_code, interval_type)
-                    if latest:
-                        today = datetime.now().replace(hour=9, minute=0, second=0, microsecond=0)
-                        candle = CandleDTO(
-                            stock_code=stock_code,
-                            interval_type=interval_type,
-                            candle_time=today,
-                            open_price=latest['close_price'],
-                            high_price=latest['close_price'],
-                            low_price=latest['close_price'],
-                            close_price=latest['close_price'],
-                            volume=0
-                        )
-                        save_candles(db_conn, [candle])
-                        db_conn.close()
-                        name = self._get_stock_name(stock_code)
-                        logger.info(f"{stock_code}({name}) {interval_type}: 집계 없음 - 최근 캔들로 대체")
-                        return {'success': 1, 'fail': 0, 'candles': 1, 'retries': 0}
-                    db_conn.close()
-                name = self._get_stock_name(stock_code)
-                logger.warning(f"{stock_code}({name}) {interval_type}: 집계된 캔들 없음")
-                return {'success': 0, 'fail': 1, 'candles': 0, 'retries': 0}
+                today = datetime.now().replace(hour=9, minute=0, second=0, microsecond=0)
+                return await self._fallback_or_fail(db_lock, stock_code, interval_type, today, "집계된 캔들 없음")
 
         except Exception as e:
             name = self._get_stock_name(stock_code)
@@ -483,7 +351,7 @@ class CandleCollector:
             start_date = (datetime.now() - timedelta(days=days)).strftime('%Y%m%d')
             end_date = datetime.now().strftime('%Y%m%d')
 
-            candles_list = await self.api_client.fetch_daily_candles_direct(
+            candles_list = await self.api_client.fetch_daily_candles(
                 session, stock_code, start_date, end_date, 'D', limiter
             )
 
@@ -536,31 +404,8 @@ class CandleCollector:
 
                 return {'success': 1, 'fail': 0, 'candles': len(candles), 'retries': 0}
             else:
-                # 일봉 데이터 없으면 가장 최근 일봉 복사
-                async with db_lock:
-                    db_conn = get_db_connection(None)
-                    latest = get_latest_candle(db_conn, stock_code, '1d')
-                    if latest:
-                        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-                        candle = CandleDTO(
-                            stock_code=stock_code,
-                            interval_type='1d',
-                            candle_time=today,
-                            open_price=latest['close_price'],
-                            high_price=latest['close_price'],
-                            low_price=latest['close_price'],
-                            close_price=latest['close_price'],
-                            volume=0
-                        )
-                        save_candles(db_conn, [candle])
-                        db_conn.close()
-                        name = self._get_stock_name(stock_code)
-                        logger.info(f"{stock_code}({name}) 1d: 최근 캔들로 대체")
-                        return {'success': 1, 'fail': 0, 'candles': 1, 'retries': 0}
-                    db_conn.close()
-                name = self._get_stock_name(stock_code)
-                logger.warning(f"{stock_code}({name}) 1d: 일봉 데이터 없음")
-                return {'success': 0, 'fail': 1, 'candles': 0, 'retries': 0}
+                today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+                return await self._fallback_or_fail(db_lock, stock_code, '1d', today, "일봉 데이터 없음")
 
         except Exception as e:
             name = self._get_stock_name(stock_code)
@@ -582,7 +427,7 @@ class CandleCollector:
             start_date = (datetime.now() - timedelta(days=days)).strftime('%Y%m%d')
             end_date = datetime.now().strftime('%Y%m%d')
 
-            candles_list = await self.api_client.fetch_daily_candles_direct(
+            candles_list = await self.api_client.fetch_daily_candles(
                 session, stock_code, start_date, end_date, 'W', limiter
             )
 
@@ -608,31 +453,8 @@ class CandleCollector:
 
                 return {'success': 1, 'fail': 0, 'candles': len(candles), 'retries': 0}
             else:
-                # 주봉 데이터 없으면 가장 최근 주봉 복사
-                async with db_lock:
-                    db_conn = get_db_connection(None)
-                    latest = get_latest_candle(db_conn, stock_code, '1w')
-                    if latest:
-                        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-                        candle = CandleDTO(
-                            stock_code=stock_code,
-                            interval_type='1w',
-                            candle_time=today,
-                            open_price=latest['close_price'],
-                            high_price=latest['close_price'],
-                            low_price=latest['close_price'],
-                            close_price=latest['close_price'],
-                            volume=0
-                        )
-                        save_candles(db_conn, [candle])
-                        db_conn.close()
-                        name = self._get_stock_name(stock_code)
-                        logger.info(f"{stock_code}({name}) 1w: 최근 캔들로 대체")
-                        return {'success': 1, 'fail': 0, 'candles': 1, 'retries': 0}
-                    db_conn.close()
-                name = self._get_stock_name(stock_code)
-                logger.warning(f"{stock_code}({name}) 1w: 주봉 데이터 없음")
-                return {'success': 0, 'fail': 1, 'candles': 0, 'retries': 0}
+                today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+                return await self._fallback_or_fail(db_lock, stock_code, '1w', today, "주봉 데이터 없음")
 
         except Exception as e:
             name = self._get_stock_name(stock_code)

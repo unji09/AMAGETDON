@@ -6,7 +6,7 @@ from typing import List, Optional, Dict
 from core.token_manager import TokenManager
 from models.dto import CandleDTO
 from utils.logger import logger
-from utils.db import get_db_connection, save_candles, get_latest_candle
+from utils.db import get_db_connection, save_candles, build_fallback_candle
 from utils.kis_api_client import KISApiClient
 from utils.rate_limiter import HardRateLimiter, BatchRetryStats
 
@@ -73,14 +73,15 @@ class CandleFiller:
         if start_time >= end_time:
             return 0
 
-        connector = aiohttp.TCPConnector(limit=18)
+        connector = aiohttp.TCPConnector(limit=20)
         async with aiohttp.ClientSession(connector=connector) as session:
-            candles_dict = await self.api_client.fetch_minute_candles_by_date_async(
+            candles_dict = await self.api_client.fetch_minute_candles(
                 session=session,
                 stock_code=stock_code,
                 target_date=target_date_str,
                 start_time=start_time,
-                end_time=end_time
+                end_time=end_time,
+                page_delay=0.15
             )
 
         if candles_dict:
@@ -111,7 +112,7 @@ class CandleFiller:
     
     #5분봉 누락 보정
     def _fill_5min_candles(self, stock_code: str, target_date: date, target_date_str: str) -> int:
-        missing_5m_slots = self._find_missing_5min_slots(stock_code, target_date)
+        missing_5m_slots = self._find_missing_slots(stock_code, target_date, 5, '5m', 15, 25)
 
         if not missing_5m_slots:
             return 0
@@ -123,8 +124,8 @@ class CandleFiller:
         no_data_count = 0
 
         for slot_time in missing_5m_slots:
-            minute_candles = self._get_1min_candles_for_slot(
-                stock_code, slot_time, minutes=5
+            minute_candles = self._get_candles_for_slot(
+                stock_code, slot_time, minutes=5, interval_type='1m'
             )
 
             if len(minute_candles) >= 1:
@@ -142,20 +143,9 @@ class CandleFiller:
                 )
                 candles_to_save.append(candle_5m)
             else:
-                # 1분봉이 없으면 가장 최근 5분봉 복사
-                latest = get_latest_candle(self.conn, stock_code, '5m')
-                if latest:
-                    candle_5m = CandleDTO(
-                        stock_code=stock_code,
-                        interval_type='5m',
-                        candle_time=slot_time,
-                        open_price=latest['close_price'],
-                        high_price=latest['close_price'],
-                        low_price=latest['close_price'],
-                        close_price=latest['close_price'],
-                        volume=0
-                    )
-                    candles_to_save.append(candle_5m)
+                fallback = build_fallback_candle(self.conn, stock_code, '5m', slot_time)
+                if fallback:
+                    candles_to_save.append(fallback)
                     no_data_count += 1
 
         if no_data_count > 0:
@@ -168,7 +158,7 @@ class CandleFiller:
 
     #30분봉 누락 보정
     def _fill_30min_candles(self, stock_code: str, target_date: date, target_date_str: str) -> int:
-        missing_30m_slots = self._find_missing_30min_slots(stock_code, target_date)
+        missing_30m_slots = self._find_missing_slots(stock_code, target_date, 30, '30m', 15, 0)
 
         if not missing_30m_slots:
             return 0
@@ -180,8 +170,8 @@ class CandleFiller:
         no_data_count = 0
 
         for slot_time in missing_30m_slots:
-            candles_5m = self._get_5min_candles_for_slot(
-                stock_code, slot_time, minutes=30
+            candles_5m = self._get_candles_for_slot(
+                stock_code, slot_time, minutes=30, interval_type='5m'
             )
 
             if len(candles_5m) >= 1:
@@ -197,20 +187,9 @@ class CandleFiller:
                 )
                 candles_to_save.append(candle_30m)
             else:
-                # 5분봉이 없으면 가장 최근 30분봉 복사
-                latest = get_latest_candle(self.conn, stock_code, '30m')
-                if latest:
-                    candle_30m = CandleDTO(
-                        stock_code=stock_code,
-                        interval_type='30m',
-                        candle_time=slot_time,
-                        open_price=latest['close_price'],
-                        high_price=latest['close_price'],
-                        low_price=latest['close_price'],
-                        close_price=latest['close_price'],
-                        volume=0
-                    )
-                    candles_to_save.append(candle_30m)
+                fallback = build_fallback_candle(self.conn, stock_code, '30m', slot_time)
+                if fallback:
+                    candles_to_save.append(fallback)
                     no_data_count += 1
 
         if no_data_count > 0:
@@ -237,8 +216,12 @@ class CandleFiller:
         result = cursor.fetchone()
         return result[0] if result and result[0] else None
     
-    #누락된 5분봉 찾기
-    def _find_missing_5min_slots(self, stock_code: str, target_date: date) -> List[datetime]:
+    #누락된 슬롯 찾기 (5분봉/30분봉 공통)
+    def _find_missing_slots(
+        self, stock_code: str, target_date: date,
+        interval_minutes: int, interval_type: str,
+        end_hour: int, end_minute: int
+    ) -> List[datetime]:
         self.connect_db()
         cursor = self.conn.cursor()
 
@@ -246,146 +229,62 @@ class CandleFiller:
         SELECT candle_time
         FROM chart_candles
         WHERE stock_code = %s
-          AND interval_type = '5m'
+          AND interval_type = %s
           AND DATE(candle_time) = %s
         """
-        cursor.execute(query, (stock_code, target_date))
-        existing_5m = {row[0] for row in cursor.fetchall()}
+        cursor.execute(query, (stock_code, interval_type, target_date))
+        existing = {row[0] for row in cursor.fetchall()}
 
         now = datetime.now()
         today = now.date()
 
-        expected_5m = []
         start = datetime(target_date.year, target_date.month, target_date.day, 9, 0)
 
-        # 오늘이면 현재 시간까지만, 과거면 15:25까지
         if target_date == today:
             if now.hour < 9:
-                return []  # 장 시작 전
-            # 현재 시간 기준 마지막 완료된 5분봉 슬롯
+                return []
             end = now.replace(second=0, microsecond=0)
         else:
-            end = datetime(target_date.year, target_date.month, target_date.day, 15, 25)
+            end = datetime(target_date.year, target_date.month, target_date.day, end_hour, end_minute)
 
+        expected = []
         current = start
         while current <= end:
-            expected_5m.append(current)
-            current += timedelta(minutes=5)
+            expected.append(current)
+            current += timedelta(minutes=interval_minutes)
 
-        missing = [slot for slot in expected_5m if slot not in existing_5m]
-        return missing
+        return [slot for slot in expected if slot not in existing]
     
-    #누락된 30분봉 찾기
-    def _find_missing_30min_slots(self, stock_code: str, target_date: date) -> List[datetime]:
-        self.connect_db()
-        cursor = self.conn.cursor()
-
-        query = """
-        SELECT candle_time
-        FROM chart_candles
-        WHERE stock_code = %s
-          AND interval_type = '30m'
-          AND DATE(candle_time) = %s
-        """
-        cursor.execute(query, (stock_code, target_date))
-        existing_30m = {row[0] for row in cursor.fetchall()}
-
-        now = datetime.now()
-        today = now.date()
-
-        expected_30m = []
-        start = datetime(target_date.year, target_date.month, target_date.day, 9, 0)
-
-        # 오늘이면 현재 시간까지만, 과거면 15:00까지
-        if target_date == today:
-            if now.hour < 9:
-                return []  # 장 시작 전
-            # 현재 시간 기준 마지막 완료된 30분봉 슬롯
-            end = now.replace(second=0, microsecond=0)
-        else:
-            end = datetime(target_date.year, target_date.month, target_date.day, 15, 0)
-
-        current = start
-        while current <= end:
-            expected_30m.append(current)
-            current += timedelta(minutes=30)
-
-        missing = [slot for slot in expected_30m if slot not in existing_30m]
-        return missing
-    
-    #특정 시간의 1분봉 조회
-    def _get_1min_candles_for_slot(
-        self, 
-        stock_code: str, 
-        slot_time: datetime, 
-        minutes: int
+    #특정 시간대의 캔들 조회 (1분봉/5분봉 공통)
+    def _get_candles_for_slot(
+        self,
+        stock_code: str,
+        slot_time: datetime,
+        minutes: int,
+        interval_type: str
     ) -> List[dict]:
         self.connect_db()
         cursor = self.conn.cursor()
-        
+
         end_time = slot_time + timedelta(minutes=minutes-1, seconds=59)
-        
+
         query = """
         SELECT candle_time, open_price, high_price, low_price, close_price, volume
         FROM chart_candles
         WHERE stock_code = %s
-          AND interval_type = '1m'
+          AND interval_type = %s
           AND candle_time >= %s
           AND candle_time <= %s
         ORDER BY candle_time ASC
         """
-        
-        cursor.execute(query, (stock_code, slot_time, end_time))
-        
-        candles = []
-        for row in cursor.fetchall():
-            candles.append({
-                'time': row[0],
-                'open': row[1],
-                'high': row[2],
-                'low': row[3],
-                'close': row[4],
-                'volume': row[5]
-            })
-        
-        return candles
-    
-    #특정 시간의 5분봉 조회
-    def _get_5min_candles_for_slot(
-        self, 
-        stock_code: str, 
-        slot_time: datetime, 
-        minutes: int
-    ) -> List[dict]:
-        self.connect_db()
-        cursor = self.conn.cursor()
-        
-        end_time = slot_time + timedelta(minutes=minutes-1, seconds=59)
-        
-        query = """
-        SELECT candle_time, open_price, high_price, low_price, close_price, volume
-        FROM chart_candles
-        WHERE stock_code = %s
-          AND interval_type = '5m'
-          AND candle_time >= %s
-          AND candle_time <= %s
-        ORDER BY candle_time ASC
-        """
-        
-        cursor.execute(query, (stock_code, slot_time, end_time))
-        
-        candles = []
-        for row in cursor.fetchall():
-            candles.append({
-                'time': row[0],
-                'open': row[1],
-                'high': row[2],
-                'low': row[3],
-                'close': row[4],
-                'volume': row[5]
-            })
-        
-        return candles
+
+        cursor.execute(query, (stock_code, interval_type, slot_time, end_time))
+
+        return [
+            {'time': row[0], 'open': row[1], 'high': row[2],
+             'low': row[3], 'close': row[4], 'volume': row[5]}
+            for row in cursor.fetchall()
+        ]
     
     def close(self):
         if self.conn:
