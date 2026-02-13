@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getMyRoom, getUnreadCount } from '@/api/communityApi';
 import type { RoomResponse } from '@/features/community/types/CommunityTypes';
-import './FloatingChatButton.css';
+import './Floatingchatbutton.css';
 
 const POLL_INTERVAL = 15000;
 
