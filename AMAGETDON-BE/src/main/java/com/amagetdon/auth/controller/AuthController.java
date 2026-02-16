@@ -7,6 +7,7 @@ import com.amagetdon.auth.dto.response.TokenResponse;
 import com.amagetdon.auth.service.AuthService;
 import com.amagetdon.auth.service.RefreshTokenService;
 import com.amagetdon.common.jwt.JwtProperties;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -41,7 +42,7 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<AuthLoginResponse> signup(@RequestBody AuthSignupRequest request) {
+    public ResponseEntity<AuthLoginResponse> signup(@Valid @RequestBody AuthSignupRequest request) {
         TokenResponse tokenResponse = authService.signup(request);
 
         ResponseCookie refreshTokenCookie = refreshTokenService.createRefreshTokenCookie(tokenResponse.refreshToken());
