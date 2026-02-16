@@ -69,6 +69,38 @@ export const getChatMessages = async (roomId: number): Promise<ChatMessage[]> =>
     return response.data.data;
 };
 
+/**
+ * 읽지 않은 메시지 수 조회
+ */
+export const getUnreadCount = async (roomId: number): Promise<{ unreadCount: number }> => {
+    const response = await apiClient.get(`/chat/unread/${roomId}`);
+    const raw = response.data;
+
+    console.log('[communityApi] getUnreadCount raw response:', raw);
+
+    // 다양한 응답 형식 파싱
+    if (typeof raw === 'number') {
+        return { unreadCount: raw };
+    }
+    if (raw && typeof raw === 'object') {
+        if (typeof raw.unreadCount === 'number') {
+            return { unreadCount: raw.unreadCount };
+        }
+        if (raw.data && typeof raw.data === 'number') {
+            return { unreadCount: raw.data };
+        }
+        if (raw.data && typeof raw.data === 'object' && typeof raw.data.unreadCount === 'number') {
+            return { unreadCount: raw.data.unreadCount };
+        }
+    }
+
+    return { unreadCount: 0 };
+};
+
+export const markAsRead = async (roomId: number): Promise<void> => {
+    await apiClient.post(`/chat/read/${roomId}`);
+};
+
 // OpenVidu API
 
 export const getOpenViduToken = async (sessionId: string): Promise<{ token: string; sessionId: string }> => {

@@ -100,7 +100,7 @@ class WebSocketCollector:
         
         self.ws.send(json.dumps(subscribe_data))
         self.subscribed_stocks.add(stock_code)
-        logger.debug(f"{stock_code} 구독 등록")
+        logger.info(f"{stock_code} 구독 등록")
     
     #구독 해제
     def _unsubscribe(self, stock_code: str):
@@ -121,7 +121,7 @@ class WebSocketCollector:
         
         self.ws.send(json.dumps(unsubscribe_data))
         self.subscribed_stocks.discard(stock_code)
-        logger.debug(f"{stock_code} 구독 해제")
+        logger.info(f"{stock_code} 구독 해제")
     
     def on_open(self, ws):
         self.connected = True
@@ -133,10 +133,9 @@ class WebSocketCollector:
         try:
             parts = message.split('|')
             if len(parts) < 4:
-                # 구독 응답 로깅
-                logger.info(f"WS 응답: {message[:200]}")
 
-                # 에러 체크
+                logger.debug(f"WS 응답: {message[:200]}")
+
                 if "ALREADY IN USE" in message:
                     logger.error("appkey 중복 사용 - 다른 연결이 이미 존재합니다. 기존 프로세스를 종료하세요.")
                     return
@@ -155,8 +154,8 @@ class WebSocketCollector:
             current_price = safe_int(fields[2])
             change_amount = safe_int(fields[4])
             change_rate = safe_float(fields[5])
-            volume = safe_int(fields[13])  # ACML_VOL (누적 거래량)
-            trading_value = safe_int(fields[14])  # ACML_TR_PBMN (누적 거래대금)
+            volume = safe_int(fields[13]) 
+            trading_value = safe_int(fields[14]) 
 
             if current_price is None:
                 return
@@ -198,7 +197,6 @@ class WebSocketCollector:
         self.connected = False
         self.connect_event.clear()
         logger.info(f"WebSocket 연결 종료: code={close_status_code}, msg={close_msg}")
-        # 자동 재연결 안 함 - 외부에서 필요 시 reconnect() 호출
     
     #웹소켓 체결 데이터 처리
     def on_tick(self, stock_code: str, tick_data: dict):
@@ -329,7 +327,7 @@ class WebSocketCollector:
             cursor.execute(query, (stock_code, start_time, end_time))
             rows = cursor.fetchall()
 
-            if len(rows) >= 1:  # 1개 이상이면 생성
+            if len(rows) >= 1:
                 candle_30m = CandleDTO(
                     stock_code=stock_code,
                     interval_type='30m',
@@ -349,26 +347,21 @@ class WebSocketCollector:
         except Exception as e:
             logger.error(f"30분봉 생성 실패: {e}")
     
+    #재연결
     def _reconnect_with_new_key(self):
-        """Approval Key 재발급 후 재연결"""
         try:
-            # 기존 연결 종료
             if self.ws:
                 self.ws.close()
 
-            # Redis에서 기존 키 삭제
             self.token_manager.redis_client.delete(self.token_manager.ws_approval_key)
 
-            # 상태 초기화
             self.connected = False
             self.connect_event.clear()
             self.subscribed_stocks.clear()
 
-            # 재연결
             logger.info("새 Approval Key로 재연결 시도")
             self.connect()
 
-            # 기존 구독 종목이 있으면 다시 구독 (main에서 처리)
         except Exception as e:
             logger.error(f"재연결 실패: {e}")
 
