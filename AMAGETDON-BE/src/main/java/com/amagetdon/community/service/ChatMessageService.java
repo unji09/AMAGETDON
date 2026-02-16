@@ -80,4 +80,35 @@ public class ChatMessageService {
         log.info("메시지 삭제 완료 - roomId : {}", roomId);
 
     }
+
+    // 읽지 않은 메시지 개수 조회
+    public int getUnreadCount(Long roomId, Long userId) {
+        Member member = memberRepository.findByRoomIdAndUserIdAndIsActiveTrue(roomId, userId)
+                .orElse(null);
+
+        if(member == null) return 0;
+
+        LocalDateTime lastRead = member.getLastReadAt();
+        if(lastRead == null) lastRead = member.getJoinedAt();
+
+        String key = CHAT_MESSAGE_KEY_PREFIX + roomId;
+        List<Object> rawMessages = redisTemplate.opsForList().range(key, 0, -1);
+        if(rawMessages == null) return 0;
+
+        LocalDateTime finalLastRead = lastRead;
+        return (int) rawMessages.stream()
+                .map(obj -> (ChatMessage) obj)
+                .filter(msg -> msg.getCreatedAt().isAfter(finalLastRead))
+                .filter(msg -> !msg.getUserId().equals(userId))
+                .count();
+    }
+
+    // 읽음 처리
+    public void markAsRead(Long roomId, Long userId) {
+        memberRepository.findByRoomIdAndUserIdAndIsActiveTrue(roomId, userId)
+                .ifPresent(member -> {
+                    member.updateLastReadAt(LocalDateTime.now());
+                    memberRepository.save(member);
+                });
+    }
 }

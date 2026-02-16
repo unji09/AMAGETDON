@@ -1,21 +1,6 @@
 /**
  * ChatRoomPage - 채팅방 페이지
- * Figma 디자인 기반 (커뮤니티 대화)
- *
- * [Fix 목록]
- * Fix 1: ✅ apiClient로 닉네임 로드 (raw fetch → apiClient)
- * Fix 2: ✅ 새로고침 시 방 유지 (beforeunload 방 나가기 제거)
- * Fix 3: 15초 폴링으로 방 정보(인원 수) 자동 갱신
- * Fix 4: ✅ room.currentMemberCount 대신 실제 members API 카운트 사용
- * Fix 5: 마운트 시 getChatMessages로 메시지 히스토리 로드 (새로고침 복원)
- * Fix 6: ✅ 나가기 레이스 컨디션 제거 (cleanup에서 forceLeaveRoom 제거)
- * Fix 7: ✅ handleLeaveRoom 멱등성 - 에러 시에도 navigate
- * Fix 8: ✅ 아바타 제거 - 이름만 표시
- * Fix 9: ✅ localStorage 메시지 캐시 - 새로고침 시 메시지 복원
- *
- * [새로고침 동작]
- * - 새로고침 → 방에 머물고, localStorage 캐시에서 메시지 즉시 복원
- * - 명시적 나가기 or 로그아웃 → 방 퇴장 + 캐시 삭제 + 채팅 초기화
+ * 핵심: 채팅방 진입 시 항상 API에서 최신 메시지를 로드
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -23,7 +8,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useOpenVidu } from '@/hooks/useOpenVidu';
 import apiClient from '@/api/client';
-import { getMyRoom, leaveRoom, getRoomMembers, getChatMessages } from '@/api/communityApi';
+import { getMyRoom, leaveRoom, getRoomMembers, getChatMessages, sendChatMessage, markAsRead } from '@/api/communityApi';
 import type { RoomResponse, RoomMemberListResponse, RoomMemberDto } from '@/features/community/types/CommunityTypes';
 import './ChatRoomPage.css';
 
@@ -68,10 +53,6 @@ const renderMessageWithLinks = (text: string) => {
     });
 };
 
-/**
- * ✅ Fix 1: apiClient 사용하여 닉네임 로드
- * raw fetch는 Vite 프록시를 못 타서 HTML이 반환됨
- */
 const fetchMyNickname = async (): Promise<string> => {
     try {
         const response = await apiClient.get('/users/me');
@@ -85,31 +66,13 @@ const fetchMyNickname = async (): Promise<string> => {
     }
 };
 
-/**
- * ✅ Fix 2 → 수정됨: 새로고침 시 방 유지
- *
- * [변경 사항]
- * - beforeunload에서 forceLeaveRoom 호출 제거
- * - 새로고침해도 방에 머물고, getChatMessages로 메시지 히스토리 복원
- * - 명시적 나가기(handleLeaveRoom) 또는 로그아웃 시에만 방 퇴장
- * - 탭/브라우저 완전 종료 시에도 서버 측에서 OpenVidu disconnect 감지 가능
- */
-
-/**
- * ✅ [Fix 9] localStorage 메시지 캐시
- * - OpenVidu 시그널 메시지는 백엔드 DB에 저장되지 않음
- * - 새로고침 시 메시지 복원을 위해 localStorage에 캐시
- * - 방 나가기/로그아웃 시에만 삭제
- */
 const MESSAGE_CACHE_PREFIX = 'chat_messages_room_';
-const MAX_CACHED_MESSAGES = 500; // 최대 캐시 메시지 수
+const MAX_CACHED_MESSAGES = 500;
 
 const getCachedMessages = (roomId: string): ChatMessage[] => {
     try {
         const cached = localStorage.getItem(`${MESSAGE_CACHE_PREFIX}${roomId}`);
-        if (cached) {
-            return JSON.parse(cached);
-        }
+        if (cached) return JSON.parse(cached);
     } catch (err) {
         console.warn('[ChatRoom] 캐시 메시지 로드 실패:', err);
     }
@@ -118,7 +81,6 @@ const getCachedMessages = (roomId: string): ChatMessage[] => {
 
 const saveCachedMessages = (roomId: string, messages: ChatMessage[]) => {
     try {
-        // 최대 개수 제한 (오래된 메시지부터 제거)
         const trimmed = messages.slice(-MAX_CACHED_MESSAGES);
         localStorage.setItem(`${MESSAGE_CACHE_PREFIX}${roomId}`, JSON.stringify(trimmed));
     } catch (err) {
@@ -140,12 +102,12 @@ const ChatRoomPage = () => {
 
     const [room, setRoom] = useState<RoomResponse | null>(null);
     const [loading, setLoading] = useState(true);
-    // ✅ [Fix 9] 초기 메시지를 localStorage 캐시에서 로드
+    // ✅ 초기값: 캐시에서 즉시 복원 (빈 화면 방지)
     const [messages, setMessages] = useState<ChatMessage[]>(() => {
         if (roomId) {
             const cached = getCachedMessages(roomId);
             if (cached.length > 0) {
-                console.log(`[ChatRoom] 캐시에서 ${cached.length}개 메시지 복원`);
+                console.log(`[ChatRoom] 캐시에서 ${cached.length}개 메시지 즉시 표시`);
                 return cached;
             }
         }
@@ -161,20 +123,15 @@ const ChatRoomPage = () => {
     const [toasts, setToasts] = useState<Toast[]>([]);
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; messageId: string; text: string } | null>(null);
     const [myNickname, setMyNickname] = useState<string>('');
-
-    /**
-     * ✅ [Fix 4] 실제 멤버 수 (members API에서 가져온 값)
-     * room.currentMemberCount는 수동 증감이라 동기화가 깨질 수 있음
-     */
     const [realMemberCount, setRealMemberCount] = useState<number | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const reconnectAttempts = useRef(0);
-    const historyLoadedRef = useRef(false);
-    /** ✅ 정상적으로 나가기 했는지 추적 (중복 나가기 방지) */
     const hasLeftRef = useRef(false);
-    /** ✅ 나가기 진행 중인지 (버튼 중복 클릭 방지) */
     const isLeavingRef = useRef(false);
+    // ✅ 백엔드 signal 중복 방지용
+    const recentlySentRef = useRef<Set<string>>(new Set());
+    const historyLoadedRef = useRef(false);
 
     const addToast = useCallback((type: Toast['type'], title: string, message?: string) => {
         const id = Date.now().toString();
@@ -197,7 +154,15 @@ const ChatRoomPage = () => {
     }
 
     const handleMessageReceived = (message: SimpleMessage) => {
-        setMessages(prev => [...prev, { ...message, id: Date.now().toString() }]);
+        // ✅ 중복 방지: 내가 보낸 메시지의 signal echo → 모두 무시 (key 삭제 안함, timeout이 정리)
+        const dedupKey = `${message.userName}::${message.message}`;
+        if (recentlySentRef.current.has(dedupKey)) {
+            console.log('[ChatRoom] 중복 signal 무시:', dedupKey);
+            return; // key 삭제 안함 → 백엔드 signal도 차단됨
+        }
+        // ✅ isMine을 닉네임 비교로 판별 (useOpenVidu의 판별이 부정확할 수 있으므로)
+        const isMine = message.userName === myNickname;
+        setMessages(prev => [...prev, { ...message, isMine, id: Date.now().toString() }]);
     };
 
     const handleSessionIdChanged = (newSessionId: string) => {
@@ -210,7 +175,6 @@ const ChatRoomPage = () => {
         error,
         connect,
         disconnect,
-        sendMessage: sendOpenViduMessage,
     } = useOpenVidu({
         sessionId,
         userName: myNickname,
@@ -230,24 +194,34 @@ const ChatRoomPage = () => {
         }
     }, [connected, connecting]);
 
-    // ✅ 마운트 시 사용자 닉네임 로드
+    // 마운트 시 사용자 닉네임 로드
     useEffect(() => {
         fetchMyNickname().then(setMyNickname);
     }, []);
 
-    // ✅ [Fix 9] 메시지 변경 시 localStorage 캐시에 저장
+    // 메시지 변경 시 localStorage 캐시에 저장
     useEffect(() => {
         if (roomId && messages.length > 0) {
             saveCachedMessages(roomId, messages);
         }
     }, [roomId, messages]);
 
-    /**
-     * ✅ [Fix 6 수정] beforeunload에서 방 나가기 제거
-     * - 새로고침 시 방에 머물도록 변경
-     * - 메시지 히스토리는 getChatMessages API로 복원됨
-     * - OpenVidu 세션만 재연결하면 됨
-     */
+    // ✅ 채팅방 진입 시 읽음 처리
+    useEffect(() => {
+        if (!roomId) return;
+        markAsRead(Number(roomId)).catch((err) => {
+            console.warn('[ChatRoom] markAsRead 실패 (무시):', err);
+        });
+    }, [roomId]);
+
+    // ✅ 메시지 수신 시 읽음 처리 (2초 디바운스)
+    useEffect(() => {
+        if (!roomId || messages.length === 0) return;
+        const timer = setTimeout(() => {
+            markAsRead(Number(roomId)).catch(() => {});
+        }, 2000);
+        return () => clearTimeout(timer);
+    }, [roomId, messages.length]);
 
     // 방 정보 로드
     useEffect(() => {
@@ -272,31 +246,34 @@ const ChatRoomPage = () => {
         loadRoom();
     }, [roomId, navigate, addToast]);
 
-    /** ✅ [Fix 9] 캐시에서 메시지가 복원되었는지 추적 */
-    const hasCachedMessagesRef = useRef(messages.length > 0);
-
-    // ✅ [Fix 9] 메시지 히스토리 로드 (캐시 → API fallback)
+    /**
+     * ✅ [핵심 수정] 메시지 히스토리 로드
+     * - 항상 API에서 최신 메시지를 가져옴
+     * - 캐시는 초기 즉시 표시용 (깜빡임 방지)
+     * - API 응답이 오면 캐시를 덮어씀
+     */
     useEffect(() => {
-        if (!room || !roomId || historyLoadedRef.current) return;
+        if (!room || !roomId) return;
 
         const loadMessageHistory = async () => {
-            // 캐시에서 이미 복원된 경우 API 스킵
-            if (hasCachedMessagesRef.current) {
-                console.log('[ChatRoom] 캐시 메시지 사용, API 스킵');
-                historyLoadedRef.current = true;
-                return;
-            }
-
-            // 캐시가 비어있으면 API에서 로드 시도
             try {
+                console.log('[ChatRoom] API에서 메시지 히스토리 로드 시작...');
                 const chatMessages = await getChatMessages(Number(roomId));
+
                 if (chatMessages && chatMessages.length > 0) {
+                    // 현재 유저 ID 추출
                     let currentUserId: number | null = null;
                     try {
                         const token = localStorage.getItem('accessToken');
                         if (token) {
                             const payload = JSON.parse(atob(token.split('.')[1]));
-                            currentUserId = payload.userId || payload.sub ? Number(payload.sub) : null;
+                            // ✅ 연산자 우선순위 수정: userId 우선, 없으면 sub 사용
+                            if (payload.userId != null) {
+                                currentUserId = Number(payload.userId);
+                            } else if (payload.sub != null) {
+                                currentUserId = Number(payload.sub);
+                            }
+                            console.log('[ChatRoom] JWT에서 추출한 userId:', currentUserId, 'payload:', { userId: payload.userId, sub: payload.sub });
                         }
                     } catch {
                         // 토큰 파싱 실패 시 무시
@@ -307,44 +284,46 @@ const ChatRoomPage = () => {
                         userName: msg.userName || '알 수 없음',
                         message: msg.message,
                         createdAt: msg.createdAt,
-                        isMine: currentUserId !== null && msg.userId === currentUserId,
+                        // ✅ userId 비교 우선, 실패 시 닉네임 비교 fallback
+                        isMine: (currentUserId !== null && msg.userId === currentUserId)
+                            || (msg.userName === myNickname),
                         isSystem: msg.type === 'system',
                     }));
+
+                    console.log(`[ChatRoom] API에서 ${historyMessages.length}개 메시지 로드 완료`);
                     setMessages(historyMessages);
+                    historyLoadedRef.current = true;
+                } else {
+                    console.log('[ChatRoom] API 응답: 메시지 없음');
+                    // API에서 빈 배열이 오면 캐시도 비움 (일관성)
                 }
-                historyLoadedRef.current = true;
             } catch (err) {
-                console.error('메시지 히스토리 로드 실패:', err);
-                historyLoadedRef.current = true;
+                console.error('[ChatRoom] 메시지 히스토리 로드 실패:', err);
+                // API 실패 시 캐시된 메시지 유지 (이미 state에 있음)
+                console.log('[ChatRoom] API 실패 → 캐시 메시지 유지');
             }
         };
 
         loadMessageHistory();
     }, [room, roomId]);
 
-    // OpenVidu 연결 - 닉네임이 준비된 후에만
+    // OpenVidu 연결
     useEffect(() => {
         if (sessionId && myNickname && !connected && !connecting) {
             connect();
         }
     }, [sessionId, myNickname, connected, connecting, connect]);
 
-    /**
-     * ✅ [Fix 4] 15초 폴링 - 방 정보 + 실제 멤버 수 갱신
-     * room.currentMemberCount 대신 members API의 totalMembers 사용
-     */
+    // 15초 폴링
     useEffect(() => {
         if (!roomId) return;
 
         const pollRoomData = async () => {
             try {
-                // 방 기본 정보 갱신
                 const myRoom = await getMyRoom();
                 if (myRoom && myRoom.roomId === Number(roomId)) {
                     setRoom(myRoom);
                 }
-
-                // ✅ 실제 멤버 수 갱신 (members API)
                 const membersResponse = await getRoomMembers(Number(roomId));
                 setRealMemberCount(membersResponse.totalMembers);
             } catch {
@@ -352,15 +331,15 @@ const ChatRoomPage = () => {
             }
         };
 
-        // 최초 1회 즉시 실행 (멤버 수 초기화)
         pollRoomData();
-
         const intervalId = setInterval(pollRoomData, 15000);
         return () => clearInterval(intervalId);
     }, [roomId]);
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        // ✅ 히스토리 최초 로드 시 즉시 맨 아래로, 이후 메시지는 smooth 스크롤
+        const behavior = historyLoadedRef.current ? 'smooth' : 'auto';
+        messagesEndRef.current?.scrollIntoView({ behavior });
     }, [messages]);
 
     useEffect(() => {
@@ -375,7 +354,6 @@ const ChatRoomPage = () => {
         try {
             const response: RoomMemberListResponse = await getRoomMembers(Number(roomId));
             setParticipants(response.members);
-            // ✅ 참여자 목록 로드 시 실제 멤버 수도 갱신
             setRealMemberCount(response.totalMembers);
         } catch (err) {
             console.error('참여자 목록 로드 실패:', err);
@@ -391,7 +369,37 @@ const ChatRoomPage = () => {
 
     const handleSendMessage = () => {
         if (!inputMessage.trim() || !connected) return;
-        sendOpenViduMessage(inputMessage.trim());
+        const trimmedMessage = inputMessage.trim();
+
+        // 1️⃣ ✅ 로컬에 즉시 추가 (본인 화면에 바로 표시)
+        const localMessage: ChatMessage = {
+            id: `local-${Date.now()}`,
+            userName: myNickname,
+            message: trimmedMessage,
+            createdAt: new Date().toISOString(),
+            isMine: true,
+        };
+        setMessages(prev => [...prev, localMessage]);
+
+        // 2️⃣ ✅ 중복 방지 등록 (백엔드 signal echo 차단)
+        const dedupKey = `${myNickname}::${trimmedMessage}`;
+        recentlySentRef.current.add(dedupKey);
+        setTimeout(() => recentlySentRef.current.delete(dedupKey), 5000);
+
+        // 3️⃣ ✅ 백엔드 API만 호출 (Redis 저장 + 백엔드가 signal 전송)
+        //    → 프론트에서 signal 직접 전송 안 함 (보안: 메시지 조작 방지)
+        if (sessionId) {
+            sendChatMessage({
+                openviduSessionId: sessionId,
+                sender: myNickname,
+                message: trimmedMessage,
+                type: 'chat',
+            }).catch((err) => {
+                console.error('[ChatRoom] 메시지 전송 실패:', err);
+                addToast('error', '메시지 전송에 실패했습니다');
+            });
+        }
+
         setInputMessage('');
     };
 
@@ -409,37 +417,21 @@ const ChatRoomPage = () => {
         }
     };
 
-    /**
-     * ✅ [Fix 6 + Fix 7] 정상 나가기 (버튼 클릭)
-     * - isLeavingRef로 중복 클릭 방지 (토스트 3번 뜨는 문제 해결)
-     * - API 실패 시에도 무조건 /community로 이동
-     */
     const handleLeaveRoom = async () => {
         if (!roomId || isLeavingRef.current) return;
         isLeavingRef.current = true;
         hasLeftRef.current = true;
-
-        // ✅ [Fix 9] 방 나가기 시 메시지 캐시 삭제
         clearCachedMessages(roomId);
 
-        // OpenVidu 연결 해제 (실패해도 무시)
-        try {
-            disconnect();
-        } catch (err) {
-            console.warn('[ChatRoom] disconnect 실패 (무시):', err);
-        }
+        try { disconnect(); } catch { /* 무시 */ }
 
-        // 방 나가기 API 호출
         try {
             await leaveRoom(Number(roomId));
             addToast('success', '그룹을 나갔습니다');
-        } catch (err) {
-            console.warn('[ChatRoom] leaveRoom API 실패 (무시하고 이동):', err);
-            // ✅ API 실패해도 에러 토스트 안 띄우고 그냥 이동
-            // 이미 나간 상태(NOT_ROOM_MEMBER)이거나 네트워크 오류일 수 있음
+        } catch {
+            // API 실패해도 이동
         }
 
-        // ✅ 무조건 커뮤니티로 이동
         navigate('/community');
     };
 
@@ -488,21 +480,12 @@ const ChatRoomPage = () => {
         return groups;
     };
 
-    const getConnectionStatusClass = () => {
-        if (connectionStatus === 'connecting') return 'reconnecting';
-        return connectionStatus;
-    };
-
-    /**
-     * ✅ [Fix 4] 헤더에 표시할 멤버 수
-     * realMemberCount (members API) → room.currentMemberCount (fallback)
-     */
     const displayMemberCount = realMemberCount ?? room?.currentMemberCount ?? 0;
 
     // 로딩 스켈레톤
     if (loading) {
         return (
-            <Layout>
+            <Layout showFooter={false}>
                 <div className="chat-room-container">
                     <div className="chat-header">
                         <div className="chat-header-left">
@@ -548,8 +531,9 @@ const ChatRoomPage = () => {
             <Layout>
                 <div className="chat-error-state">
                     <div className="error-icon">⚠️</div>
-                    <p>채팅방을 찾을 수 없습니다</p>
-                    <button onClick={() => navigate('/community')} className="error-back-btn">
+                    <h2>채팅방을 찾을 수 없습니다</h2>
+                    <p>이미 삭제되었거나 접근 권한이 없습니다.</p>
+                    <button className="error-back-btn" onClick={() => navigate('/community')}>
                         커뮤니티로 돌아가기
                     </button>
                 </div>
@@ -560,76 +544,73 @@ const ChatRoomPage = () => {
     const messageGroups = groupMessagesByDate(messages);
 
     return (
-        <Layout>
+        <Layout showFooter={false}>
             <div className="chat-room-container">
-                {connectionStatus !== 'connected' && (
-                    <div className={`connection-status ${getConnectionStatusClass()}`}>
-                        <div className="status-dot" />
-                        <span className="status-text">
-                            {connectionStatus === 'connecting' ? '재연결 중...' : '연결 끊김 • 재연결 시도 중'}
-                        </span>
-                        {connectionStatus === 'disconnected' && (
-                            <button className="reconnect-btn" onClick={handleManualReconnect}>
-                                수동 재연결
-                            </button>
-                        )}
-                    </div>
-                )}
-
+                {/* ===== 헤더 ===== */}
                 <div className="chat-header">
                     <div className="chat-header-left">
                         <div className="chat-header-info">
-                            <h1 className="chat-room-name">{room.name}</h1>
+                            <h2 className="chat-room-name">{room.name}</h2>
                             <div className="chat-room-meta">
-                                <span className={`chat-online-dot ${getConnectionStatusClass()}`} />
+                                <span className={`chat-online-dot ${connectionStatus === 'connected' ? 'connected' : connectionStatus === 'connecting' ? 'reconnecting' : 'disconnected'}`} />
                                 <span className="chat-participant-count">
-                                    {/* ✅ [Fix 4] 실제 멤버 수 표시 */}
-                                    {displayMemberCount}명 참여 중
-                                </span>
+                                        {displayMemberCount}명 참여 중
+                                    </span>
                                 <span className="chat-room-type-tag">
-                                    {room.isPublic ? '공개방' : '비공개방'}
-                                </span>
-                                {/* ✅ 비공개방: 참여 코드 복사 버튼 */}
+                                        {room.isPublic ? '공개방' : '비공개방'}
+                                    </span>
                                 {!room.isPublic && room.joinCode && (
                                     <button
                                         className="chat-copy-code-btn"
                                         onClick={() => {
-                                            navigator.clipboard.writeText(room.joinCode!)
-                                                .then(() => addToast('success', '참여 코드가 복사되었습니다'))
-                                                .catch(() => addToast('error', '복사에 실패했습니다'));
+                                            navigator.clipboard.writeText(room.joinCode || '');
+                                            addToast('info', '참여 코드가 복사되었습니다');
                                         }}
-                                        title={`참여 코드: ${room.joinCode}`}
                                     >
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                                        </svg>
-                                        참여 코드 복사
+                                        🔑 {room.joinCode}
                                     </button>
                                 )}
                             </div>
                         </div>
                     </div>
                     <div className="chat-header-actions">
+                        {connectionStatus === 'disconnected' && (
+                            <button className="reconnect-btn" onClick={handleManualReconnect}>
+                                🔄 재연결
+                            </button>
+                        )}
                         <button
                             className={`chat-action-btn participants-btn ${showParticipants ? 'active' : ''}`}
                             onClick={handleToggleParticipants}
                         >
-                            <span className="dots-icon">
-                                <span className="dot" /><span className="dot" /><span className="dot" />
-                            </span>
+                                <span className="dots-icon">
+                                    <span className="dot" />
+                                    <span className="dot" />
+                                    <span className="dot" />
+                                </span>
                             참여자 보기
                         </button>
-                        <button className="chat-action-btn leave-btn" onClick={() => setShowLeaveModal(true)}>
+                        <button
+                            className="chat-action-btn leave-btn"
+                            onClick={() => setShowLeaveModal(true)}
+                        >
                             그룹 나가기
                         </button>
                     </div>
                 </div>
 
+                {/* 에러 배너 */}
+                {error && (
+                    <div className="chat-error-banner">
+                        <span>⚠️ {error}</span>
+                        <button onClick={handleManualReconnect}>재연결</button>
+                    </div>
+                )}
+
+                {/* ===== 메인 영역 ===== */}
                 <div className="chat-main">
                     <div className={`chat-messages-area ${showParticipants ? 'with-sidebar' : ''}`}>
-                        {error && <div className="chat-error-banner">{error}</div>}
-
+                        {/* 메시지 목록 */}
                         <div className="chat-messages">
                             {messages.length === 0 ? (
                                 <div className="chat-empty">
@@ -671,19 +652,17 @@ const ChatRoomPage = () => {
                                                     onContextMenu={(e) => handleMessageContextMenu(e, msg.id, msg.message)}
                                                 >
                                                     {!msg.isMine && (
-                                                        <>
-                                                            <div className="message-content-wrapper">
-                                                                <div className="message-header">
-                                                                    <span className="message-sender">{msg.userName}</span>
-                                                                    <span className="message-time">{formatTime(msg.createdAt)}</span>
-                                                                </div>
-                                                                <div className="message-bubble">
-                                                                    <p className="message-content">
-                                                                        {renderMessageWithLinks(msg.message)}
-                                                                    </p>
-                                                                </div>
+                                                        <div className="message-content-wrapper">
+                                                            <div className="message-header">
+                                                                <span className="message-sender">{msg.userName}</span>
+                                                                <span className="message-time">{formatTime(msg.createdAt)}</span>
                                                             </div>
-                                                        </>
+                                                            <div className="message-bubble">
+                                                                <p className="message-content">
+                                                                    {renderMessageWithLinks(msg.message)}
+                                                                </p>
+                                                            </div>
+                                                        </div>
                                                     )}
                                                     {msg.isMine && (
                                                         <div className="message-content-wrapper mine">
@@ -706,6 +685,7 @@ const ChatRoomPage = () => {
                             <div ref={messagesEndRef} />
                         </div>
 
+                        {/* 입력 영역 */}
                         <div className="chat-input-area">
                             <div className="chat-input-wrapper">
                                 <input
@@ -728,6 +708,7 @@ const ChatRoomPage = () => {
                         </div>
                     </div>
 
+                    {/* 참여자 사이드바 */}
                     {showParticipants && (
                         <div className="chat-participants-sidebar">
                             <div className="participants-header">
@@ -744,10 +725,10 @@ const ChatRoomPage = () => {
                                     participants.map((member) => (
                                         <div key={member.memberId} className="participant-item">
                                             <div className="participant-info">
-                                                <span className="participant-name">
-                                                    {member.nickname}
-                                                    {member.isOwner && <span className="owner-badge">방장</span>}
-                                                </span>
+                                                    <span className="participant-name">
+                                                        {member.nickname}
+                                                        {member.isOwner && <span className="owner-badge">방장</span>}
+                                                    </span>
                                             </div>
                                         </div>
                                     ))
@@ -757,6 +738,7 @@ const ChatRoomPage = () => {
                     )}
                 </div>
 
+                {/* 컨텍스트 메뉴 */}
                 {contextMenu && (
                     <div className="context-menu" style={{ top: contextMenu.y, left: contextMenu.x }}>
                         <button className="context-menu-item" onClick={handleCopyMessage}>
@@ -766,6 +748,7 @@ const ChatRoomPage = () => {
                     </div>
                 )}
 
+                {/* 나가기 모달 */}
                 {showLeaveModal && (
                     <div className="leave-modal-overlay" onClick={() => setShowLeaveModal(false)}>
                         <div className="leave-modal" onClick={(e) => e.stopPropagation()}>
@@ -780,6 +763,7 @@ const ChatRoomPage = () => {
                     </div>
                 )}
 
+                {/* 토스트 */}
                 <div className="toast-container">
                     {toasts.map((toast) => (
                         <div key={toast.id} className={`toast toast-${toast.type}`}>

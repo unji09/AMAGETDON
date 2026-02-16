@@ -19,7 +19,6 @@ class CandleCollector:
         '1w': 365
     }
 
-    # 종목명 캐시
     _stock_names = {}
 
     def __init__(self, token_manager: TokenManager):
@@ -29,7 +28,6 @@ class CandleCollector:
         self._load_stock_names()
 
     def _load_stock_names(self):
-        """DB에서 종목명 로드"""
         if CandleCollector._stock_names:
             return
         try:
@@ -43,54 +41,10 @@ class CandleCollector:
             logger.error(f"종목명 로드 실패: {e}")
 
     def _get_stock_name(self, stock_code: str) -> str:
-        """종목명 반환"""
         return CandleCollector._stock_names.get(stock_code, "")
 
     def connect_db(self):
         self.conn = get_db_connection(self.conn)
-
-    # [미사용] 비동기 수집/업데이트 - collect_batch_parallel 사용
-    # async def collect_or_update_async(self, stock_code: str, interval_type: str):
-    #     try:
-    #         last_time = self._get_last_candle_time(stock_code, interval_type)
-    #
-    #         if last_time is None:
-    #             days = self.RETENTION_DAYS[interval_type]
-    #             logger.info(f"{stock_code} {interval_type} 초기 수집: {days}일")
-    #             await self._collect_candles_async(stock_code, interval_type, days)
-    #         else:
-    #             now = datetime.now()
-    #             days_diff = (now - last_time).days + 1
-    #             days_diff = max(days_diff, 1)
-    #
-    #             logger.info(f"{stock_code} {interval_type} 업데이트 수집: {days_diff}일")
-    #             await self._collect_candles_async(stock_code, interval_type, days_diff)
-    #
-    #     except Exception as e:
-    #         logger.error(f"{stock_code} {interval_type} 수집 실패: {e}")
-
-    # [미사용] _collect_candles_async - collect_batch_parallel 사용
-    # async def _collect_candles_async(self, stock_code: str, interval_type: str, days: int):
-    #     try:
-    #         if interval_type in ['5m', '30m']:
-    #             candles = await self._collect_minute_based_candles(stock_code, interval_type, days)
-    #         elif interval_type == '1d':
-    #             candles = await self._collect_daily_candles(stock_code, days)
-    #         elif interval_type == '1w':
-    #             candles = await self._collect_weekly_candles(stock_code, days)
-    #         else:
-    #             logger.error(f"지원하지 않는 interval_type: {interval_type}")
-    #             return
-    #
-    #         if candles:
-    #             self.connect_db()
-    #             save_candles(self.conn, candles)
-    #             logger.info(f"{stock_code} {interval_type} 캔들 {len(candles)}개 저장")
-    #         else:
-    #             logger.warning(f"{stock_code} {interval_type} 캔들 데이터 없음")
-    #
-    #     except Exception as e:
-    #         logger.error(f"{stock_code} {interval_type} 수집 실패: {e}")
 
     #해당 종목의 마지막 시간 조회
     def _get_last_candle_time(self, stock_code: str, interval_type: str) -> Optional[datetime]:
@@ -222,62 +176,6 @@ class CandleCollector:
             logger.error(f"캔들 집계 실패: {e}")
             return None
 
-    # [미사용] 일봉 수집 - _collect_and_save_daily_candles_direct 사용
-    # async def _collect_daily_candles(self, stock_code: str, days: int) -> List[CandleDTO]:
-    #     start_date = (datetime.now() - timedelta(days=days)).strftime('%Y%m%d')
-    #     end_date = datetime.now().strftime('%Y%m%d')
-    #
-    #     async with aiohttp.ClientSession() as session:
-    #         candles_list = await self.api_client.fetch_daily_candles_async(
-    #             session=session,
-    #             stock_code=stock_code,
-    #             start_date=start_date,
-    #             end_date=end_date,
-    #             period_code='D'
-    #         )
-    #
-    #     return [
-    #         CandleDTO(
-    #             stock_code=stock_code,
-    #             interval_type='1d',
-    #             candle_time=c['date'],
-    #             open_price=c['open'],
-    #             high_price=c['high'],
-    #             low_price=c['low'],
-    #             close_price=c['close'],
-    #             volume=c['volume']
-    #         )
-    #         for c in candles_list
-    #     ]
-
-    # [미사용] 주봉 수집 - _collect_and_save_weekly_candles_direct 사용
-    # async def _collect_weekly_candles(self, stock_code: str, days: int) -> List[CandleDTO]:
-    #     start_date = (datetime.now() - timedelta(days=days)).strftime('%Y%m%d')
-    #     end_date = datetime.now().strftime('%Y%m%d')
-    #
-    #     async with aiohttp.ClientSession() as session:
-    #         candles_list = await self.api_client.fetch_daily_candles_async(
-    #             session=session,
-    #             stock_code=stock_code,
-    #             start_date=start_date,
-    #             end_date=end_date,
-    #             period_code='W'  # 주봉
-    #         )
-    #
-    #     return [
-    #         CandleDTO(
-    #             stock_code=stock_code,
-    #             interval_type='1w',
-    #             candle_time=c['date'],
-    #             open_price=c['open'],
-    #             high_price=c['high'],
-    #             low_price=c['low'],
-    #             close_price=c['close'],
-    #             volume=c['volume']
-    #         )
-    #         for c in candles_list
-    #     ]
-
     def close(self):
         if self.conn:
             self.conn.close()
@@ -303,7 +201,7 @@ class CandleCollector:
 
         total_batches = (len(stock_codes) + batch_size - 1) // batch_size
 
-        connector = aiohttp.TCPConnector(limit=18)
+        connector = aiohttp.TCPConnector(limit=20)
         timeout = aiohttp.ClientTimeout(total=600)
         session = aiohttp.ClientSession(connector=connector, timeout=timeout)
 
@@ -401,7 +299,6 @@ class CandleCollector:
                     all_candles.update(result)
 
             if not all_candles:
-                # 분봉 데이터 없으면 가장 최근 캔들 복사
                 async with db_lock:
                     db_conn = get_db_connection(None)
                     latest = get_latest_candle(db_conn, stock_code, interval_type)
@@ -437,7 +334,6 @@ class CandleCollector:
 
                 return {'success': 1, 'fail': 0, 'candles': len(aggregated), 'retries': 0}
             else:
-                # 집계된 캔들이 없으면 가장 최근 캔들 복사
                 async with db_lock:
                     db_conn = get_db_connection(None)
                     latest = get_latest_candle(db_conn, stock_code, interval_type)
@@ -506,11 +402,9 @@ class CandleCollector:
                     db_conn = get_db_connection(None)
                     save_candles(db_conn, candles)
 
-                    # 최신 일봉으로 stock_prices 저장 (초기화용)
                     if len(candles_list) >= 2:
-                        # 최신 2개 일봉으로 등락 계산
-                        latest = candles_list[0]  # 가장 최근
-                        prev = candles_list[1]    # 전일
+                        latest = candles_list[0] 
+                        prev = candles_list[1]
                         change_amount = latest['close'] - prev['close']
                         change_rate = round((change_amount / prev['close']) * 100, 2) if prev['close'] > 0 else 0
                     elif len(candles_list) == 1:
@@ -536,7 +430,6 @@ class CandleCollector:
 
                 return {'success': 1, 'fail': 0, 'candles': len(candles), 'retries': 0}
             else:
-                # 일봉 데이터 없으면 가장 최근 일봉 복사
                 async with db_lock:
                     db_conn = get_db_connection(None)
                     latest = get_latest_candle(db_conn, stock_code, '1d')
@@ -608,7 +501,6 @@ class CandleCollector:
 
                 return {'success': 1, 'fail': 0, 'candles': len(candles), 'retries': 0}
             else:
-                # 주봉 데이터 없으면 가장 최근 주봉 복사
                 async with db_lock:
                     db_conn = get_db_connection(None)
                     latest = get_latest_candle(db_conn, stock_code, '1w')

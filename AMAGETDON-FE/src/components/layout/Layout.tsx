@@ -5,6 +5,8 @@
 import { Header } from './Header';
 import { Footer } from './Footer';
 import './Layout.css';
+import FloatingChatButton from '@/features/community/components/Floatingchatbutton';
+
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -20,6 +22,7 @@ export const Layout = ({ children, showFooter = true }: LayoutProps) => {
                 {children}
             </main>
             {showFooter && <Footer />}
+            <FloatingChatButton />
         </div>
     );
 };

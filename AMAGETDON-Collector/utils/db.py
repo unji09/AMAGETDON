@@ -1,6 +1,6 @@
 from typing import List, Optional
 import pymysql
-from datetime import datetime
+from datetime import datetime, timedelta
 from config.config import DB_CONFIG
 from models.dto import StockDTO, CandleDTO
 
@@ -82,14 +82,13 @@ def save_candles(conn, candles: List[CandleDTO]):
     cursor.executemany(query, data)
     conn.commit()
 
+#거래 정지 종목 삭제
 def delete_stock(conn, stock_code: str):
-    """거래 정지 종목 삭제"""
     cursor = conn.cursor()
     cursor.execute("DELETE FROM stock WHERE stock_code = %s", (stock_code,))
     conn.commit()
 
 def delete_stocks(conn, stock_codes: List[str]):
-    """거래 정지 종목 일괄 삭제"""
     if not stock_codes:
         return
     cursor = conn.cursor()
@@ -97,8 +96,27 @@ def delete_stocks(conn, stock_codes: List[str]):
     cursor.execute(f"DELETE FROM stock WHERE stock_code IN ({placeholders})", stock_codes)
     conn.commit()
 
+# stock_prices 전체 삭제 + 캔들 보관 기간 초과분 삭제
+def cleanup_old_data(conn) -> dict:
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM stock_prices")
+    result = {'stock_prices': cursor.rowcount}
+
+    retention = {'1m': 1, '5m': 1, '30m': 7, '1d': 90, '1w': 365}
+    for interval_type, days in retention.items():
+        cutoff = datetime.now() - timedelta(days=days)
+        cursor.execute(
+            "DELETE FROM chart_candles WHERE interval_type = %s AND candle_time < %s",
+            (interval_type, cutoff)
+        )
+        result[interval_type] = cursor.rowcount
+
+    conn.commit()
+    return result
+
+# 해당 종목의 가장 최근 캔들 조회
 def get_latest_candle(conn, stock_code: str, interval_type: str) -> Optional[dict]:
-    """해당 종목의 가장 최근 캔들 조회"""
     cursor = conn.cursor()
     query = """
     SELECT candle_time, open_price, high_price, low_price, close_price, volume

@@ -121,29 +121,35 @@ services:
       - amagetdon-network
 
   # Stock Collector Service
-  # network_mode: host 사용 - 한투 API 외부 접속 필요
-  # EC2 Linux: localhost로 MySQL/Redis 접근
-  # 로컬 Windows: host.docker.internal 또는 localhost (포트 포워딩됨)
+  # bridge 네트워크 + extra_hosts로 외부 API 접속 및 내부 서비스 접근
   collector:
     build:
       context: ./AMAGETDON-Collector
       dockerfile: Dockerfile
     container_name: amagetdon-collector
     environment:
-      - DB_HOST=localhost
+      - DB_HOST=mysql
       - DB_PORT=3306
       - DB_USER=root
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=amagetdon
-      - REDIS_HOST=localhost
+      - REDIS_HOST=redis
       - REDIS_PORT=6379
       - STOCK_API_KEY=${STOCK_API_KEY}
       - STOCK_API_SECRET=${STOCK_API_SECRET}
       - CANDLE_API_KEY=${CANDLE_API_KEY}
       - CANDLE_API_SECRET=${CANDLE_API_SECRET}
       - TZ=Asia/Seoul
-    network_mode: host
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    networks:
+      - amagetdon-network
 
   # Frontend
   frontend:

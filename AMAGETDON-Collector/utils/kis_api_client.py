@@ -11,7 +11,7 @@ from utils.rate_limiter import HardRateLimiter, retry_on_failure, is_api_error
 
 class KISApiClient:
 
-    def __init__(self, token_manager: TokenManager, rate_limit: int = 18):
+    def __init__(self, token_manager: TokenManager, rate_limit: int = 20):
         self.token_manager = token_manager
         self.base_url = "https://openapi.koreainvestment.com:9443"
 
@@ -27,7 +27,7 @@ class KISApiClient:
     #세션 하나로 유지
     async def _get_session(self) -> aiohttp.ClientSession:
         if self._session is None or self._session.closed:
-            connector = aiohttp.TCPConnector(limit=18) 
+            connector = aiohttp.TCPConnector(limit=20) 
             timeout = aiohttp.ClientTimeout(total=30)
             self._session = aiohttp.ClientSession(connector=connector, timeout=timeout)
         return self._session
