@@ -1,5 +1,7 @@
 package com.amagetdon.user.service;
 
+import com.amagetdon.achievement.entity.Achievement;
+import com.amagetdon.achievement.repository.AchievementRepository;
 import com.amagetdon.common.ErrorCode;
 import com.amagetdon.common.oauth.dto.response.KakaoUserResponse;
 import com.amagetdon.user.dto.request.UserLoginRequest;
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final AchievementRepository achievementRepository;
     private final PasswordEncoder passwordEncoder;
 
     public User validateLogin(UserLoginRequest request) {
@@ -86,10 +89,12 @@ public class UserService {
         user.updatePassword(passwordEncoder.encode(newPassword));
     }
 
-    public String updateCurrentTitle(Long userId, String newTitle) {
+    public String updateCurrentTitle(Long userId, Long achievementId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND_SIMPLE.getMessage()));
-        user.updateCurrentTitle(newTitle);
+        Achievement achievement = achievementRepository.findById(achievementId)
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.ACHIEVEMENT_NOT_FOUND.getMessage()));
+        user.updateCurrentTitle(achievement.getAchievementName());
         return user.getCurrentTitle();
     }
 

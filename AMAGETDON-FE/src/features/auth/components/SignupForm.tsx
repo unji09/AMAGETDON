@@ -75,6 +75,7 @@ const getErrorDetails = (error: string) => {
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]).{8,20}$/
 
 export const SignupForm = () => {
     const navigate = useNavigate()
@@ -93,6 +94,7 @@ export const SignupForm = () => {
     }
 
     const isEmailValid = EMAIL_REGEX.test(form.email)
+    const isPasswordValid = PASSWORD_REGEX.test(form.password)
 
     const isPasswordMatch =
         form.password !== '' &&
@@ -103,7 +105,7 @@ export const SignupForm = () => {
 
     const isValid =
         isEmailValid &&
-        form.password.trim() !== '' &&
+        isPasswordValid &&
         form.passwordConfirm.trim() !== '' &&
         form.nickname.trim() !== '' &&
         isPasswordMatch
@@ -112,7 +114,7 @@ export const SignupForm = () => {
     const getWarningMessage = () => {
         if (form.email && !isEmailValid) return '올바른 이메일 형식을 입력해주세요.'
         if (form.nickname && form.nickname.trim().length < 2) return '닉네임은 2자 이상 입력해주세요.'
-        if (form.password && form.password.length < 4) return '비밀번호는 4자 이상 입력해주세요.'
+        if (form.password && !isPasswordValid) return '비밀번호는 8~20자이며, 영문, 숫자, 특수문자를 각각 1개 이상 포함해야 합니다.'
         return null
     }
 
