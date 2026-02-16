@@ -4,6 +4,7 @@ import com.amagetdon.common.security.SecurityUtil;
 import com.amagetdon.user.controller.swagger.UserControllerSwagger;
 import com.amagetdon.user.dto.request.PasswordResetEmailRequest;
 import com.amagetdon.user.dto.request.UpdateUserTitleRequest;
+import com.amagetdon.user.dto.response.UserResponseDto;
 import com.amagetdon.user.entity.User;
 import com.amagetdon.user.service.PasswordResetService;
 import com.amagetdon.user.service.UserService;
@@ -18,22 +19,22 @@ import jakarta.validation.Valid;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/users")
-public class UserController implements UserControllerSwagger {
+public class UserController{
 
     private final UserService userService;
     private final PasswordResetService passwordResetService;
 
     @GetMapping("/me")
-    public ResponseEntity<User> getUserInfo() {
+    public ResponseEntity<UserResponseDto> getUserInfo() {
         Long userId = SecurityUtil.getCurrentUserId();
-        User user = userService.getUserInfo(userId);
+        UserResponseDto user = userService.getUserInfo(userId);
         return ResponseEntity.ok(user);
     }
 
     @PutMapping("/me")
-    public ResponseEntity<User> updateUserInfo(@RequestBody User updatedInfo) {
+    public ResponseEntity<UserResponseDto> updateUserInfo(@RequestBody User updatedInfo) {
         Long userId = SecurityUtil.getCurrentUserId();
-        User user = userService.updateUserInfo(userId, updatedInfo);
+        UserResponseDto user = userService.updateUserInfo(userId, updatedInfo);
         return ResponseEntity.ok(user);
     }
 
@@ -47,7 +48,7 @@ public class UserController implements UserControllerSwagger {
     @GetMapping("/me/title")
     public ResponseEntity<String> getUserTitle() {
         Long userId = SecurityUtil.getCurrentUserId();
-        String title = userService.getUserInfo(userId).getCurrentTitle();
+        String title = userService.getUserInfo(userId).currentTitle();
 
         return ResponseEntity.ok(title);
     }

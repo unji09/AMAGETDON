@@ -21,10 +21,10 @@ public class RefreshTokenService {
     private final RedisTemplate<Object, Object> redisTemplate;
     private final JwtProperties jwtProperties;
 
-    @Value("${cookie.secure:true}")
+    @Value("${spring.cookie.secure}")
     private boolean cookieSecure;
 
-    @Value("${cookie.same-site:Lax}")
+    @Value("${spring.cookie.same-site}")
     private String cookieSameSite;
 
     private String refreshKey(Long userId) {
@@ -56,15 +56,9 @@ public class RefreshTokenService {
             Object storedTokenObj = redisTemplate.opsForValue().get(key);
             String storedToken = (storedTokenObj != null) ? storedTokenObj.toString() : null;
 
-            // Redis 직렬화 따옴표 방어 코드
-            if (storedToken != null && storedToken.startsWith("\"") && storedToken.endsWith("\"")) {
-                storedToken = storedToken.substring(1, storedToken.length() - 1);
-            }
-
             if (storedToken == null || !storedToken.equals(token)) {
                 throw new SecurityException("로그인 정보가 일치하지 않거나 이미 로그아웃된 계정입니다.");
             }
-
             return userIdStr;
         } catch (ExpiredJwtException e) {
             throw new SecurityException("토큰이 만료되었습니다. 다시 로그인해주세요.");
@@ -78,7 +72,6 @@ public class RefreshTokenService {
     }
 
     public ResponseCookie createRefreshTokenCookie(String refreshToken) {
-        System.out.println("그렇다면 여기니?");
         return ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
                 .secure(cookieSecure)

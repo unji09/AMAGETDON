@@ -4,6 +4,7 @@ import com.amagetdon.common.ErrorCode;
 import com.amagetdon.common.oauth.dto.response.KakaoUserResponse;
 import com.amagetdon.user.dto.request.UserLoginRequest;
 import com.amagetdon.user.dto.request.UserSignupRequest;
+import com.amagetdon.user.dto.response.UserResponseDto;
 import com.amagetdon.user.entity.InvestmentType;
 import com.amagetdon.user.entity.LoginType;
 import com.amagetdon.user.entity.User;
@@ -55,12 +56,13 @@ public class UserService {
         userRepository.delete(user);
     }
 
-    public User getUserInfo(Long userId) {
-        return userRepository.findById(userId)
+    public UserResponseDto getUserInfo(Long userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND_SIMPLE.getMessage()));
+        return result(user);
     }
 
-    public User updateUserInfo(Long userId, User updatedInfo) {
+    public UserResponseDto updateUserInfo(Long userId, User updatedInfo) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND_SIMPLE.getMessage()));
 
@@ -75,7 +77,7 @@ public class UserService {
 
         user.updateUser(email, password, nickname);
 
-        return user;
+        return result(user);
     }
 
     public void updatePassword(String email, String newPassword) {
@@ -141,5 +143,21 @@ public class UserService {
                 .orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND_SIMPLE.getMessage()));
 
         user.updateInvestmentType(investmentType);
+    }
+
+
+    public UserResponseDto result(User user){
+        UserResponseDto result = UserResponseDto.builder()
+                .userId(String.valueOf(user.getUserId()))
+                .email(user.getEmail())
+                .nickname(user.getNickname())
+                .investmentType(user.getInvestmentType() != null ? user.getInvestmentType().name() : null)
+                .loginType(user.getLoginType() != null ? user.getLoginType().name() : null)
+                .socialId(user.getSocialId() != null ? user.getSocialId() : null)
+                .currentTitle(user.getCurrentTitle() != null ? user.getCurrentTitle() : null)
+                .totalPoints(user.getTotalPoints())
+                .balance(user.getBalance())
+                .build();
+        return result;
     }
 }

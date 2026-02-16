@@ -20,7 +20,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        String path = request.getRequestURI();
+        String path = request.getServletPath();
         // 로그인, 회원가입 API는 필터링하지 않음
         return path.startsWith("/oauth")
                 || path.startsWith("/auth")
