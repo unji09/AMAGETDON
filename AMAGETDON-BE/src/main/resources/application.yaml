@@ -30,6 +30,10 @@ spring:
     access-token-expiration-ms: 1800000
     refresh-token-expiration-ms: 1209600000
 
+  cookie:
+    secure: false
+    same-site: Lax
+
   mail:
     host: smtp.gmail.com
     port: 587
