@@ -52,7 +52,7 @@ export const AchievementDetailModal = ({
         if (loading || isCurrentTitle) return;
         setLoading(true);
         try {
-            await updateUserTitle(achievementName);
+            await updateUserTitle(achievement.achievementId);
             onTitleChanged(achievementName);
             setToastMsg(`칭호가 "${achievementName}"(으)로 변경되었습니다.`);
             // 헤더 칭호 갱신

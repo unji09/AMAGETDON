@@ -56,7 +56,7 @@ public class UserController{
     @PutMapping("/me/title")
     public ResponseEntity<String> updateUserTitle(@RequestBody UpdateUserTitleRequest request) {
         Long userId = SecurityUtil.getCurrentUserId();
-        String updatedTitle = userService.updateCurrentTitle(userId, request.newTitle());
+        String updatedTitle = userService.updateCurrentTitle(userId, request.achievementId());
         return ResponseEntity.ok(updatedTitle);
     }
 

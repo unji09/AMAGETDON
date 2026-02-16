@@ -16,8 +16,8 @@ export const getUserTitle = async (): Promise<string> => {
 };
 
 /** 칭호 변경 */
-export const updateUserTitle = async (newTitle: string): Promise<string> => {
-    const response = await apiClient.put<string>('/users/me/title', { newTitle });
+export const updateUserTitle = async (achievementId: number): Promise<string> => {
+    const response = await apiClient.put<string>('/users/me/title', { achievementId });
     return response.data;
 };
 
