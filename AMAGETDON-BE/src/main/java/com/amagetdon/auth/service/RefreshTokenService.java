@@ -59,7 +59,6 @@ public class RefreshTokenService {
             if (storedToken == null || !storedToken.equals(token)) {
                 throw new SecurityException("로그인 정보가 일치하지 않거나 이미 로그아웃된 계정입니다.");
             }
-
             return userIdStr;
         } catch (ExpiredJwtException e) {
             throw new SecurityException("토큰이 만료되었습니다. 다시 로그인해주세요.");
@@ -73,7 +72,6 @@ public class RefreshTokenService {
     }
 
     public ResponseCookie createRefreshTokenCookie(String refreshToken) {
-        System.out.println("그렇다면 여기니?");
         return ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
                 .secure(cookieSecure)

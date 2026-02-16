@@ -56,10 +56,8 @@ public class JwtTokenProvider {
         try {
             parseClaims(token);
             return false;
-        } catch (ExpiredJwtException e) {
-            return true;
         } catch (Exception e) {
-            return false;
+            return true;
         }
     }
 
