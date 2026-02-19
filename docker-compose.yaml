@@ -109,7 +109,6 @@ services:
       - MYSQL_USER=root
       - MYSQL_PASSWORD=${DB_PASSWORD}
       - MYSQL_DATABASE=amagetdon
-      - GMS_API_KEY=${GMS_API_KEY}
       - TZ=Asia/Seoul
     depends_on:
       mysql:
@@ -120,7 +119,7 @@ services:
     networks:
       - amagetdon-network
     volumes:
-      - ./fastapi:/app
+      - ./AMAGETDON-FastAPI:/app
       - ./backup:/app/backup
 
   # Stock Collector Service
