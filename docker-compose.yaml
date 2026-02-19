@@ -109,7 +109,6 @@ services:
       - MYSQL_USER=root
       - MYSQL_PASSWORD=${DB_PASSWORD}
       - MYSQL_DATABASE=amagetdon
-      - GMS_API_KEY=${GMS_API_KEY}
       - TZ=Asia/Seoul
     depends_on:
       mysql:
@@ -119,6 +118,9 @@ services:
     restart: unless-stopped
     networks:
       - amagetdon-network
+    volumes:
+      - ./AMAGETDON-FastAPI:/app
+      - ./backup:/app/backup
 
   # Stock Collector Service
   # bridge 네트워크 + extra_hosts로 외부 API 접속 및 내부 서비스 접근

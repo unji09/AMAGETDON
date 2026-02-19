@@ -8,9 +8,6 @@ class Settings(BaseSettings):
     mysql_password: str
     mysql_database: str
 
-    # GMS (Gemini)
-    gms_api_key: str
-
     class Config:
         env_file = ".env"
 
