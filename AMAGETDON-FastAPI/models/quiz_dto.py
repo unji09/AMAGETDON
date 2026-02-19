@@ -29,15 +29,15 @@ class QuizGenerateResponse(BaseModel):
     generated_count: int
     cached_total: int
 
-# GMS API 응답 파싱용
+# 퀴즈 데이터 모델
 class ChoiceData(BaseModel):
     """객관식 선택지 데이터"""
     choice_text: str
     choice_no: int
     is_answer: bool
 
-class GmsQuizData(BaseModel):
-    """GMS API로부터 생성된 퀴즈 데이터"""
+class LocalQuizData(BaseModel):
+    """로컬 CSV 파일에서 읽어온 퀴즈 데이터"""
     quiz_type: QuizType
     quiz_content: str
     answer_ox: Optional[bool] = None
