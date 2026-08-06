@@ -1,0 +1,42 @@
+services:
+  mysql:
+    ports: !override
+      - "127.0.0.1:3306:3306"
+    restart: unless-stopped
+
+  redis:
+    ports: !override
+      - "127.0.0.1:6379:6379"
+    restart: unless-stopped
+
+  backend:
+    ports: !reset null
+    environment: !override
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MY_EMAIL_PASSWORD=${MY_EMAIL_PASSWORD}
+      - REST_KAKAO_API_KEY=${REST_KAKAO_API_KEY}
+      - OPENVIDU_SECRET=${OPENVIDU_SECRET}
+      - REDIRECT_URL=${REDIRECT_URL}
+      - TZ=Asia/Seoul
+
+  fastapi:
+    ports: !reset null
+    volumes: !override
+      - ./backup:/app/backup
+
+  collector:
+    network_mode: host
+    networks: !reset null
+    extra_hosts: !reset null
+    environment:
+      - DB_HOST=localhost
+      - REDIS_HOST=localhost
+      - KIS_HTS_ID=${KIS_HTS_ID}
+
+  frontend:
+    build:
+      args:
+        - VITE_KAKAO_JS_KEY=${VITE_KAKAO_JS_KEY}
