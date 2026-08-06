@@ -12,7 +12,7 @@ export const useKakaoLogin = () => {
         }
 
         Kakao.Auth.authorize({
-            redirectUri: "http://localhost:5173/oauth/kakao",
+            redirectUri: `${window.location.origin}/oauth/kakao`,
         });
     };
 
