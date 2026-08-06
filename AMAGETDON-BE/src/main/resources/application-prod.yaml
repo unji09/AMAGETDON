@@ -42,5 +42,8 @@ springdoc:
   api-docs:
     enabled: false
 
+server:
+  forward-headers-strategy: framework
+
 fastapi:
   url: http://fastapi:8000
