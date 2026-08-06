@@ -13,6 +13,7 @@ services:
     ports: !reset null
     environment: !override
       - SPRING_PROFILES_ACTIVE=prod
+      - JPA_DDL_AUTO=${JPA_DDL_AUTO:-validate}
       - DB_PASSWORD=${DB_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
       - MAIL_USERNAME=${MAIL_USERNAME}
