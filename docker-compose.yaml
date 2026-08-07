@@ -176,9 +176,6 @@ services:
       - "443:443"
     environment:
       - SERVER_DOMAIN=${DOMAIN:-localhost}
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
     depends_on:
       - frontend
       - backend
@@ -186,19 +183,6 @@ services:
     restart: unless-stopped
     networks:
       - amagetdon-network
-
-  # Certbot (SSL 인증서 발급 및 갱신 - EC2 프로덕션용)
-  certbot:
-    image: certbot/certbot
-    container_name: amagetdon-certbot
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-    networks:
-      - amagetdon-network
-    profiles:
-      - production
 
 volumes:
   mysql-data:

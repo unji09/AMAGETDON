@@ -33,7 +33,7 @@ kakao:
   redirect-uri: ${REDIRECT_URL}
 
 openvidu:
-  url: http://openvidu:4443/
+  url: ${OPENVIDU_URL:http://openvidu:4443/}
   secret: ${OPENVIDU_SECRET}
 
 springdoc:
