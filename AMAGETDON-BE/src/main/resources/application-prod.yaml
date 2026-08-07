@@ -45,5 +45,14 @@ springdoc:
 server:
   forward-headers-strategy: framework
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    tags:
+      application: amagetdon-be
+
 fastapi:
   url: http://fastapi:8000
