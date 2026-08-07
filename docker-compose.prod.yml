@@ -12,8 +12,6 @@ services:
   openvidu:
     image: openvidu/openvidu-server:2.32.0
     entrypoint: ["/usr/local/bin/entrypoint.sh"]
-    network_mode: host
-    networks: !reset null
     ports: !reset null
     environment: !override
       - OPENVIDU_SECRET=${OPENVIDU_SECRET}
@@ -21,7 +19,7 @@ services:
       - HTTPS_PORT=443
       - SERVER_SSL_ENABLED=false
       - SERVER_PORT=5443
-      - KMS_URIS=["ws://localhost:8888/kurento"]
+      - KMS_URIS=["ws://kms:8888/kurento"]
       - COTURN_IP=${COTURN_IP:-${DOMAIN}}
       - COTURN_PORT=3478
       - OPENVIDU_RECORDING=false
@@ -35,19 +33,15 @@ services:
     image: kurento/kurento-media-server:7.3.0
     container_name: amagetdon-kms
     restart: always
-    network_mode: host
     ulimits:
       nofile:
         soft: 65536
         hard: 65536
-    environment:
-      - KMS_MIN_PORT=40000
-      - KMS_MAX_PORT=57000
+    networks:
+      - amagetdon-network
 
   backend:
     ports: !reset null
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     environment: !override
       - SPRING_PROFILES_ACTIVE=prod
       - JPA_DDL_AUTO=${JPA_DDL_AUTO:-validate}
@@ -56,7 +50,7 @@ services:
       - MAIL_USERNAME=${MAIL_USERNAME}
       - MY_EMAIL_PASSWORD=${MY_EMAIL_PASSWORD}
       - REST_KAKAO_API_KEY=${REST_KAKAO_API_KEY}
-      - OPENVIDU_URL=http://host.docker.internal:5443/
+      - OPENVIDU_URL=http://openvidu:5443/
       - OPENVIDU_SECRET=${OPENVIDU_SECRET}
       - REDIRECT_URL=${REDIRECT_URL}
       - TZ=Asia/Seoul
@@ -81,5 +75,5 @@ services:
         - VITE_KAKAO_JS_KEY=${VITE_KAKAO_JS_KEY}
 
   nginx:
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    depends_on:
+      - openvidu
