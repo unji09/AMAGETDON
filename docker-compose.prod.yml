@@ -73,7 +73,3 @@ services:
     build:
       args:
         - VITE_KAKAO_JS_KEY=${VITE_KAKAO_JS_KEY}
-
-  nginx:
-    depends_on:
-      - openvidu
