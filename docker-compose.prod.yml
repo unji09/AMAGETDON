@@ -11,9 +11,9 @@ services:
 
   openvidu:
     image: openvidu/openvidu-server:2.32.0
+    container_name: amagetdon-openvidu
     entrypoint: ["/usr/local/bin/entrypoint.sh"]
-    ports: !reset null
-    environment: !override
+    environment:
       - OPENVIDU_SECRET=${OPENVIDU_SECRET}
       - DOMAIN_OR_PUBLIC_IP=${DOMAIN}
       - HTTPS_PORT=443
@@ -23,11 +23,14 @@ services:
       - COTURN_IP=${COTURN_IP:-${DOMAIN}}
       - COTURN_PORT=3478
       - OPENVIDU_RECORDING=false
-    volumes: !override
+    volumes:
       - ./openvidu/coturn:/run/secrets/coturn
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - kms
+    restart: unless-stopped
+    networks:
+      - amagetdon-network
 
   kms:
     image: kurento/kurento-media-server:7.3.0
@@ -41,8 +44,21 @@ services:
       - amagetdon-network
 
   backend:
-    ports: !reset null
-    environment: !override
+    build:
+      context: ./AMAGETDON-BE
+      dockerfile: Dockerfile
+    container_name: amagetdon-backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      openvidu:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - amagetdon-network
+    environment:
       - SPRING_PROFILES_ACTIVE=prod
       - JPA_DDL_AUTO=${JPA_DDL_AUTO:-validate}
       - DB_PASSWORD=${DB_PASSWORD}
