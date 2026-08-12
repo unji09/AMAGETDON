@@ -122,9 +122,74 @@ services:
       - ./AMAGETDON-FastAPI:/app
       - ./backup:/app/backup
 
+  # HDFS NameNode (MySQL 에서 삭제되는 시세/캔들 데이터의 보관소)
+  namenode:
+    image: apache/hadoop:3.4.1
+    container_name: amagetdon-namenode
+    hostname: namenode
+    user: root
+    command:
+      - /bin/bash
+      - -c
+      - |
+        if [ ! -d /opt/hadoop/data/nameNode/current ]; then
+          hdfs namenode -format -force -nonInteractive
+        fi
+        exec hdfs namenode
+    environment:
+      - HDFS_NAMENODE_USER=root
+      - CORE-SITE.XML_fs.defaultFS=hdfs://namenode:8020
+      - HDFS-SITE.XML_dfs.replication=1
+      - HDFS-SITE.XML_dfs.namenode.name.dir=/opt/hadoop/data/nameNode
+      - HDFS-SITE.XML_dfs.namenode.rpc-bind-host=0.0.0.0
+      - HDFS-SITE.XML_dfs.namenode.http-bind-host=0.0.0.0
+      - HDFS-SITE.XML_dfs.webhdfs.enabled=true
+      - HDFS-SITE.XML_dfs.permissions.enabled=false
+      - TZ=Asia/Seoul
+    ports:
+      - "9870:9870"
+    volumes:
+      - hdfs-namenode:/opt/hadoop/data
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9870"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - amagetdon-network
+
+  # HDFS DataNode
+  datanode:
+    image: apache/hadoop:3.4.1
+    container_name: amagetdon-datanode
+    hostname: datanode
+    # ponytail: namenode 와 같은 이유로 root (위 주석 참고)
+    user: root
+    command: ["hdfs", "datanode"]
+    environment:
+      - HDFS_DATANODE_USER=root
+      - CORE-SITE.XML_fs.defaultFS=hdfs://namenode:8020
+      - HDFS-SITE.XML_dfs.replication=1
+      - HDFS-SITE.XML_dfs.datanode.data.dir=/opt/hadoop/data/dataNode
+      - HDFS-SITE.XML_dfs.webhdfs.enabled=true
+      - HDFS-SITE.XML_dfs.permissions.enabled=false
+      - TZ=Asia/Seoul
+    volumes:
+      - hdfs-datanode:/opt/hadoop/data
+    depends_on:
+      namenode:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - amagetdon-network
+
   # Stock Collector Service
   # bridge 네트워크 + extra_hosts로 외부 API 접속 및 내부 서비스 접근
   collector:
+    profiles:
+      - collect
     build:
       context: ./AMAGETDON-Collector
       dockerfile: Dockerfile
@@ -188,6 +253,8 @@ volumes:
   mysql-data:
   redis-data:
   openvidu-recordings:
+  hdfs-namenode:
+  hdfs-datanode:
 
 networks:
   amagetdon-network:
