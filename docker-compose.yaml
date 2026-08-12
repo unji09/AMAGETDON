@@ -165,7 +165,6 @@ services:
     image: apache/hadoop:3.4.1
     container_name: amagetdon-datanode
     hostname: datanode
-    # ponytail: namenode 와 같은 이유로 root (위 주석 참고)
     user: root
     command: ["hdfs", "datanode"]
     environment:
@@ -214,37 +213,6 @@ services:
         condition: service_healthy
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    restart: unless-stopped
-    networks:
-      - amagetdon-network
-
-  # Frontend
-  frontend:
-    build:
-      context: ./AMAGETDON-FE
-      dockerfile: Dockerfile
-    container_name: amagetdon-frontend
-    expose:
-      - "3000"
-    restart: unless-stopped
-    networks:
-      - amagetdon-network
-
-  # Nginx with SSL (자체 서명 인증서 자동 생성)
-  nginx:
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile
-    container_name: amagetdon-nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      - SERVER_DOMAIN=${DOMAIN:-localhost}
-    depends_on:
-      - frontend
-      - backend
-      - fastapi
     restart: unless-stopped
     networks:
       - amagetdon-network

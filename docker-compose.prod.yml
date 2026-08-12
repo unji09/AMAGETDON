@@ -80,7 +80,8 @@ services:
       - HDFS-SITE.XML_dfs.datanode.http.address=127.0.0.1:9864
       - HDFS-SITE.XML_dfs.datanode.ipc.address=127.0.0.1:9867
 
-  # 로컬 기본 기동에서만 빠지는 서비스들. 운영에서는 전부 떠야 한다.
+  # 로컬에서는 collect 프로파일로만 뜨지만 운영에서는 항상 떠야 한다.
+  # 한투증 API 호출 때문에 host 네트워크를 쓴다 (e7ba47b)
   collector:
     profiles: !reset null
     network_mode: host
@@ -92,13 +93,35 @@ services:
       - KIS_HTS_ID=${KIS_HTS_ID}
 
   frontend:
-    profiles: !reset null
     build:
+      context: ./AMAGETDON-FE
+      dockerfile: Dockerfile
       args:
         - VITE_KAKAO_JS_KEY=${VITE_KAKAO_JS_KEY}
+    container_name: amagetdon-frontend
+    expose:
+      - "3000"
+    restart: unless-stopped
+    networks:
+      - amagetdon-network
 
   nginx:
-    profiles: !reset null
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: amagetdon-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - SERVER_DOMAIN=${DOMAIN:-localhost}
+    depends_on:
+      - frontend
+      - backend
+      - fastapi
+    restart: unless-stopped
+    networks:
+      - amagetdon-network
 
   jenkins:
     build:
