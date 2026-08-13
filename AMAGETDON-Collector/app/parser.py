@@ -264,10 +264,12 @@ class StockParser:
             await session.close()
             await api_client.close()
 
-        # 거래 정지 종목 삭제
         if stopped_stocks:
-            delete_stocks(self.conn, stopped_stocks)
-            logger.info(f"거래 정지 종목 {len(stopped_stocks)}개 삭제 완료")
+            skipped = delete_stocks(self.conn, stopped_stocks)
+            deleted_count = len(stopped_stocks) - len(skipped)
+            logger.info(f"거래 정지 종목 {deleted_count}개 삭제 완료")
+            if skipped:
+                logger.warning(f"사용자 데이터 존재로 삭제 스킵: {skipped}")
 
         elapsed = time.time() - start_time
         logger.info(f"업종 코드 수집 완료: {success_count}성공, {fail_count}실패, {len(stopped_stocks)}거래정지, {total_retries}재시도, {elapsed:.1f}초")
