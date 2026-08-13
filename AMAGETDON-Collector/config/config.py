@@ -43,5 +43,6 @@ COLLECTION_CONFIG = {
 
 REDIS_KEYS = {
     'top_10_stocks': 'kis:top_10_stocks',
-    'user_stocks': 'kis:user_stocks'
+    'user_stocks': 'kis:user_stocks',
+    'stock_price': 'stock:price'
 }

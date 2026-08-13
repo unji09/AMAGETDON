@@ -8,7 +8,7 @@ from core.token_manager import TokenManager
 from models.dto import StockDTO, CandleDTO
 from utils.logger import logger
 from utils.helpers import safe_int, safe_float
-from utils.db import get_db_connection, save_stock_price, save_candle
+from utils.db import get_db_connection, save_stock_price, save_candle, cache_stock_price
 
 class WebSocketCollector:
 
@@ -189,6 +189,11 @@ class WebSocketCollector:
             save_stock_price(self.conn, stock)
         except Exception as e:
             logger.error(f"DB 저장 실패 ({stock.stock_code}): {e}")
+            return
+        try:
+            cache_stock_price(self.token_manager.redis_client, stock)
+        except Exception as e:
+            logger.warning(f"Redis 캐시 저장 실패 ({stock.stock_code}): {e}")
     
     def on_error(self, ws, error):
         logger.error(f"WebSocket 오류: {error}")

@@ -141,7 +141,7 @@ async def check_and_initialize(rate_limit: int = 20):
 #REST 수집(5초마다) + 새 유저 종목 분봉 보정 + 분봉 생성
 async def run_rest_collection_loop():
     from utils.rate_limiter import BatchRetryStats
-    from utils.db import get_db_connection, save_stock_price
+    from utils.db import get_db_connection, save_stock_price, cache_stock_price
     from config.config import REDIS_KEYS
 
     global collection_active, token_manager, rest_candle_builder, shared_limiter
@@ -206,6 +206,11 @@ async def run_rest_collection_loop():
                         except Exception as e:
                             logger.error(f"REST DB 저장 실패 ({stock_code}): {e}")
                             batch_stats.record_fail()
+
+                        try:
+                            cache_stock_price(token_manager.redis_client, dto)
+                        except Exception as e:
+                            logger.warning(f"Redis 캐시 저장 실패 ({stock_code}): {e}")
                     else:
                         batch_stats.record_fail()
 
@@ -412,7 +417,12 @@ async def stop_collection(rate_limit: int = 20):
     logger.info(f"일봉 수집: {result['success_count']}성공, {result['fail_count']}실패, {retries}재시도, {result['elapsed_time']:.1f}초")
     candle_collector.close()
 
-    from utils.db import cleanup_old_data
+    from utils.db import save_closing_prices, cleanup_old_data
+    closing_conn = pymysql.connect(**DB_CONFIG)
+    closing_count = save_closing_prices(closing_conn)
+    closing_conn.close()
+    logger.info(f"종가 저장: {closing_count}건")
+
     cleanup_conn = pymysql.connect(**DB_CONFIG)
     cleanup_result = cleanup_old_data(cleanup_conn)
     cleanup_conn.close()
