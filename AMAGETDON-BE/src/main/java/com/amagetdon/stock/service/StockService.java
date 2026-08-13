@@ -2,30 +2,35 @@ package com.amagetdon.stock.service;
 
 import com.amagetdon.common.ErrorCode;
 import com.amagetdon.stock.dto.CandleDto;
+import com.amagetdon.stock.dto.StockPriceDto;
 import com.amagetdon.stock.dto.response.CandleChartResponse;
 import com.amagetdon.stock.dto.response.StockDetailResponse;
 import com.amagetdon.stock.dto.response.StockSearchResponse;
 import com.amagetdon.stock.dto.response.VolumeRankingResponse;
 import com.amagetdon.stock.entity.ChartCandle;
 import com.amagetdon.stock.entity.IntervalType;
+import com.amagetdon.stock.entity.Stock;
 import com.amagetdon.stock.repository.ChartCandleRepository;
-import com.amagetdon.stock.repository.StockQueryRepository;
 import com.amagetdon.stock.repository.StockRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class StockService {
-    private final StockQueryRepository stockQueryRepository;
     private final ChartCandleRepository chartCandleRepository;
     private final StockRepository stockRepository;
+    private final StockPriceCacheService stockPriceCacheService;
     private final RedisTemplate<String, String> redisTemplate;
 
     private static final String USER_STOCKS_KEY = "kis:user_stocks";
@@ -36,12 +41,17 @@ public class StockService {
         redisTemplate.opsForValue().set(
                 USER_STOCKS_KEY + ":" + stockCode,
                 stockCode,
-                5,
+                1,
                 TimeUnit.MINUTES
         );
 
-        return stockQueryRepository.findStockDetail(stockCode)
+        Stock stock = stockRepository.findById(stockCode)
                 .orElseThrow(() -> new EntityNotFoundException(ErrorCode.STOCK_INFO_NOT_FOUND.getMessage()));
+
+        StockPriceDto price = stockPriceCacheService.getLatestPriceSync(stockCode)
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRICE_NOT_AVAILABLE.getMessage()));
+
+        return StockDetailResponse.from(stock, price);
     }
 
     public CandleChartResponse getCandleChart(String stockCode, String period) {
@@ -88,7 +98,13 @@ public class StockService {
             return List.of();
         }
 
-        return stockQueryRepository.findTopStocks(stockCodes);
+        return IntStream.range(0, stockCodes.size())
+                .mapToObj(i -> stockRepository.findById(stockCodes.get(i))
+                        .flatMap(stock -> stockPriceCacheService.getLatestPrice(stockCodes.get(i))
+                                .map(price -> VolumeRankingResponse.from(i + 1, stock, price)))
+                        .orElse(null))
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     public List<StockSearchResponse> searchStocks(String keyword) {

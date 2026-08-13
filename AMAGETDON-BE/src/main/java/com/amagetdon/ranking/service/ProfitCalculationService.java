@@ -1,8 +1,8 @@
 package com.amagetdon.ranking.service;
 
+import com.amagetdon.stock.dto.StockPriceDto;
 import com.amagetdon.stock.entity.Stock;
-import com.amagetdon.stock.entity.StockPrice;
-import com.amagetdon.stock.repository.StockPriceRepository;
+import com.amagetdon.stock.service.StockPriceCacheService;
 import com.amagetdon.trading.entity.StockHolding;
 import com.amagetdon.trading.entity.Transaction;
 import com.amagetdon.trading.entity.TransactionType;
@@ -23,7 +23,7 @@ import java.util.Optional;
 public class ProfitCalculationService {
 
     private final TransactionRepository transactionRepository;
-    private final StockPriceRepository stockPriceRepository;
+    private final StockPriceCacheService stockPriceCacheService;
     private final AccountRepository accountRepository;
 
     // 특정 유저의 순수 투자 수익을 계산(수익 = 보유주식 평가액 + (매도 총액 - 매수 총액)
@@ -64,11 +64,11 @@ public class ProfitCalculationService {
 
             Stock stock = holding.getStock();
 
-            Optional<StockPrice> latestPrice = stockPriceRepository
-                    .findTopByStockOrderByCreatedAtDesc(stock);
+            Optional<StockPriceDto> latestPrice = stockPriceCacheService
+                    .getLatestPrice(stock);
 
             if(latestPrice.isPresent()){
-                BigDecimal currentPrice = new BigDecimal(latestPrice.get().getCurrentPrice());
+                BigDecimal currentPrice = new BigDecimal(latestPrice.get().currentPrice());
                 BigDecimal quantity = new BigDecimal(holding.getQuantity());
                 BigDecimal stockValue = currentPrice.multiply(quantity);
 

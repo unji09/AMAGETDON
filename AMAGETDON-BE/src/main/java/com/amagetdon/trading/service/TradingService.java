@@ -3,9 +3,8 @@ package com.amagetdon.trading.service;
 import com.amagetdon.achievement.repository.AchievementRedisRepository;
 import com.amagetdon.achievement.service.AchievementService;
 import com.amagetdon.stock.entity.Stock;
-import com.amagetdon.stock.entity.StockPrice;
-import com.amagetdon.stock.repository.StockPriceRepository;
 import com.amagetdon.stock.repository.StockRepository;
+import com.amagetdon.stock.service.StockPriceCacheService;
 import com.amagetdon.trading.dto.request.TradingRequest;
 import com.amagetdon.trading.dto.response.TradingResponse;
 import com.amagetdon.trading.entity.StockHolding;
@@ -41,7 +40,7 @@ public class TradingService {
 
     private final UserRepository userRepository;
     private final StockRepository stockRepository;
-    private final StockPriceRepository stockPriceRepository;
+    private final StockPriceCacheService stockPriceCacheService;
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
     private final AchievementService achievementService;
@@ -170,10 +169,9 @@ public class TradingService {
     }
 
     private Integer getCurrentPrice(Stock stock) {
-        return stockPriceRepository
-                .findTopByStockOrderByCreatedAtDesc(stock)
-                .map(StockPrice::getCurrentPrice)
-                .map(Integer::parseInt)
+        return stockPriceCacheService
+                .getLatestPrice(stock)
+                .map(data -> Integer.parseInt(data.currentPrice()))
                 .orElseThrow(() -> new IllegalStateException(PRICE_NOT_AVAILABLE.getMessage()));
     }
 

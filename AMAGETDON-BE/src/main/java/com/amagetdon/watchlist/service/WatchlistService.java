@@ -1,10 +1,10 @@
 package com.amagetdon.watchlist.service;
 
 import com.amagetdon.achievement.service.AchievementService;
+import com.amagetdon.stock.dto.StockPriceDto;
 import com.amagetdon.stock.entity.Stock;
-import com.amagetdon.stock.entity.StockPrice;
-import com.amagetdon.stock.repository.StockPriceRepository;
 import com.amagetdon.stock.repository.StockRepository;
+import com.amagetdon.stock.service.StockPriceCacheService;
 import com.amagetdon.user.entity.User;
 import com.amagetdon.user.repository.UserRepository;
 import com.amagetdon.watchlist.dto.response.WatchlistCheckResponse;
@@ -38,7 +38,7 @@ public class WatchlistService {
     private final WatchlistRepository watchlistRepository;
     private final UserRepository userRepository;
     private final StockRepository stockRepository;
-    private final StockPriceRepository stockPriceRepository;
+    private final StockPriceCacheService stockPriceCacheService;
     private final AchievementService achievementService;
     private final RedisTemplate<String, String> redisTemplate;
 
@@ -115,17 +115,13 @@ public class WatchlistService {
     }
 
     private WatchlistItem convertToItem(Watchlist watchlist) {
-        StockPrice latestPrice = getCurrentPrice(watchlist.getStock());
-        Integer currentPrice = Integer.parseInt(latestPrice.getCurrentPrice());
-        BigDecimal changeRate = latestPrice.getChangeRate();
+        StockPriceDto priceData = stockPriceCacheService
+                .getLatestPrice(watchlist.getStock())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, PRICE_NOT_AVAILABLE.getMessage()));
+        Integer currentPrice = Integer.parseInt(priceData.currentPrice());
+        BigDecimal changeRate = priceData.changeRate();
 
         return WatchlistItem.from(watchlist, currentPrice, changeRate);
-    }
-
-    private StockPrice getCurrentPrice(Stock stock) {
-        return stockPriceRepository
-                .findTopByStockOrderByCreatedAtDesc(stock)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, PRICE_NOT_AVAILABLE.getMessage()));
     }
 
     private void validateStockCode(String stockCode) {
