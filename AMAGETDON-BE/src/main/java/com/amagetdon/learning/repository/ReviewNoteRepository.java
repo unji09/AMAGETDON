@@ -7,7 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface ReviewNoteRepository extends JpaRepository<ReviewNote, Long> {
@@ -30,12 +30,6 @@ public interface ReviewNoteRepository extends JpaRepository<ReviewNote, Long> {
             "FROM ReviewNote rn " +
             "WHERE rn.userId = :userId AND rn.quiz.quizId = :quizId")
     boolean existsByUserIdAndQuizId(@Param("userId") Long userId, @Param("quizId") Long quizId);
-    /**
-     * 특정 사용자의 특정 퀴즈 오답노트 조회
-     * 오답노트 풀이 제출 시 사용
-     */
-    @Query("SELECT rn FROM ReviewNote rn WHERE rn.userId = :userId AND rn.quiz.quizId = :quizId")
-    Optional<ReviewNote> findByUserAndQuiz(@Param("userId") Long userId, @Param("quizId") Long quizId);
 
     /**
      * 사용자의 남은 오답노트 개수 조회
@@ -43,4 +37,33 @@ public interface ReviewNoteRepository extends JpaRepository<ReviewNote, Long> {
      */
     @Query("SELECT COUNT(rn) FROM ReviewNote rn WHERE rn.userId = :userId")
     Integer countByUserId(@Param("userId") Long userId);
+
+    /**
+     * 틀린 퀴즈 중 이미 오답노트에 저장된 퀴즈 ID 조회
+     */
+    @Query("""
+        SELECT DISTINCT rn.quiz.quizId
+        FROM ReviewNote rn
+        WHERE rn.userId = :userId
+          AND rn.quiz.quizId IN :quizIds
+        """)
+    Set<Long> findExistingQuizIds(
+            @Param("userId") Long userId,
+            @Param("quizIds") List<Long> quizIds
+    );
+
+    /**
+     * 특정 사용자의 특정 퀴즈 오답노트 전체 조회
+     * 기존 중복 데이터 대응을 위해 List로 반환
+     */
+    @Query("""
+        SELECT rn
+        FROM ReviewNote rn
+        WHERE rn.userId = :userId
+          AND rn.quiz.quizId = :quizId
+        """)
+    List<ReviewNote> findAllByUserAndQuiz(
+            @Param("userId") Long userId,
+            @Param("quizId") Long quizId
+    );
 }

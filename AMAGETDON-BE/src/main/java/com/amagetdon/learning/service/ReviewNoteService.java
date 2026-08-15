@@ -67,9 +67,12 @@ public class ReviewNoteService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 퀴즈입니다"));
 
         // 2. 오답노트에 있는지 확인
-        ReviewNote reviewNote = reviewNoteRepository
-                .findByUserAndQuiz(userId, request.quizId())
-                .orElseThrow(() -> new IllegalArgumentException("오답노트에 없는 문제입니다"));
+        List<ReviewNote> reviewNotes =
+                reviewNoteRepository.findAllByUserAndQuiz(userId, request.quizId());
+
+        if (reviewNotes.isEmpty()) {
+            throw new IllegalArgumentException("오답노트에 없는 문제입니다");
+        }
 
         // 3. 정답 체크
         boolean isCorrect = checkAnswer(quiz, request);
@@ -77,7 +80,7 @@ public class ReviewNoteService {
         // 4. 정답이면 오답노트에서 삭제
         boolean deletedFromReviewNote = false;
         if (isCorrect) {
-            reviewNoteRepository.delete(reviewNote);
+            reviewNoteRepository.deleteAll(reviewNotes);
             deletedFromReviewNote = true;
         }
 
