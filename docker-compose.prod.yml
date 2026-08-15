@@ -25,7 +25,6 @@ services:
       - OPENVIDU_RECORDING=false
     volumes:
       - ./openvidu/coturn:/run/secrets/coturn
-      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - kms
     restart: unless-stopped
@@ -61,9 +60,10 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - JPA_DDL_AUTO=${JPA_DDL_AUTO:-validate}
+      - DB_HOST=mysql
       - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
       - JWT_SECRET=${JWT_SECRET}
-      - MAIL_USERNAME=${MAIL_USERNAME}
       - MY_EMAIL_PASSWORD=${MY_EMAIL_PASSWORD}
       - REST_KAKAO_API_KEY=${REST_KAKAO_API_KEY}
       - OPENVIDU_URL=http://openvidu:5443/

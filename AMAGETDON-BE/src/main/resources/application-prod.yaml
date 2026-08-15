@@ -1,9 +1,4 @@
 spring:
-  datasource:
-    url: jdbc:mysql://mysql:3306/amagetdon?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: root
-    password: ${DB_PASSWORD}
-
   jpa:
     hibernate:
       ddl-auto: ${JPA_DDL_AUTO:validate}
@@ -12,21 +7,12 @@ spring:
       hibernate:
         format_sql: false
 
-  data:
-    redis:
-      host: redis
-      port: 6379
-
   jwt:
     secret-key: ${JWT_SECRET}
 
   cookie:
     secure: true
     same-site: Lax
-
-  mail:
-    username: ${MAIL_USERNAME}
-    password: ${MY_EMAIL_PASSWORD}
 
 kakao:
   rest-api-key: ${REST_KAKAO_API_KEY}
@@ -46,13 +32,6 @@ server:
   forward-headers-strategy: framework
 
 management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,prometheus
   metrics:
     tags:
       application: amagetdon-be
-
-fastapi:
-  url: http://fastapi:8000

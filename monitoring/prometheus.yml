@@ -8,9 +8,9 @@ scrape_configs:
       - targets: ['localhost:9090']
 
   - job_name: backend
-    metrics_path: /api/v1/actuator/prometheus
+    metrics_path: /actuator/prometheus
     static_configs:
-      - targets: ['backend:8080']
+      - targets: ['backend:8081']
 
   - job_name: node
     static_configs:
