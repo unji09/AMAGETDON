@@ -10,6 +10,7 @@ import com.amagetdon.stock.dto.response.VolumeRankingResponse;
 import com.amagetdon.stock.entity.ChartCandle;
 import com.amagetdon.stock.entity.IntervalType;
 import com.amagetdon.stock.entity.Stock;
+import com.amagetdon.stock.entity.StockStatus;
 import com.amagetdon.stock.repository.ChartCandleRepository;
 import com.amagetdon.stock.repository.StockRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -100,6 +101,7 @@ public class StockService {
 
         return IntStream.range(0, stockCodes.size())
                 .mapToObj(i -> stockRepository.findById(stockCodes.get(i))
+                        .filter(stock -> stock.getStockStatus() == StockStatus.ACTIVE)
                         .flatMap(stock -> stockPriceCacheService.getLatestPrice(stockCodes.get(i))
                                 .map(price -> VolumeRankingResponse.from(i + 1, stock, price)))
                         .orElse(null))
@@ -112,7 +114,7 @@ public class StockService {
             throw new IllegalArgumentException(ErrorCode.KEYWORD_TOO_SHORT.getMessage());
         }
 
-        return stockRepository.findByStockNameContaining(keyword)
+        return stockRepository.findByStockNameContainingAndStockStatus(keyword, StockStatus.ACTIVE)
                 .stream()
                 .map(s -> new StockSearchResponse(s.getStockCode(), s.getStockName()))
                 .toList();

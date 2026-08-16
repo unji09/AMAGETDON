@@ -3,6 +3,7 @@ package com.amagetdon.trading.service;
 import com.amagetdon.achievement.repository.AchievementRedisRepository;
 import com.amagetdon.achievement.service.AchievementService;
 import com.amagetdon.stock.entity.Stock;
+import com.amagetdon.stock.entity.StockStatus;
 import com.amagetdon.stock.repository.StockRepository;
 import com.amagetdon.stock.service.StockPriceCacheService;
 import com.amagetdon.trading.dto.request.TradingRequest;
@@ -62,9 +63,11 @@ public class TradingService {
         validateQuantity(request.quantity());
         validateStockCode(request.stockCode());
 
-        // 사용자 및 주식 정보 조회
         User user = findUser(userId);
         Stock stock = findStock(request.stockCode());
+        if (stock.getStockStatus() != StockStatus.ACTIVE) {
+            throw new IllegalStateException(STOCK_NOT_TRADABLE.getMessage());
+        }
         Integer currentPrice = getCurrentPrice(stock);
 
         // 거래 생성

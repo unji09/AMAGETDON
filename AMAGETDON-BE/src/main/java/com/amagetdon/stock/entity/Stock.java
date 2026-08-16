@@ -23,6 +23,10 @@ public class Stock {
     @Column(nullable = false)
     private MarketType marketType;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private StockStatus stockStatus = StockStatus.ACTIVE;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sector_code")
     private Sector sector;
