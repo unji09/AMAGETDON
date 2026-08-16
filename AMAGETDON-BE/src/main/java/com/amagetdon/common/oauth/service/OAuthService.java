@@ -22,9 +22,9 @@ public class OAuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
 
-    public TokenResponse loginWithCode(String code) {
+    public TokenResponse loginWithCode(String code, String redirectUri) {
 
-        String kakaoAccessToken = kakaoTokenClient.getAccessToken(code);
+        String kakaoAccessToken = kakaoTokenClient.getAccessToken(code, redirectUri);
 
         KakaoUserResponse userInfo = kakaoOAuthClient.getUserInfo(kakaoAccessToken);
 

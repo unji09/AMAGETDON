@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   # MySQL
@@ -48,53 +47,6 @@ services:
     networks:
       - amagetdon-network
 
-  # OpenVidu Server
-  openvidu:
-    image: openvidu/openvidu-dev:latest
-    container_name: amagetdon-openvidu
-    ports:
-      - "4443:4443"
-    environment:
-      - OPENVIDU_SECRET=${OPENVIDU_SECRET}
-      - DOMAIN_OR_PUBLIC_IP=${DOMAIN:-localhost}
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - openvidu-recordings:/opt/openvidu/recordings
-    restart: unless-stopped
-    networks:
-      - amagetdon-network
-
-  # Backend
-  backend:
-    build:
-      context: ./AMAGETDON-BE
-      dockerfile: Dockerfile
-    container_name: amagetdon-backend
-    ports:
-      - "8080:8080"
-    environment:
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_USER=root
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=amagetdon
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - JWT_SECRET=${JWT_SECRET}
-      - OPENVIDU_URL=http://openvidu:4443/
-      - OPENVIDU_SECRET=${OPENVIDU_SECRET}
-      - TZ=Asia/Seoul
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      openvidu:
-        condition: service_started
-    restart: unless-stopped
-    networks:
-      - amagetdon-network
-
   # FastAPI Quiz Service
   fastapi:
     build:
@@ -122,9 +74,73 @@ services:
       - ./AMAGETDON-FastAPI:/app
       - ./backup:/app/backup
 
+  # HDFS NameNode (MySQL 에서 삭제되는 시세/캔들 데이터의 보관소)
+  namenode:
+    image: apache/hadoop:3.4.1
+    container_name: amagetdon-namenode
+    hostname: namenode
+    user: root
+    command:
+      - /bin/bash
+      - -c
+      - |
+        if [ ! -d /opt/hadoop/data/nameNode/current ]; then
+          hdfs namenode -format -force -nonInteractive
+        fi
+        exec hdfs namenode
+    environment:
+      - HDFS_NAMENODE_USER=root
+      - CORE-SITE.XML_fs.defaultFS=hdfs://namenode:8020
+      - HDFS-SITE.XML_dfs.replication=1
+      - HDFS-SITE.XML_dfs.namenode.name.dir=/opt/hadoop/data/nameNode
+      - HDFS-SITE.XML_dfs.namenode.rpc-bind-host=0.0.0.0
+      - HDFS-SITE.XML_dfs.namenode.http-bind-host=0.0.0.0
+      - HDFS-SITE.XML_dfs.webhdfs.enabled=true
+      - HDFS-SITE.XML_dfs.permissions.enabled=false
+      - TZ=Asia/Seoul
+    ports:
+      - "9870:9870"
+    volumes:
+      - hdfs-namenode:/opt/hadoop/data
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9870"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - amagetdon-network
+
+  # HDFS DataNode
+  datanode:
+    image: apache/hadoop:3.4.1
+    container_name: amagetdon-datanode
+    hostname: datanode
+    user: root
+    command: ["hdfs", "datanode"]
+    environment:
+      - HDFS_DATANODE_USER=root
+      - CORE-SITE.XML_fs.defaultFS=hdfs://namenode:8020
+      - HDFS-SITE.XML_dfs.replication=1
+      - HDFS-SITE.XML_dfs.datanode.data.dir=/opt/hadoop/data/dataNode
+      - HDFS-SITE.XML_dfs.webhdfs.enabled=true
+      - HDFS-SITE.XML_dfs.permissions.enabled=false
+      - TZ=Asia/Seoul
+    volumes:
+      - hdfs-datanode:/opt/hadoop/data
+    depends_on:
+      namenode:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - amagetdon-network
+
   # Stock Collector Service
   # bridge 네트워크 + extra_hosts로 외부 API 접속 및 내부 서비스 접근
   collector:
+    profiles:
+      - collect
     build:
       context: ./AMAGETDON-Collector
       dockerfile: Dockerfile
@@ -153,57 +169,11 @@ services:
     networks:
       - amagetdon-network
 
-  # Frontend
-  frontend:
-    build:
-      context: ./AMAGETDON-FE
-      dockerfile: Dockerfile
-    container_name: amagetdon-frontend
-    expose:
-      - "3000"
-    restart: unless-stopped
-    networks:
-      - amagetdon-network
-
-  # Nginx with SSL (자체 서명 인증서 자동 생성)
-  nginx:
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile
-    container_name: amagetdon-nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      - SERVER_DOMAIN=${DOMAIN:-localhost}
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    depends_on:
-      - frontend
-      - backend
-      - fastapi
-    restart: unless-stopped
-    networks:
-      - amagetdon-network
-
-  # Certbot (SSL 인증서 발급 및 갱신 - EC2 프로덕션용)
-  certbot:
-    image: certbot/certbot
-    container_name: amagetdon-certbot
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-    networks:
-      - amagetdon-network
-    profiles:
-      - production
-
 volumes:
   mysql-data:
   redis-data:
-  openvidu-recordings:
+  hdfs-namenode:
+  hdfs-datanode:
 
 networks:
   amagetdon-network:

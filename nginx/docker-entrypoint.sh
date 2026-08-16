@@ -29,9 +29,6 @@ else
     echo "Using existing SSL certificate for ${SERVER_DOMAIN}"
 fi
 
-# Certbot 디렉토리 생성
-mkdir -p /var/www/certbot
-
 echo "Starting nginx with domain: ${SERVER_DOMAIN}"
 
 # nginx 실행
