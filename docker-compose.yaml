@@ -12,17 +12,9 @@ services:
       - "3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./AMAGETDON-BE/data/chapters.csv:/var/lib/mysql-files/chapters.csv
-      - ./AMAGETDON-BE/data/quizzes.csv:/var/lib/mysql-files/quizzes.csv
-      - ./AMAGETDON-BE/data/quiz_choices.csv:/var/lib/mysql-files/quiz_choices.csv
-      - ./AMAGETDON-BE/data/survey_questions.csv:/var/lib/mysql-files/survey_questions.csv
-      - ./AMAGETDON-BE/data/achievements.csv:/var/lib/mysql-files/achievements.csv
-      - ./AMAGETDON-BE/init-scripts/01-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
-      - ./AMAGETDON-BE/init-scripts/02-load-data.sql:/docker-entrypoint-initdb.d/02-load-data.sql
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
-      - --secure-file-priv=/var/lib/mysql-files
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
