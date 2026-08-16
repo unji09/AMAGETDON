@@ -17,14 +17,19 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.zip.CRC32;
 
 /**
@@ -71,14 +76,35 @@ public class R__Seed_master_data extends BaseJavaMigration {
     @Override
     public void migrate(Context context) throws Exception {
         Connection connection = context.getConnection();
-        seedChapters(connection);
-        seedQuizzes(connection);
-        seedQuizChoices(connection);
-        seedSurveyQuestions(connection);
-        seedAchievements(connection);
+        warnRowsMissingFromCsv(connection, "chapters", "chapter_id", seedChapters(connection));
+        warnRowsMissingFromCsv(connection, "quizzes", "quiz_id", seedQuizzes(connection));
+        warnRowsMissingFromCsv(connection, "quiz_choices", "choice_id", seedQuizChoices(connection));
+        warnRowsMissingFromCsv(connection, "survey_questions", "question_id", seedSurveyQuestions(connection));
+        warnRowsMissingFromCsv(connection, "achievements", "achievement_id", seedAchievements(connection));
     }
 
-    private void seedChapters(Connection connection) throws Exception {
+    private void warnRowsMissingFromCsv(Connection connection, String table, String idColumn, List<Long> csvIds)
+            throws SQLException {
+        Set<Long> seededIds = new HashSet<>(csvIds);
+        List<Long> missing = new ArrayList<>();
+
+        try (Statement statement = connection.createStatement();
+             ResultSet rows = statement.executeQuery("SELECT " + idColumn + " FROM " + table)) {
+            while (rows.next()) {
+                long id = rows.getLong(1);
+                if (!seededIds.contains(id)) {
+                    missing.add(id);
+                }
+            }
+        }
+
+        if (!missing.isEmpty()) {
+            log.warn("{} 에 CSV 에 없는 행 {}건 - {} (삭제가 필요하면 V*__.sql 에 명시하세요)",
+                    table, missing.size(), missing);
+        }
+    }
+
+    private List<Long> seedChapters(Connection connection) throws Exception {
         String sql = """
                 INSERT INTO chapters (chapter_id, chapter_type, base_chapter_no, chapter_title,
                                       chapter_summary, chapter_content, created_at, updated_at)
@@ -90,7 +116,7 @@ public class R__Seed_master_data extends BaseJavaMigration {
                                         chapter_content = src.chapter_content,
                                         updated_at      = src.updated_at
                 """;
-        upsert(connection, "chapters.csv", sql, (ps, row) -> {
+        return upsert(connection, "chapters.csv", "chapter_id", sql, (ps, row) -> {
             ps.setLong(1, requireLong(row, "chapter_id"));
             ps.setString(2, require(row, "chapter_type"));
             setInteger(ps, 3, row.get("base_chapter_no"));
@@ -102,7 +128,7 @@ public class R__Seed_master_data extends BaseJavaMigration {
         });
     }
 
-    private void seedQuizzes(Connection connection) throws Exception {
+    private List<Long> seedQuizzes(Connection connection) throws Exception {
         String sql = """
                 INSERT INTO quizzes (quiz_id, chapter_id, quiz_type, quiz_title, quiz_content,
                                      answer_ox, difficulty, hint, explanation_text, created_at, updated_at)
@@ -117,7 +143,7 @@ public class R__Seed_master_data extends BaseJavaMigration {
                                         explanation_text = src.explanation_text,
                                         updated_at       = src.updated_at
                 """;
-        upsert(connection, "quizzes.csv", sql, (ps, row) -> {
+        return upsert(connection, "quizzes.csv", "quiz_id", sql, (ps, row) -> {
             ps.setLong(1, requireLong(row, "quiz_id"));
             ps.setLong(2, requireLong(row, "chapter_id"));
             ps.setString(3, require(row, "quiz_type"));
@@ -132,7 +158,7 @@ public class R__Seed_master_data extends BaseJavaMigration {
         });
     }
 
-    private void seedQuizChoices(Connection connection) throws Exception {
+    private List<Long> seedQuizChoices(Connection connection) throws Exception {
         String sql = """
                 INSERT INTO quiz_choices (choice_id, quiz_id, choice_no, choice_text, is_answer)
                 VALUES (?, ?, ?, ?, ?) AS src
@@ -141,7 +167,7 @@ public class R__Seed_master_data extends BaseJavaMigration {
                                         choice_text = src.choice_text,
                                         is_answer   = src.is_answer
                 """;
-        upsert(connection, "quiz_choices.csv", sql, (ps, row) -> {
+        return upsert(connection, "quiz_choices.csv", "choice_id", sql, (ps, row) -> {
             ps.setLong(1, requireLong(row, "choice_id"));
             ps.setLong(2, requireLong(row, "quiz_id"));
             ps.setInt(3, Integer.parseInt(require(row, "choice_no")));
@@ -150,19 +176,19 @@ public class R__Seed_master_data extends BaseJavaMigration {
         });
     }
 
-    private void seedSurveyQuestions(Connection connection) throws Exception {
+    private List<Long> seedSurveyQuestions(Connection connection) throws Exception {
         String sql = """
                 INSERT INTO survey_questions (question_id, question_text)
                 VALUES (?, ?) AS src
                 ON DUPLICATE KEY UPDATE question_text = src.question_text
                 """;
-        upsert(connection, "survey_questions.csv", sql, (ps, row) -> {
+        return upsert(connection, "survey_questions.csv", "question_id", sql, (ps, row) -> {
             ps.setLong(1, requireLong(row, "question_id"));
             ps.setString(2, require(row, "question_text"));
         });
     }
 
-    private void seedAchievements(Connection connection) throws Exception {
+    private List<Long> seedAchievements(Connection connection) throws Exception {
         String sql = """
                 INSERT INTO achievements (achievement_id, achievement_name, achievement_icon, achievement_content,
                                           achievement_category, target_value, comparison_type, created_at, updated_at)
@@ -175,7 +201,7 @@ public class R__Seed_master_data extends BaseJavaMigration {
                                         comparison_type      = src.comparison_type,
                                         updated_at           = src.updated_at
                 """;
-        upsert(connection, "achievements.csv", sql, (ps, row) -> {
+        return upsert(connection, "achievements.csv", "achievement_id", sql, (ps, row) -> {
             ps.setLong(1, requireLong(row, "achievement_id"));
             ps.setString(2, require(row, "achievement_name"));
             ps.setString(3, require(row, "achievement_icon"));
@@ -188,8 +214,9 @@ public class R__Seed_master_data extends BaseJavaMigration {
         });
     }
 
-    private void upsert(Connection connection, String fileName, String sql, RowBinder binder) throws Exception {
-        int rows = 0;
+    private List<Long> upsert(Connection connection, String fileName, String idColumn, String sql, RowBinder binder)
+            throws Exception {
+        List<Long> ids = new ArrayList<>();
         try (Reader reader = openSeed(fileName);
              CSVParser parser = csvFormat().parse(reader);
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -197,11 +224,12 @@ public class R__Seed_master_data extends BaseJavaMigration {
             for (CSVRecord row : parser) {
                 binder.bind(statement, row);
                 statement.addBatch();
-                rows++;
+                ids.add(requireLong(row, idColumn));
             }
             statement.executeBatch();
         }
-        log.info("Seeded {} rows from {}", rows, fileName);
+        log.info("Seeded {} rows from {}", ids.size(), fileName);
+        return ids;
     }
 
     private CSVFormat csvFormat() {
