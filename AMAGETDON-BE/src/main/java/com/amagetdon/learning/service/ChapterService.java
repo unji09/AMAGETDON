@@ -420,14 +420,11 @@ public class ChapterService {
 
         // 7. 오답 노트 저장 (틀린 문제들)
         if (!wrongQuizIds.isEmpty()) {
-            List<ReviewNote> reviewNotes = wrongQuizIds.stream()
-                    .map(quizId -> {
-                        Quiz quiz = quizMap.get(quizId);
-                        return new ReviewNote(userId, quiz);
-                    })
-                    .toList();
-
-            reviewNoteRepository.saveAll(reviewNotes);
+            wrongQuizIds.stream()
+                    .distinct()
+                    .forEach(quizId ->
+                            reviewNoteRepository.insertIfAbsent(userId, quizId)
+                    );
         }
 
         return QuizSubmissionResponse.builder()
