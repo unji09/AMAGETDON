@@ -2,12 +2,12 @@ package com.amagetdon.learning.repository;
 
 import com.amagetdon.learning.entity.ReviewNote;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Set;
 
 @Repository
 public interface ReviewNoteRepository extends JpaRepository<ReviewNote, Long> {
@@ -23,34 +23,11 @@ public interface ReviewNoteRepository extends JpaRepository<ReviewNote, Long> {
     List<ReviewNote> findByUserIdWithQuiz(@Param("userId") Long userId);
 
     /**
-     * 특정 퀴즈가 오답노트에 이미 있는지 확인
-     * 중복 저장 방지용
-     */
-    @Query("SELECT CASE WHEN COUNT(rn) > 0 THEN true ELSE false END " +
-            "FROM ReviewNote rn " +
-            "WHERE rn.userId = :userId AND rn.quiz.quizId = :quizId")
-    boolean existsByUserIdAndQuizId(@Param("userId") Long userId, @Param("quizId") Long quizId);
-
-    /**
      * 사용자의 남은 오답노트 개수 조회
      * Response에 반환용
      */
     @Query("SELECT COUNT(rn) FROM ReviewNote rn WHERE rn.userId = :userId")
     Integer countByUserId(@Param("userId") Long userId);
-
-    /**
-     * 틀린 퀴즈 중 이미 오답노트에 저장된 퀴즈 ID 조회
-     */
-    @Query("""
-        SELECT DISTINCT rn.quiz.quizId
-        FROM ReviewNote rn
-        WHERE rn.userId = :userId
-          AND rn.quiz.quizId IN :quizIds
-        """)
-    Set<Long> findExistingQuizIds(
-            @Param("userId") Long userId,
-            @Param("quizIds") List<Long> quizIds
-    );
 
     /**
      * 특정 사용자의 특정 퀴즈 오답노트 전체 조회
@@ -63,6 +40,16 @@ public interface ReviewNoteRepository extends JpaRepository<ReviewNote, Long> {
           AND rn.quiz.quizId = :quizId
         """)
     List<ReviewNote> findAllByUserAndQuiz(
+            @Param("userId") Long userId,
+            @Param("quizId") Long quizId
+    );
+
+    @Modifying
+    @Query(value = """
+    INSERT IGNORE INTO review_notes (user_id, quiz_id, created_at)
+    VALUES (:userId, :quizId, CURRENT_TIMESTAMP)
+    """, nativeQuery = true)
+    int insertIfAbsent(
             @Param("userId") Long userId,
             @Param("quizId") Long quizId
     );

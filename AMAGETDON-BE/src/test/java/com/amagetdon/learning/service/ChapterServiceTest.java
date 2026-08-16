@@ -20,7 +20,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
@@ -78,10 +77,8 @@ class ChapterServiceTest {
 
         when(quizChoiceRepository.findAllById(List.<Long>of()))
                 .thenReturn(List.of());
-        when(reviewNoteRepository.findExistingQuizIds(
-                userId,
-                List.of(quizId)
-        )).thenReturn(Set.of(quizId));
+        when(reviewNoteRepository.insertIfAbsent(userId, quizId))
+                .thenReturn(0);
 
         when(user.getBalance()).thenReturn(3_000_000L);
 
@@ -90,7 +87,7 @@ class ChapterServiceTest {
 
         // then
         verify(reviewNoteRepository)
-                .findExistingQuizIds(userId, List.of(quizId));
+                .insertIfAbsent(userId, quizId);
         verify(reviewNoteRepository, never())
                 .saveAll(anyList());
     }

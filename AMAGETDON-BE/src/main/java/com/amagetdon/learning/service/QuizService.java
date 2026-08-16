@@ -184,12 +184,8 @@ public class QuizService {
 
             // 오답노트 저장
             if (!isCorrect) {
-                boolean exists = reviewNoteRepository.existsByUserIdAndQuizId(userId, request.quizId());
-                if (!exists) {
-                    ReviewNote reviewNote = new ReviewNote(user.getUserId(), quiz);
-                    reviewNoteRepository.save(reviewNote);
-                    addedToReviewNote = true;
-                }
+                addedToReviewNote =
+                        reviewNoteRepository.insertIfAbsent(userId, request.quizId()) == 1;
             }
 
             // DailyQuizHistory 저장 (100번 이하만)
