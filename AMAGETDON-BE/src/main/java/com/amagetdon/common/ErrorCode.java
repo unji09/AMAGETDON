@@ -62,6 +62,7 @@ public enum ErrorCode {
     // Trading
     PRICE_NOT_AVAILABLE("현재가를 조회할 수 없습니다."),
     STOCK_INFO_NOT_FOUND("주식 정보를 찾을 수 없습니다."),
+    STOCK_NOT_TRADABLE("현재 거래할 수 없는 종목입니다."),
     NO_OWNED_STOCK("보유한 주식이 없습니다."),
     INSUFFICIENT_STOCK_QUANTITY("보유 수량이 부족합니다."),
     MARKET_CLOSED("장 시간이 아닙니다. 거래 가능 시간: 09:00 ~ 15:30"),

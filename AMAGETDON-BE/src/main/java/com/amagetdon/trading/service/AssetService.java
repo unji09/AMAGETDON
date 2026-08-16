@@ -1,7 +1,6 @@
 package com.amagetdon.trading.service;
 
-import com.amagetdon.stock.entity.StockPrice;
-import com.amagetdon.stock.repository.StockPriceRepository;
+import com.amagetdon.stock.service.StockPriceCacheService;
 import com.amagetdon.trading.dto.response.AssetResponse;
 import com.amagetdon.trading.entity.StockHolding;
 import com.amagetdon.trading.repository.AccountRepository;
@@ -24,7 +23,7 @@ import static com.amagetdon.common.ErrorCode.USER_NOT_FOUND_SIMPLE;
 public class AssetService {
     private final UserRepository userRepository;
     private final AccountRepository accountRepository;
-    private final StockPriceRepository stockPriceRepository;
+    private final StockPriceCacheService stockPriceCacheService;
     private final RedisTemplate<String, String> redisTemplate;
 
     private static final String USER_STOCKS_KEY = "kis:user_stocks";
@@ -78,10 +77,9 @@ public class AssetService {
     }
 
     private Integer getCurrentPrice(StockHolding holding) {
-        return stockPriceRepository
-                .findTopByStockOrderByCreatedAtDesc(holding.getStock())
-                .map(StockPrice::getCurrentPrice)
-                .map(Integer::parseInt)
+        return stockPriceCacheService
+                .getLatestPrice(holding.getStock())
+                .map(data -> Integer.parseInt(data.currentPrice()))
                 .orElse(0);
     }
 

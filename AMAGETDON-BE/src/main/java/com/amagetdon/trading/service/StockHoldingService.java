@@ -1,8 +1,8 @@
 package com.amagetdon.trading.service;
 
-import com.amagetdon.stock.entity.StockPrice;
-import com.amagetdon.stock.repository.StockPriceRepository;
+import com.amagetdon.stock.dto.StockPriceDto;
 import com.amagetdon.stock.repository.StockRepository;
+import com.amagetdon.stock.service.StockPriceCacheService;
 import com.amagetdon.trading.dto.response.StockHoldingItemResponse;
 import com.amagetdon.trading.dto.response.StockHoldingResponse;
 import com.amagetdon.trading.entity.StockHolding;
@@ -27,7 +27,7 @@ import static com.amagetdon.common.ErrorCode.*;
 public class StockHoldingService {
     private final AccountRepository accountRepository;
     private final StockRepository stockRepository;
-    private final StockPriceRepository stockPriceRepository;
+    private final StockPriceCacheService stockPriceCacheService;
     private final RedisTemplate<String, String> redisTemplate;
 
     private static final String USER_STOCKS_KEY = "kis:user_stocks";
@@ -71,17 +71,13 @@ public class StockHoldingService {
     }
 
     private StockHoldingItemResponse convertToItem(StockHolding holding) {
-        StockPrice latestPrice = getCurrentPrice(holding);
-        Integer currentPrice = Integer.parseInt(latestPrice.getCurrentPrice());
-        BigDecimal changeRate = latestPrice.getChangeRate();
+        StockPriceDto priceData = stockPriceCacheService
+                .getLatestPrice(holding.getStock())
+                .orElseThrow(() -> new IllegalStateException(PRICE_NOT_AVAILABLE.getMessage()));
+        Integer currentPrice = Integer.parseInt(priceData.currentPrice());
+        BigDecimal changeRate = priceData.changeRate();
 
         return StockHoldingItemResponse.from(holding, currentPrice, changeRate);
-    }
-
-    private StockPrice getCurrentPrice(StockHolding holding) {
-        return stockPriceRepository
-                .findTopByStockOrderByCreatedAtDesc(holding.getStock())
-                .orElseThrow(() -> new IllegalStateException(PRICE_NOT_AVAILABLE.getMessage()));
     }
 
     private void validateStockCode(String stockCode) {

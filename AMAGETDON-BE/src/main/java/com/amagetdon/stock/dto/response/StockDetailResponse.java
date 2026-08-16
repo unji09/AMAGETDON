@@ -1,6 +1,8 @@
 package com.amagetdon.stock.dto.response;
 
+import com.amagetdon.stock.dto.StockPriceDto;
 import com.amagetdon.stock.entity.MarketType;
+import com.amagetdon.stock.entity.Stock;
 
 import java.math.BigDecimal;
 
@@ -16,4 +18,13 @@ public record StockDetailResponse(
         Integer changeAmount,
         Integer volume
 ) {
+    public static StockDetailResponse from(Stock stock, StockPriceDto price) {
+        return new StockDetailResponse(
+                stock.getStockName(), stock.getMarketType(),
+                stock.getSector().getSectorName(),
+                stock.getPer(), stock.getPbr(), stock.getMarketCap(),
+                price.currentPrice(), price.changeRate(),
+                price.changeAmount(), price.volume()
+        );
+    }
 }
