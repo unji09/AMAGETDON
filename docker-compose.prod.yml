@@ -1,0 +1,252 @@
+services:
+  mysql:
+    ports: !override
+      - "127.0.0.1:3306:3306"
+    restart: unless-stopped
+
+  redis:
+    ports: !override
+      - "127.0.0.1:6379:6379"
+    restart: unless-stopped
+
+  openvidu:
+    image: openvidu/openvidu-server:2.32.0
+    container_name: amagetdon-openvidu
+    entrypoint: ["/usr/local/bin/entrypoint.sh"]
+    environment:
+      - OPENVIDU_SECRET=${OPENVIDU_SECRET}
+      - DOMAIN_OR_PUBLIC_IP=${DOMAIN}
+      - HTTPS_PORT=443
+      - SERVER_SSL_ENABLED=false
+      - SERVER_PORT=5443
+      - KMS_URIS=["ws://kms:8888/kurento"]
+      - COTURN_IP=${COTURN_IP:-${DOMAIN}}
+      - COTURN_PORT=3478
+      - OPENVIDU_RECORDING=false
+    volumes:
+      - ./openvidu/coturn:/run/secrets/coturn
+    depends_on:
+      - kms
+    restart: unless-stopped
+    networks:
+      - amagetdon-network
+
+  kms:
+    image: kurento/kurento-media-server:7.3.0
+    container_name: amagetdon-kms
+    restart: always
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    networks:
+      - amagetdon-network
+
+  backend:
+    build:
+      context: ./AMAGETDON-BE
+      dockerfile: Dockerfile
+    container_name: amagetdon-backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      openvidu:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - amagetdon-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - JPA_DDL_AUTO=${JPA_DDL_AUTO:-validate}
+      - DB_HOST=mysql
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
+      - JWT_SECRET=${JWT_SECRET}
+      - MY_EMAIL_PASSWORD=${MY_EMAIL_PASSWORD}
+      - REST_KAKAO_API_KEY=${REST_KAKAO_API_KEY}
+      - OPENVIDU_URL=http://openvidu:5443/
+      - OPENVIDU_SECRET=${OPENVIDU_SECRET}
+      - REDIRECT_URL=${REDIRECT_URL}
+      - TZ=Asia/Seoul
+
+  fastapi:
+    ports: !reset null
+    volumes: !override
+      - ./backup:/app/backup
+
+  namenode:
+    network_mode: host
+    networks: !reset null
+    ports: !reset null
+    environment:
+      - CORE-SITE.XML_fs.defaultFS=hdfs://localhost:8020
+      # 서버 밖으로 열리지 않도록 루프백에만 바인딩
+      - HDFS-SITE.XML_dfs.namenode.rpc-bind-host=127.0.0.1
+      - HDFS-SITE.XML_dfs.namenode.http-bind-host=127.0.0.1
+
+  datanode:
+    network_mode: host
+    networks: !reset null
+    environment:
+      - CORE-SITE.XML_fs.defaultFS=hdfs://localhost:8020
+      - HDFS-SITE.XML_dfs.datanode.hostname=localhost
+      - HDFS-SITE.XML_dfs.datanode.address=127.0.0.1:9866
+      - HDFS-SITE.XML_dfs.datanode.http.address=127.0.0.1:9864
+      - HDFS-SITE.XML_dfs.datanode.ipc.address=127.0.0.1:9867
+
+  # 로컬에서는 collect 프로파일로만 뜨지만 운영에서는 항상 떠야 한다.
+  # 한투증 API 호출 때문에 host 네트워크를 쓴다 (e7ba47b)
+  collector:
+    profiles: !reset null
+    network_mode: host
+    networks: !reset null
+    extra_hosts: !reset null
+    environment:
+      - DB_HOST=localhost
+      - REDIS_HOST=localhost
+      - KIS_HTS_ID=${KIS_HTS_ID}
+
+  frontend:
+    build:
+      context: ./AMAGETDON-FE
+      dockerfile: Dockerfile
+      args:
+        - VITE_KAKAO_JS_KEY=${VITE_KAKAO_JS_KEY}
+    container_name: amagetdon-frontend
+    expose:
+      - "3000"
+    restart: unless-stopped
+    networks:
+      - amagetdon-network
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: amagetdon-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - SERVER_DOMAIN=${DOMAIN:-localhost}
+    depends_on:
+      - frontend
+      - backend
+      - fastapi
+    restart: unless-stopped
+    networks:
+      - amagetdon-network
+
+  jenkins:
+    build:
+      context: ./jenkins
+      dockerfile: Dockerfile
+    container_name: amagetdon-jenkins
+    restart: unless-stopped
+    profiles:
+      - ci
+    ports:
+      - "${JENKINS_BIND_IP:-127.0.0.1}:8080:8080"
+    environment:
+      - TZ=Asia/Seoul
+      - DEPLOY_DIR=${DEPLOY_DIR}
+    group_add:
+      - "${DOCKER_GID}"
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${DEPLOY_DIR}:${DEPLOY_DIR}
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: amagetdon-prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - amagetdon-network
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: amagetdon-grafana
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_SERVER_ROOT_URL=https://grafana.${DOMAIN}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - TZ=Asia/Seoul
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    networks:
+      - amagetdon-network
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: amagetdon-node-exporter
+    restart: unless-stopped
+    command:
+      - --path.rootfs=/host
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+    networks:
+      - amagetdon-network
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: amagetdon-cadvisor
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - amagetdon-network
+
+  mysqld-exporter:
+    image: prom/mysqld-exporter:v0.15.1
+    container_name: amagetdon-mysqld-exporter
+    restart: unless-stopped
+    command:
+      - --mysqld.address=mysql:3306
+      - --mysqld.username=root
+    environment:
+      - MYSQLD_EXPORTER_PASSWORD=${DB_PASSWORD}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - amagetdon-network
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.66.0
+    container_name: amagetdon-redis-exporter
+    restart: unless-stopped
+    command:
+      - --redis.addr=redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - amagetdon-network
+
+volumes:
+  jenkins-data:
+  prometheus-data:
+  grafana-data:

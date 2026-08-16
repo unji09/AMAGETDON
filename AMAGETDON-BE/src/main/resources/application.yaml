@@ -1,4 +1,8 @@
 spring:
+  config:
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:../.env[.properties]
   profiles:
     include:
       - db
@@ -41,18 +45,14 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: service.tester.20260130@gmail.com
-    password: MY_EMAIL_PASSWORD
+    username: ${MAIL_USERNAME:service.tester.20260130@gmail.com}
+    password: ${MY_EMAIL_PASSWORD}
     properties:
       mail:
         smtp:
           auth: true
           starttls:
             enable: true
-
-openvidu:
-  url: ${OPENVIDU_URL:https://openvidu:4443/}
-  secret: ${OPENVIDU_SECRET:MY_SECRET}
 
 springdoc:
   swagger-ui:
@@ -74,3 +74,11 @@ fastapi:
 server:
   servlet:
     context-path: /api/v1
+
+management:
+  server:
+    port: 8081
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus

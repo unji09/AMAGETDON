@@ -27,8 +27,9 @@ public class OAuthController {
             @RequestBody Map<String, Object> body
     ) {
         String code = (String) body.get("code");
+        String redirectUri = (String) body.get("redirectUri");
 
-        TokenResponse tokenResponse = oAuthService.loginWithCode(code);
+        TokenResponse tokenResponse = oAuthService.loginWithCode(code, redirectUri);
 
         ResponseCookie refreshTokenCookie =
                 refreshTokenService.createRefreshTokenCookie(

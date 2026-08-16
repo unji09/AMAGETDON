@@ -1,0 +1,37 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  jwt:
+    secret-key: ${JWT_SECRET}
+
+  cookie:
+    secure: true
+    same-site: Lax
+
+kakao:
+  rest-api-key: ${REST_KAKAO_API_KEY}
+  redirect-uri: ${REDIRECT_URL}
+
+openvidu:
+  url: ${OPENVIDU_URL:http://openvidu:4443/}
+  secret: ${OPENVIDU_SECRET}
+
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false
+
+server:
+  forward-headers-strategy: framework
+
+management:
+  metrics:
+    tags:
+      application: amagetdon-be

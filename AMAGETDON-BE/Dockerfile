@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jdk-alpine
+FROM eclipse-temurin:17-jdk-jammy
 
 WORKDIR /app
 
@@ -25,7 +25,7 @@ RUN ./gradlew clean build -x test --no-daemon
 # 생성된 JAR 파일을 app.jar로 이름 변경
 RUN mv build/libs/amagetdonbe-0.0.1-SNAPSHOT.jar build/libs/app.jar
 
-EXPOSE 8080
+EXPOSE 8080 8081
 
 # JVM 옵션
 ENV JAVA_OPTS="-Xmx512m -Xms256m"
