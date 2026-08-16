@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalTime;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Service
@@ -26,6 +27,9 @@ public class StockPriceCacheService {
     private static final LocalTime MARKET_CLOSE = LocalTime.of(15, 30);
     private static final int POLL_INTERVAL_MS = 500;
     private static final int POLL_TIMEOUT_MS = 6000;
+    private static final long CIRCUIT_OPEN_DURATION_MS = 30_000;
+
+    private final AtomicLong circuitOpenUntil = new AtomicLong(0);
 
     public Optional<StockPriceDto> getLatestPrice(String stockCode) {
         Optional<StockPriceDto> cached = getFromRedis(stockCode);
@@ -44,7 +48,7 @@ public class StockPriceCacheService {
             return cached;
         }
 
-        if (isMarketOpen()) {
+        if (shouldPoll()) {
             long deadline = System.currentTimeMillis() + POLL_TIMEOUT_MS;
             while (System.currentTimeMillis() < deadline) {
                 try {
@@ -58,6 +62,7 @@ public class StockPriceCacheService {
                     return cached;
                 }
             }
+            circuitOpenUntil.set(System.currentTimeMillis() + CIRCUIT_OPEN_DURATION_MS);
         }
 
         return stockPriceRepository
@@ -79,6 +84,13 @@ public class StockPriceCacheService {
             log.warn("Redis 가격 캐시 조회 실패 ({}): {}", stockCode, e.getMessage());
         }
         return Optional.empty();
+    }
+
+    private boolean shouldPoll() {
+        if (!isMarketOpen()) {
+            return false;
+        }
+        return System.currentTimeMillis() > circuitOpenUntil.get();
     }
 
     private boolean isMarketOpen() {

@@ -99,8 +99,10 @@ def _filter_stocks_with_user_data(cursor, stock_codes: List[str]) -> tuple:
     cursor.execute(
         f"""SELECT DISTINCT stock_code FROM watchlist WHERE stock_code IN ({placeholders})
             UNION
-            SELECT DISTINCT stock_code FROM stock_holdings WHERE stock_code IN ({placeholders})""",
-        stock_codes + stock_codes
+            SELECT DISTINCT stock_code FROM stock_holdings WHERE stock_code IN ({placeholders})
+            UNION
+            SELECT DISTINCT stock_code FROM transaction WHERE stock_code IN ({placeholders})""",
+        stock_codes + stock_codes + stock_codes
     )
     has_user_data = {row[0] for row in cursor.fetchall()}
     deletable = [c for c in stock_codes if c not in has_user_data]
@@ -185,8 +187,16 @@ def save_closing_prices(conn) -> int:
 def cleanup_old_data(conn) -> dict:
     cursor = conn.cursor()
 
-    cutoff = datetime.now() - timedelta(days=1)
-    cursor.execute("DELETE FROM stock_prices WHERE created_at < %s", (cutoff,))
+    cursor.execute(
+        """DELETE FROM stock_prices
+           WHERE price_id NOT IN (
+               SELECT max_id FROM (
+                   SELECT MAX(price_id) AS max_id
+                   FROM stock_prices
+                   GROUP BY stock_code
+               ) latest
+           )"""
+    )
     result = {'stock_prices': cursor.rowcount}
 
     retention = {'1m': 1, '5m': 1, '30m': 7, '1d': 90, '1w': 365}
