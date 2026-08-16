@@ -21,7 +21,7 @@ public class KakaoTokenClient {
     private final RestTemplate restTemplate = new RestTemplate();
     private final KakaoProperties kakaoProperties;
 
-    public String getAccessToken(String code) {
+    public String getAccessToken(String code, String redirectUri) {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -29,7 +29,7 @@ public class KakaoTokenClient {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
         params.add("client_id", kakaoProperties.getRestApiKey());
-        params.add("redirect_uri", kakaoProperties.getRedirectUri());
+        params.add("redirect_uri", redirectUri);
         params.add("code", code);
 
         if (kakaoProperties.getClientSecret() != null) {

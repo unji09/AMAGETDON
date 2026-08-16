@@ -12,6 +12,7 @@ export const kakaoOAuthLogin = async (
             body: JSON.stringify({
                 provider: "KAKAO",
                 code,
+                redirectUri: `${window.location.origin}/oauth/kakao`,
             }),
         }
     );
